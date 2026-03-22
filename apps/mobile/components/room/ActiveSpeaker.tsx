@@ -1,13 +1,13 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Image, Dimensions } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, Animated, Image, Dimensions, LayoutAnimation, Platform, UIManager, Easing } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { getRoleIcon, getRoleColor, getRoleLabel } from '../../utils/roleHelpers';
 
 const { width } = Dimensions.get('window');
-const AVATAR_SIZE = 110;
+const AVATAR_SIZE = 80;
 const RING_SIZE = AVATAR_SIZE + 16;
-const MOON_SIZE = 100;
+const MOON_SIZE = 72;
 
 interface ActiveSpeakerProps {
   userId?: string;
@@ -16,59 +16,98 @@ interface ActiveSpeakerProps {
   role?: string;
   speaking?: boolean;
   muted?: boolean;
+  camOn?: boolean;
   duration?: number;
   startedAt?: number;
+  onExitComplete?: () => void;
 }
 
-/* ── Neon Dalga Animasyonu ── */
-function NeonSpeakingRing({ speaking }: { speaking: boolean }) {
+/* ── Ses Dalgası — 3 genişleyen halka + Ay ışığı glow ── */
+function NeonSpeakingRing({ speaking, hideMoon }: { speaking: boolean; hideMoon?: boolean }) {
   const ring1 = useRef(new Animated.Value(1)).current;
   const ring2 = useRef(new Animated.Value(1)).current;
   const ring3 = useRef(new Animated.Value(1)).current;
   const op1 = useRef(new Animated.Value(0)).current;
   const op2 = useRef(new Animated.Value(0)).current;
   const op3 = useRef(new Animated.Value(0)).current;
+  const glowOp = useRef(new Animated.Value(0.15)).current;
 
   useEffect(() => {
     if (!speaking) {
       [ring1, ring2, ring3].forEach(r => r.setValue(1));
       [op1, op2, op3].forEach(o => o.setValue(0));
+      glowOp.setValue(0.15);
       return;
     }
-    const animate = (scale: Animated.Value, opacity: Animated.Value, maxScale: number, delay: number, dur: number) =>
+
+    const animate = (scale: Animated.Value, opacity: Animated.Value, delay: number) => {
       Animated.loop(Animated.sequence([
         Animated.delay(delay),
         Animated.parallel([
-          Animated.timing(scale, { toValue: maxScale, duration: dur, useNativeDriver: true }),
-          Animated.timing(opacity, { toValue: 0.6, duration: dur * 0.3, useNativeDriver: true }),
+          Animated.timing(scale, { toValue: 1.4, duration: 1600, useNativeDriver: true }),
+          Animated.sequence([
+            Animated.timing(opacity, { toValue: 0.7, duration: 300, useNativeDriver: true }),
+            Animated.timing(opacity, { toValue: 0, duration: 1300, useNativeDriver: true }),
+          ]),
         ]),
-        Animated.parallel([
-          Animated.timing(scale, { toValue: 1, duration: dur, useNativeDriver: true }),
-          Animated.timing(opacity, { toValue: 0, duration: dur * 0.7, useNativeDriver: true }),
-        ]),
-      ]));
-    animate(ring1, op1, 1.25, 0, 800).start();
-    animate(ring2, op2, 1.35, 250, 900).start();
-    animate(ring3, op3, 1.45, 500, 1000).start();
+        Animated.timing(scale, { toValue: 1, duration: 0, useNativeDriver: true }),
+      ])).start();
+    };
+
+    animate(ring1, op1, 0);
+    animate(ring2, op2, 530);
+    animate(ring3, op3, 1060);
+
+    // Ay ışığı glow pulse
+    Animated.loop(Animated.sequence([
+      Animated.timing(glowOp, { toValue: 0.35, duration: 1500, useNativeDriver: true }),
+      Animated.timing(glowOp, { toValue: 0.15, duration: 1500, useNativeDriver: true }),
+    ])).start();
   }, [speaking]);
 
-  if (!speaking) return null;
+  const ringStyle = {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: RING_SIZE / 2,
+    borderWidth: 2,
+    borderColor: '#00ff88',
+  };
+
   return (
     <>
-      {[
-        { scale: ring1, opacity: op1, color: '#00ff88', width: 2.5 },
-        { scale: ring2, opacity: op2, color: '#00cc6a', width: 2 },
-        { scale: ring3, opacity: op3, color: '#009950', width: 1.5 },
-      ].map((r, i) => (
-        <Animated.View key={i} style={{
-          ...StyleSheet.absoluteFillObject,
-          borderRadius: RING_SIZE / 2,
-          borderWidth: r.width,
-          borderColor: r.color,
-          opacity: r.opacity,
-          transform: [{ scale: r.scale }],
-        }} />
-      ))}
+      {/* Ay ışığı — blur hüzmeleri (kamera açıkken gizle) */}
+      {!hideMoon && (
+        <>
+      <Animated.View style={{
+        ...StyleSheet.absoluteFillObject,
+        margin: -25,
+        borderRadius: 999,
+        backgroundColor: '#c8e6ff',
+        opacity: Animated.multiply(glowOp, 0.3),
+      }} />
+      <Animated.View style={{
+        ...StyleSheet.absoluteFillObject,
+        margin: -15,
+        borderRadius: 999,
+        backgroundColor: '#dbeeff',
+        opacity: Animated.multiply(glowOp, 0.5),
+      }} />
+      <Animated.View style={{
+        ...StyleSheet.absoluteFillObject,
+        margin: -7,
+        borderRadius: 999,
+        backgroundColor: '#e8f4ff',
+        opacity: glowOp,
+      }} />
+      </>)}
+
+      {/* Konuşma halkaları */}
+      {speaking && (
+        <>
+          <Animated.View style={[ringStyle, { opacity: op1, transform: [{ scale: ring1 }] }]} />
+          <Animated.View style={[ringStyle, { opacity: op2, transform: [{ scale: ring2 }] }]} />
+          <Animated.View style={[ringStyle, { opacity: op3, transform: [{ scale: ring3 }], borderWidth: 1.5 }]} />
+        </>
+      )}
     </>
   );
 }
@@ -138,7 +177,7 @@ function DurationCounter({ duration, startedAt }: { duration?: number; startedAt
    ACTIVE SPEAKER SPOTLIGHT
    ══════════════════════════════════════════ */
 export default function ActiveSpeaker(props: ActiveSpeakerProps) {
-  const { userId, displayName, avatar, role, speaking, muted, duration, startedAt } = props;
+  const { userId, displayName, avatar, role, speaking, muted, camOn, duration, startedAt, onExitComplete } = props;
   const roleColor = getRoleColor(role);
   const roleIcon = getRoleIcon(role);
   const roleLabel = getRoleLabel(role);
@@ -196,29 +235,137 @@ export default function ActiveSpeaker(props: ActiveSpeakerProps) {
     );
   }
 
+  const camSize = camOn ? 140 : AVATAR_SIZE;
+  const camRing = camSize + 16;
+
+  // Ay animasyonu hook'ları (her zaman çağrılmalı — conditional hook yasak)
+  const moonRotation = useRef(new Animated.Value(0)).current;
+  const glowPulse = useRef(new Animated.Value(0.3)).current;
+  const isEmpty = userId === 'empty';
+
+  // Önceki konuşmacı verilerini sakla (exit animasyonu için)
+  const lastSpeaker = useRef({ avatar, displayName, role, speaking, muted, camOn });
+  if (!isEmpty) {
+    lastSpeaker.current = { avatar, displayName, role, speaking, muted, camOn };
+  }
+  // Exit animasyonunda eskiyi kullan
+  const sp = isEmpty ? lastSpeaker.current : { avatar, displayName, role, speaking, muted, camOn };
+  const spRoleIcon = getRoleIcon(sp.role);
+  const spRoleColor = getRoleColor(sp.role);
+  const spRoleLabel = getRoleLabel(sp.role);
+  useEffect(() => {
+    if (!isEmpty) return;
+    const r = Animated.loop(
+      Animated.timing(moonRotation, { toValue: 1, duration: 120000, useNativeDriver: true })
+    );
+    r.start();
+    const g = Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowPulse, { toValue: 0.7, duration: 4000, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(glowPulse, { toValue: 0.3, duration: 4000, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      ])
+    );
+    g.start();
+    return () => { r.stop(); g.stop(); };
+  }, [isEmpty]);
+
+  const moonSpin = moonRotation.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+  const MOON_S = RING_SIZE;
+
+  // Crossfade: 1 = ay görünür, 0 = avatar görünür
+  const crossfade = useRef(new Animated.Value(isEmpty ? 1 : 0)).current;
+  const badgeAnim = useRef(new Animated.Value(isEmpty ? 0 : 1)).current;
+  // Avatar'ı animasyon bitene kadar DOM'da tut
+  const [showAvatar, setShowAvatar] = useState(!isEmpty);
+
+  useEffect(() => {
+    if (isEmpty) {
+      // Mikrofon bırakıldı: önce badge'ler → sonra avatar küçülsün → ay doğsun → sonra unmount
+      Animated.sequence([
+        Animated.timing(badgeAnim, { toValue: 0, duration: 200, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+        Animated.timing(crossfade, { toValue: 1, duration: 600, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      ]).start(() => {
+        setShowAvatar(false);
+        onExitComplete?.();
+      });
+    } else {
+      // Mikrofon alındı: hemen avatar'ı DOM'a ekle, sonra animasyon
+      setShowAvatar(true);
+      crossfade.setValue(1); // Başlangıç: ay görünür
+      badgeAnim.setValue(0); // Badge'ler gizli
+      Animated.sequence([
+        Animated.timing(crossfade, { toValue: 0, duration: 600, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(badgeAnim, { toValue: 1, duration: 300, easing: Easing.out(Easing.back(1.5)), useNativeDriver: true }),
+      ]).start();
+    }
+  }, [isEmpty]);
+
+  const moonOpacity = crossfade;
+  const moonScale = crossfade;
+  const avatarOpacity = crossfade.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
+  const avatarScale = crossfade.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
+  const badgeScale = badgeAnim;
+  const badgeOpacity = badgeAnim;
+
   return (
     <View style={s.container}>
-      <Animated.View style={[s.avatarOuter, { transform: [{ scale: breathe }] }]}>
-        <NeonSpeakingRing speaking={!!speaking} />
-        <View style={[s.avatarBorder, speaking && { borderColor: '#00ff88' }]}>
-          <Image source={{ uri: avatar || 'https://sopranochat.com/avatars/neutral_1.png' }} style={s.avatarImg} />
+      {/* ── AY KATMANI ── */}
+      <Animated.View style={[s.avatarOuter, { transform: [{ scale: Animated.multiply(breathe, moonScale) }], opacity: moonOpacity }]}>
+        {/* Glow — 6 katman + blur */}
+        <Animated.View style={{ ...StyleSheet.absoluteFillObject, margin: -55, borderRadius: 999, backgroundColor: '#ffe8a0', opacity: Animated.multiply(glowPulse, 0.04), shadowColor: '#ffe8a0', shadowOpacity: 0.3, shadowRadius: 25, elevation: 8 }} />
+        <Animated.View style={{ ...StyleSheet.absoluteFillObject, margin: -42, borderRadius: 999, backgroundColor: '#ffedba', opacity: Animated.multiply(glowPulse, 0.06), shadowColor: '#ffedba', shadowOpacity: 0.3, shadowRadius: 20, elevation: 7 }} />
+        <Animated.View style={{ ...StyleSheet.absoluteFillObject, margin: -30, borderRadius: 999, backgroundColor: '#fff2cc', opacity: Animated.multiply(glowPulse, 0.09), shadowColor: '#fff2cc', shadowOpacity: 0.4, shadowRadius: 16, elevation: 6 }} />
+        <Animated.View style={{ ...StyleSheet.absoluteFillObject, margin: -20, borderRadius: 999, backgroundColor: '#fff5db', opacity: Animated.multiply(glowPulse, 0.13), shadowColor: '#fff5db', shadowOpacity: 0.4, shadowRadius: 12, elevation: 5 }} />
+        <Animated.View style={{ ...StyleSheet.absoluteFillObject, margin: -12, borderRadius: 999, backgroundColor: '#fffae8', opacity: Animated.multiply(glowPulse, 0.18), shadowColor: '#fffae8', shadowOpacity: 0.5, shadowRadius: 10, elevation: 4 }} />
+        <Animated.View style={{ ...StyleSheet.absoluteFillObject, margin: -5, borderRadius: 999, backgroundColor: '#fffdf2', opacity: Animated.multiply(glowPulse, 0.25), shadowColor: '#fffdf2', shadowOpacity: 0.5, shadowRadius: 8, elevation: 3 }} />
+        <View style={{ width: MOON_S, height: MOON_S, borderRadius: MOON_S / 2, overflow: 'hidden' }}>
+          <Animated.Image
+            source={require('../../assets/moon.png')}
+            style={{ width: MOON_S * 1.3, height: MOON_S * 1.3, marginTop: -MOON_S * 0.15, marginLeft: -MOON_S * 0.15, transform: [{ rotate: moonSpin }] }}
+            resizeMode="cover"
+          />
         </View>
-        <View style={[s.micBadge, speaking ? { backgroundColor: '#00ff88' } : muted ? { backgroundColor: '#ef4444' } : { backgroundColor: 'rgba(100,100,100,0.8)' }]}>
-          <Ionicons name={muted ? 'mic-off' : 'mic'} size={12} color={speaking ? '#0a0e27' : '#fff'} />
-        </View>
-        {roleIcon ? (
-          <View style={[s.roleBadge, { backgroundColor: roleColor }]}>
-            <Text style={s.roleEmoji}>{roleIcon}</Text>
-          </View>
-        ) : null}
       </Animated.View>
-      <Text style={[s.name, { color: roleColor }]} numberOfLines={1}>{displayName || 'Bilinmiyor'}</Text>
-      <View style={s.infoRow}>
-        <View style={[s.rolePill, { borderColor: roleColor + '40' }]}>
-          <Text style={[s.roleText, { color: roleColor }]}>{roleLabel}</Text>
-        </View>
-        <DurationCounter duration={duration} startedAt={startedAt} />
-      </View>
+
+      {/* ── AVATAR — ayın merkezinden doğar, geri çekilir ── */}
+      {showAvatar && (
+        <Animated.View style={[s.avatarOuter, { position: 'absolute', transform: [{ scale: Animated.multiply(breathe, avatarScale) }], opacity: avatarOpacity }]}>
+          <NeonSpeakingRing speaking={!!sp.speaking} hideMoon={!!sp.camOn} />
+          <View style={[s.avatarBorder, { width: camSize, height: camSize, borderRadius: camSize / 2 }, sp.speaking && { borderColor: '#00ff88' }]}>
+            {sp.camOn ? (
+              <LinearGradient
+                colors={['#1a1a2e', '#16213e', '#0f3460']}
+                style={[{ width: camSize - 8, height: camSize - 8, borderRadius: (camSize - 8) / 2, alignItems: 'center', justifyContent: 'center' }]}>
+                <Ionicons name="videocam" size={32} color="rgba(255,255,255,0.6)" />
+                <Text style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>CANLI</Text>
+              </LinearGradient>
+            ) : (
+              <Image source={{ uri: sp.avatar || 'https://sopranochat.com/avatars/neutral_1.png' }} style={s.avatarImg} />
+            )}
+          </View>
+          <Animated.View style={[s.micBadge, { transform: [{ scale: badgeScale }], opacity: badgeOpacity }, sp.speaking ? { backgroundColor: '#00ff88' } : sp.muted ? { backgroundColor: '#ef4444' } : { backgroundColor: 'rgba(100,100,100,0.8)' }]}>
+            <Ionicons name={sp.muted ? 'mic-off' : 'mic'} size={12} color={sp.speaking ? '#0a0e27' : '#fff'} />
+          </Animated.View>
+          {spRoleIcon ? (
+            <Animated.View style={[s.roleBadge, { backgroundColor: spRoleColor, transform: [{ scale: badgeScale }], opacity: badgeOpacity }]}>
+              <Text style={s.roleEmoji}>{spRoleIcon}</Text>
+            </Animated.View>
+          ) : null}
+        </Animated.View>
+      )}
+
+      {/* ── İSİM + BİLGİ ── */}
+      <Animated.Text style={[s.name, isEmpty ? { color: 'rgba(255,248,220,0.4)', marginTop: 10, opacity: moonOpacity } : { color: spRoleColor, opacity: avatarOpacity }]} numberOfLines={1}>
+        {isEmpty && !showAvatar ? 'Mikrofon boş' : (sp.displayName || 'Bilinmiyor')}
+      </Animated.Text>
+      {showAvatar && (
+        <Animated.View style={[s.infoRow, { opacity: badgeOpacity, transform: [{ scale: badgeScale }] }]}>
+          <View style={[s.rolePill, { borderColor: spRoleColor + '40' }]}>
+            <Text style={[s.roleText, { color: spRoleColor }]}>{spRoleLabel}</Text>
+          </View>
+          <DurationCounter duration={duration} startedAt={startedAt} />
+        </Animated.View>
+      )}
     </View>
   );
 }
@@ -230,7 +377,7 @@ const ms = StyleSheet.create({
 });
 
 const s = StyleSheet.create({
-  container: { alignItems: 'center', paddingVertical: 8, paddingHorizontal: 20 },
+  container: { alignItems: 'center', paddingTop: 16, paddingBottom: 14, paddingHorizontal: 20 },
 
   /* ── Ay ── */
   moonWrapper: {

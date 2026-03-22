@@ -1,7 +1,14 @@
+/* ═══════════════════════════════════════════════════════════
+   SopranoChat Mobil — LiveChat (Instagram/TikTok Live Tarzı)
+   Mesajlar tamamen şeffaf overlay, zemine entegre.
+   Arka plan YOK — sadece text shadow ile okunabilirlik.
+   ═══════════════════════════════════════════════════════════ */
+
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Animated, Image, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, StyleSheet, Animated, Dimensions } from 'react-native';
 import { getRoleColor } from '../../utils/roleHelpers';
+
+const { width } = Dimensions.get('window');
 
 interface ChatMessage {
   id: string;
@@ -18,52 +25,50 @@ interface ChatMessage {
   createdAt?: string;
 }
 
-const FADE_OUT_DELAY = 8000;  // 8 saniye sonra kaybolmaya başla
-const FADE_OUT_DURATION = 2000; // 2 saniyede tamamen yok ol
+const FADE_DELAY = 6000;
+const FADE_DURATION = 2000;
 
-/* ── Tek Mesaj Satırı — fade-in + otomatik fade-out ── */
-function ChatBubble({ msg, onFaded }: { msg: ChatMessage; onFaded?: () => void }) {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+/* ── Tek Mesaj — fade-in aşağıdan kayarak gelir, sonra erir ── */
+function ChatLine({ msg, onFaded }: { msg: ChatMessage; onFaded?: () => void }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const slideY = useRef(new Animated.Value(12)).current;
+
   const roleColor = getRoleColor(msg.role);
   const name = msg.displayName || msg.senderName || 'Kullanıcı';
-  const msgText = msg.text || msg.content || '';
-  const msgAvatar = msg.avatar || msg.senderAvatar || 'https://sopranochat.com/avatars/neutral_1.png';
+  const text = msg.text || msg.content || '';
 
   useEffect(() => {
-    // Fade in
-    Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }).start(() => {
-      // Fade out — belirli süre sonra hayalet gibi kaybol
+    // Giriş — aşağıdan kayarak fade in
+    Animated.parallel([
+      Animated.timing(opacity, { toValue: 1, duration: 250, useNativeDriver: true }),
+      Animated.timing(slideY, { toValue: 0, duration: 250, useNativeDriver: true }),
+    ]).start(() => {
+      // Bekleme sonrası fade out
       setTimeout(() => {
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: FADE_OUT_DURATION,
-          useNativeDriver: true,
-        }).start(() => {
-          onFaded?.();
-        });
-      }, FADE_OUT_DELAY);
+        Animated.timing(opacity, {
+          toValue: 0, duration: FADE_DURATION, useNativeDriver: true,
+        }).start(() => onFaded?.());
+      }, FADE_DELAY);
     });
   }, []);
 
   return (
-    <Animated.View style={[s.bubble, { opacity: fadeAnim }]}>
-      <Image source={{ uri: msgAvatar }} style={s.bubbleAvatar} />
-      <View style={s.bubbleContent}>
-        <Text style={[s.bubbleName, { color: roleColor }]}>{name}</Text>
-        {msgText ? <Text style={s.bubbleText}>{msgText}</Text> : null}
-      </View>
+    <Animated.View style={[s.line, { opacity, transform: [{ translateY: slideY }] }]}>
+      <Text style={s.lineText}>
+        <Text style={[s.lineName, { color: roleColor }]}>{name}  </Text>
+        <Text style={s.lineMsg}>{text}</Text>
+      </Text>
     </Animated.View>
   );
 }
 
 /* ══════════════════════════════════════════
-   LIVE CHAT OVERLAY
-   Son mesajlar yarı-şeffaf overlay olarak gösterilir,
-   8 saniye sonra hayalet gibi kaybolur
+   LIVE CHAT — Instagram/TikTok Live Style
+   Tamamen şeffaf, arkaplanla bütünleşik
    ══════════════════════════════════════════ */
 export default function LiveChat({
   messages,
-  maxVisible = 4,
+  maxVisible = 3,
   onOpenFullChat,
 }: {
   messages: ChatMessage[];
@@ -72,7 +77,6 @@ export default function LiveChat({
 }) {
   const [fadedIds, setFadedIds] = useState<Set<string>>(new Set());
 
-  // Yok olmuş mesajları filtrele
   const visibleMessages = messages
     .filter(m => !fadedIds.has(m.id))
     .slice(-maxVisible);
@@ -82,10 +86,9 @@ export default function LiveChat({
   };
 
   return (
-    <View style={s.container}>
-      {/* Mesajlar */}
+    <View style={s.container} pointerEvents="box-none">
       {visibleMessages.map(msg => (
-        <ChatBubble
+        <ChatLine
           key={msg.id || `${msg.userId || msg.sender}-${msg.timestamp}`}
           msg={msg}
           onFaded={() => handleFaded(msg.id)}
@@ -97,33 +100,38 @@ export default function LiveChat({
 
 const s = StyleSheet.create({
   container: {
-    paddingHorizontal: 14,
-    paddingVertical: 4,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 140,
+    paddingHorizontal: 12,
+    justifyContent: 'flex-end',
   },
 
-  bubble: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 8,
-    paddingVertical: 3, paddingHorizontal: 4,
-    marginVertical: 1,
-  },
-  bubbleAvatar: {
-    width: 22, height: 22, borderRadius: 11,
-    marginTop: 2,
-  },
-  bubbleContent: { flex: 1 },
-  bubbleName: {
-    fontSize: 10, fontWeight: '800',
-  },
-  bubbleText: {
-    fontSize: 12, color: 'rgba(255,255,255,0.85)',
-    lineHeight: 16,
+  line: {
+    marginVertical: 2,
+    paddingVertical: 2,
+    paddingHorizontal: 6,
   },
 
-  emptyHint: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    alignSelf: 'center', paddingVertical: 6,
+  lineText: {
+    flexWrap: 'wrap',
   },
-  emptyText: {
-    fontSize: 12, color: 'rgba(255,255,255,0.3)', fontWeight: '500',
+
+  lineName: {
+    fontSize: 12,
+    fontWeight: '800',
+    textShadowColor: 'rgba(0,0,0,0.7)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+
+  lineMsg: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.9)',
+    fontWeight: '500',
+    textShadowColor: 'rgba(0,0,0,0.6)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
 });

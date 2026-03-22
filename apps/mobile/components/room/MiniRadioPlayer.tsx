@@ -44,6 +44,8 @@ export default function MiniRadioPlayer() {
   const [playing, setPlaying] = useState(false);
   const [loading, setLoading] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+  const [showTrash, setShowTrash] = useState(false);
   const soundRef = useRef<Audio.Sound | null>(null);
   const spinAnim = useRef(new Animated.Value(0)).current;
   const spinRef = useRef<Animated.CompositeAnimation | null>(null);
@@ -64,10 +66,27 @@ export default function MiniRadioPlayer() {
       },
       onPanResponderMove: (_, g) => {
         if (Math.abs(g.dx) > 5 || Math.abs(g.dy) > 5) isDragging.current = true;
+        // Aşağı sürüklenince çöp kutusu göster
+        if (g.dy > 40) setShowTrash(true);
+        else setShowTrash(false);
         pan.setValue({ x: g.dx, y: g.dy });
       },
-      onPanResponderRelease: (_, g) => {
+      onPanResponderRelease: async (_, g) => {
         pan.flattenOffset();
+        setShowTrash(false);
+
+        // Çöp bölgesine bırakıldıysa → kapat
+        const finalY = lastPos.current.y + g.dy;
+        if (finalY > H - 130) {
+          if (soundRef.current) { await soundRef.current.stopAsync(); await soundRef.current.unloadAsync(); soundRef.current = null; }
+          setPlaying(false);
+          setDismissed(true);
+          // Pozisyonu sıfırla
+          lastPos.current = { x: W - FAB_SIZE - 12, y: H - 250 };
+          pan.setValue({ x: lastPos.current.x, y: lastPos.current.y });
+          return;
+        }
+
         const newX = Math.max(0, Math.min(W - FAB_SIZE, lastPos.current.x + g.dx));
         const newY = Math.max(40, Math.min(H - FAB_SIZE - 60, lastPos.current.y + g.dy));
         lastPos.current = { x: newX, y: newY };
@@ -130,8 +149,18 @@ export default function MiniRadioPlayer() {
     await playStation(next);
   }, [station, playStation]);
 
+  if (dismissed) return null;
+
   return (
     <>
+      {/* ── ÇÖPKUTUSU BÖLGESI ── */}
+      {showTrash && (
+        <View style={s.trashZone}>
+          <Ionicons name="trash" size={28} color="#ef4444" />
+          <Text style={s.trashText}>Kaldır</Text>
+        </View>
+      )}
+
       {/* ── SÜRÜKLENEBİLİR FLOATING VINYL FAB ── */}
       <Animated.View
         {...panResponder.panHandlers}
@@ -365,4 +394,17 @@ const s = StyleSheet.create({
   stItemName: { fontSize: 12, fontWeight: '700', color: 'rgba(255,255,255,0.65)' },
   stItemGenre: { fontSize: 9, color: 'rgba(255,255,255,0.25)' },
   activeDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#22c55e' },
+
+  /* ── Çöp kutusu bölgesi ── */
+  trashZone: {
+    position: 'absolute' as const,
+    bottom: 30, left: 0, right: 0,
+    alignItems: 'center' as const, justifyContent: 'center' as const,
+    paddingVertical: 16,
+    zIndex: 49,
+  },
+  trashText: {
+    fontSize: 10, fontWeight: '700' as const, color: '#ef4444',
+    marginTop: 4,
+  },
 });

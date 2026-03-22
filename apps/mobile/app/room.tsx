@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView, Platform, Dimensions,
   StyleSheet, Image, Animated, TextInput, KeyboardAvoidingView,
@@ -15,13 +15,13 @@ import TokenShop from '../components/room/TokenShop';
 import GiftAnimation from '../components/room/GiftAnimation';
 import ActiveSpeaker from '../components/room/ActiveSpeaker';
 import StageGrid from '../components/room/StageGrid';
+import CameraStrip from '../components/room/CameraStrip';
 import LiveChat from '../components/room/LiveChat';
 import ControlPanel from '../components/room/ControlPanel';
 import ChatPanel from '../components/room/ChatPanel';
 import LiveReactions from '../components/room/LiveReactions';
 import RoomInfoPanel from '../components/room/RoomInfoPanel';
 import ConnectionQuality from '../components/room/ConnectionQuality';
-import MicQueuePanel from '../components/room/MicQueuePanel';
 import EmojiPicker from '../components/room/EmojiPicker';
 import MiniRadioPlayer from '../components/room/MiniRadioPlayer';
 import useLiveKit from '../hooks/useLiveKit';
@@ -95,6 +95,7 @@ export default function RoomScreen() {
   const [emojiPickerVisible, setEmojiPickerVisible] = useState(false);
   const [joinedAt] = useState(() => Date.now());
   const [handRaiseToast, setHandRaiseToast] = useState(false);
+  const [localHandRaised, setLocalHandRaised] = useState(false);
 
   // ═══ STORE ═══
   const {
@@ -138,12 +139,41 @@ export default function RoomScreen() {
       requesting: micQueue.includes(p.userId),
     }));
 
+  // Çıkış animasyonu senkronizasyonu — senkron ref (useEffect geç kalıyor)
+  const fadingOutRef = useRef<string | null>(null);
+  const prevSpeakerIdRef = useRef<string | null>(activeSpeaker?.userId || null);
+  const [, setFadingDone] = useState(0); // forceUpdate trigger
+
+  // Senkron: render sırasında hemen güncelle
+  const curSpeakerId = activeSpeaker?.userId || null;
+  if (prevSpeakerIdRef.current && !curSpeakerId && fadingOutRef.current !== prevSpeakerIdRef.current) {
+    fadingOutRef.current = prevSpeakerIdRef.current;
+  }
+  prevSpeakerIdRef.current = curSpeakerId;
+
+  const handleExitComplete = useCallback(() => {
+    fadingOutRef.current = null;
+    setFadingDone(n => n + 1); // re-render tetikle
+  }, []);
+
   const LISTENERS = storeParticipants.filter(p => {
     if (p.userId === activeSpeaker?.userId) return false;
+    if (p.userId === fadingOutRef.current) return false;
     if ((p as any).onStage || (p as any).isSpeaking) return false;
-    if (micQueue.includes(p.userId)) return false;
     return true;
   });
+
+  // Kamera açan kullanıcılar (gerçek veri)
+  const camUsers = storeParticipants
+    .filter((p: any) => p.camOn && p.userId !== activeSpeaker?.userId)
+    .map(p => ({
+      id: p.userId, name: p.displayName || 'Kullanıcı',
+      avatar: p.avatar || DEFAULT_AVATAR,
+      role: p.role || 'listener',
+      speaking: (p as any).isSpeaking || false,
+      muted: p.isMuted || false,
+    }));
+
 
   // ═══ ROOM LIFECYCLE ═══
   useEffect(() => {
@@ -197,15 +227,18 @@ export default function RoomScreen() {
     }
   };
   const handleHandToggle = () => {
-    const inQueue = micQueue.includes(user?.id || '');
-    if (inQueue) {
+    const userId = user?.id || '';
+    if (localHandRaised) {
       console.log('[Oda] El kaldırma geri çekiliyor');
       leaveQueue();
+      setLocalHandRaised(false);
+      useStore.setState((s: any) => ({ micQueue: s.micQueue.filter((id: string) => id !== userId) }));
       setHandRaiseToast(false);
     } else {
       console.log('[Oda] Sıraya giriliyor');
       requestMic();
-      // Bildirim toast göster
+      setLocalHandRaised(true);
+      useStore.setState((s: any) => ({ micQueue: [...s.micQueue, userId] }));
       setHandRaiseToast(true);
       setTimeout(() => setHandRaiseToast(false), 3000);
     }
@@ -320,16 +353,42 @@ export default function RoomScreen() {
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 16 }} showsVerticalScrollIndicator={false}>
 
         {/* ═══ AKTİF KONUŞMACI SPOTLIGHT ═══ */}
-        <ActiveSpeaker
-          userId={activeSpeaker?.userId || speakerParticipant?.userId}
-          displayName={activeSpeaker?.displayName || speakerParticipant?.displayName}
-          avatar={speakerParticipant?.avatar || DEFAULT_AVATAR}
-          role={activeSpeaker?.role || speakerParticipant?.role}
-          speaking={!!(speakerParticipant as any)?.isSpeaking}
-          muted={speakerParticipant?.isMuted}
-          duration={activeSpeaker?.duration}
-          startedAt={activeSpeaker?.startedAt}
-        />
+        {(activeSpeaker || speakerParticipant) ? (
+          <ActiveSpeaker
+            userId={activeSpeaker?.userId || (speakerParticipant as any)?.userId}
+            displayName={activeSpeaker?.displayName || (speakerParticipant as any)?.displayName}
+            avatar={(speakerParticipant as any)?.avatar || DEFAULT_AVATAR}
+            role={activeSpeaker?.role || (speakerParticipant as any)?.role}
+            speaking={!!(speakerParticipant as any)?.isSpeaking}
+            muted={(speakerParticipant as any)?.isMuted}
+            camOn={false}
+            duration={activeSpeaker?.duration}
+            startedAt={activeSpeaker?.startedAt}
+            onExitComplete={handleExitComplete}
+          />
+        ) : (
+          <ActiveSpeaker
+            userId="empty"
+            displayName="Mikrofon boş"
+            avatar=""
+            role="listener"
+            speaking={false}
+            muted={true}
+            camOn={false}
+            onExitComplete={handleExitComplete}
+          />
+        )}
+
+        {/* ═══ KAMERA AÇANLAR ═══ */}
+        {camUsers.length > 0 && (
+          <CameraStrip
+            users={camUsers}
+            onPress={(userId) => {
+              const pp = storeParticipants.find(x => x.userId === userId);
+              if (pp) openProfile(pp);
+            }}
+          />
+        )}
 
         {/* ═══ SAHNE GRID — Diğer konuşmacılar ═══ */}
         <StageGrid
@@ -341,72 +400,80 @@ export default function RoomScreen() {
           }}
         />
 
-        {/* ═══ MIC QUEUE BADGE ═══ */}
-        {micQueue.length > 0 && (
-          <TouchableOpacity style={st.micQueueBadge} onPress={() => setMicQueueVisible(true)} activeOpacity={0.8}>
-            <Ionicons name="list-outline" size={14} color="#ffb800" />
-            <Text style={st.micQueueText}>Sıra: {micQueue.length} kişi</Text>
-            <Ionicons name="chevron-forward" size={12} color="rgba(255,255,255,0.3)" />
-          </TouchableOpacity>
-        )}
-
-        {/* ═══ DİNLEYİCİLER — Collapsible ═══ */}
+        {/* ═══ DİNLEYİCİLER — Always Visible Compact Grid ═══ */}
         {LISTENERS.length > 0 && (
           <View style={st.listenerSection}>
-            <TouchableOpacity style={st.listenerHeader} onPress={() => setShowListeners(!showListeners)} activeOpacity={0.7}>
+            <View style={st.listenerHeader}>
               <Ionicons name="people-outline" size={13} color="rgba(255,255,255,0.4)" />
               <Text style={st.listenerTitle}>DİNLEYİCİLER</Text>
-              <View style={st.listenerCountBadge}>
-                <Text style={st.listenerCountText}>{LISTENERS.length}</Text>
-              </View>
               <View style={{ flex: 1 }} />
-              <Ionicons name={showListeners ? 'chevron-up' : 'chevron-down'} size={14} color="rgba(255,255,255,0.3)" />
-            </TouchableOpacity>
+              {micQueue.length > 0 && (
+                <TouchableOpacity activeOpacity={0.7} onPress={() => setMicQueueVisible(!micQueueVisible)}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: 'rgba(255,184,0,0.12)', paddingHorizontal: 7, paddingVertical: 3, borderRadius: 10 }}>
+                  <Text style={{ fontSize: 10 }}>🖐️</Text>
+                  <Text style={{ fontSize: 10, fontWeight: '800', color: '#ffb800' }}>{micQueue.length}</Text>
+                </TouchableOpacity>
+              )}
+              {LISTENERS.length > 10 && (
+                <TouchableOpacity activeOpacity={0.7} onPress={() => setShowListeners(true)}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(139,92,246,0.12)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 }}>
+                  <Ionicons name="people" size={11} color="#a78bfa" />
+                  <Text style={{ fontSize: 10, fontWeight: '800', color: '#a78bfa' }}>+{LISTENERS.length - 10}</Text>
+                </TouchableOpacity>
+              )}
+            </View>
 
-            {showListeners && (
-              <View style={st.listenerGrid}>
-                {LISTENERS.map((p) => {
-                  const isRequesting = micQueue.includes(p.userId);
-                  const hasAvatar = p.avatar && p.avatar.startsWith('http');
-                  const initial = (p.displayName || 'K').charAt(0).toUpperCase();
-                  const bgColors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6'];
-                  const bgColor = bgColors[initial.charCodeAt(0) % bgColors.length];
-                  return (
-                    <TouchableOpacity key={p.userId} activeOpacity={0.8}
-                      onPress={() => openProfile(p)}
-                      style={[st.listenerItem, isRequesting && st.listenerItemRequesting]}>
-                      <View style={[
-                        st.listenerAvatarWrap,
-                        isRequesting && { borderColor: '#ffb800', borderWidth: 2 },
-                      ]}>
-                        {hasAvatar ? (
-                          <Image source={{ uri: p.avatar }} style={st.listenerAvatarImg} />
-                        ) : (
-                          <View style={[st.listenerAvatarImg, { backgroundColor: bgColor, alignItems: 'center', justifyContent: 'center' }]}>
-                            <Text style={{ fontSize: 16, fontWeight: '800', color: '#fff' }}>{initial}</Text>
-                          </View>
-                        )}
-                        {isRequesting && (
-                          <View style={st.listenerMicReq}>
-                            <Text style={{ fontSize: 8 }}>🖐️</Text>
-                          </View>
-                        )}
-                      </View>
-                      <Text style={[st.listenerName, isRequesting && { color: '#ffb800', fontWeight: '700' }]} numberOfLines={1}>
-                        {p.displayName || 'Kullanıcı'}
-                      </Text>
-                      {isRequesting && (
-                        <Text style={st.listenerReqText}>Mik İst.</Text>
+            <View style={st.listenerGrid}>
+              {LISTENERS.slice(0, 10).map((p) => {
+                const isMe = p.userId === user?.id || p.userId === (user as any)?._id || p.displayName === user?.displayName;
+                const isRequesting = micQueue.includes(p.userId) || (isMe && localHandRaised);
+                const hasAvatar = p.avatar && p.avatar.startsWith('http');
+                const initial = (p.displayName || 'K').charAt(0).toUpperCase();
+                const bgColors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6'];
+                const bgColor = bgColors[initial.charCodeAt(0) % bgColors.length];
+                return (
+                  <TouchableOpacity key={p.userId} activeOpacity={0.8}
+                    onPress={() => openProfile(p)}
+                    style={st.listenerItem}>
+                    <View style={[
+                      st.listenerAvatarWrap,
+                      isRequesting && { borderColor: '#ffb800', borderWidth: 2 },
+                    ]}>
+                      {hasAvatar ? (
+                        <Image source={{ uri: p.avatar }} style={st.listenerAvatarImg} />
+                      ) : (
+                        <View style={[st.listenerAvatarImg, { backgroundColor: bgColor, alignItems: 'center', justifyContent: 'center' }]}>
+                          <Text style={{ fontSize: 16, fontWeight: '800', color: '#fff' }}>{initial}</Text>
+                        </View>
                       )}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            )}
+
+                    </View>
+                    <Text style={[st.listenerName, isRequesting && { color: '#ffb800', fontWeight: '700' }]} numberOfLines={1}>
+                      {p.displayName || 'Kullanıcı'}{isRequesting ? ' ✋' : ''}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+
+            </View>
           </View>
         )}
       </ScrollView>
 
+      {/* ═══ CANLI MESAJ — Absolute overlay, emojilerin üstünde ═══ */}
+      {(() => {
+        // Dinleyici/kamera sayısına göre mesaj sayısını ayarla
+        const listenerRows = Math.ceil(Math.min(LISTENERS.length, 8) / 4);
+        const camCount = camUsers.length;
+        const dynamicMax = Math.max(3, Math.min(7, 7 - listenerRows - (camCount > 0 ? 1 : 0)));
+        return (
+          <LiveChat
+            messages={chatMessages}
+            maxVisible={dynamicMax}
+            onOpenFullChat={() => setChatPanelVisible(true)}
+          />
+        );
+      })()}
       {/* ── KLAVYEYİ KAÇIRMA: Alt bar + input ── */}
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
         {/* ═══ EL KALDIRMA TOAST BİLDİRİMİ ═══ */}
@@ -417,12 +484,7 @@ export default function RoomScreen() {
           </View>
         )}
 
-        {/* ═══ CANLI MESAJ OVERLAY — ScrollView DIŞINDA (sabit konum) ═══ */}
-        <LiveChat
-          messages={chatMessages}
-          maxVisible={4}
-          onOpenFullChat={() => setChatPanelVisible(true)}
-        />
+
 
         {/* ── CANLI EMOJI REACTİONLAR ── */}
         <LiveReactions onReaction={(emoji) => sendReaction(emoji)} incomingReaction={lastReaction} />
@@ -431,7 +493,7 @@ export default function RoomScreen() {
         <ControlPanel
           micOn={micOn}
           camOn={camOn}
-          handRaised={micQueue.includes(user?.id || '')}
+          handRaised={localHandRaised}
           onMicToggle={handleMicToggle}
           onCamToggle={handleCamToggle}
           onHandToggle={handleHandToggle}
@@ -464,7 +526,7 @@ export default function RoomScreen() {
               <TouchableOpacity onPress={() => setChatPanelVisible(false)} style={st.hBtn}>
                 <Ionicons name="chevron-back" size={20} color="#e2e8f0" />
               </TouchableOpacity>
-              <Text style={{ flex: 1, fontSize: 16, fontWeight: '800', color: '#fff', textAlign: 'center' }}>Sohbet</Text>
+              <Text style={{ flex: 1, fontSize: 16, fontWeight: '800', color: '#fff', textAlign: 'center' }}>Sohbet · {storeParticipants.length} kişi</Text>
               <View style={{ width: 38 }} />
             </View>
             <ChatPanel />
@@ -479,17 +541,90 @@ export default function RoomScreen() {
         participantCount={storeParticipants.length}
         rules={(roomSettings as any)?.rules}
       />
-      {micQueueVisible && (
-        <View style={StyleSheet.absoluteFill}>
-          <View style={{ flex: 1, backgroundColor: 'rgba(10,14,39,0.97)', paddingTop: Platform.OS === 'ios' ? 54 : 36 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingBottom: 8 }}>
-              <TouchableOpacity onPress={() => setMicQueueVisible(false)} style={st.hBtn}>
-                <Ionicons name="chevron-back" size={20} color="#e2e8f0" />
+      {/* ═ MİKROFON SIRASI KOMPAKT TOAST ═ */}
+      {micQueueVisible && micQueue.length > 0 && (
+        <View style={{ position: 'absolute', top: Platform.OS === 'ios' ? 95 : 75, right: 10, left: 10, backgroundColor: 'rgba(15,20,40,0.96)', borderRadius: 16, padding: 12, borderWidth: 1, borderColor: 'rgba(255,184,0,0.2)', zIndex: 100, shadowColor: '#000', shadowOpacity: 0.5, shadowRadius: 12, elevation: 20 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <Text style={{ fontSize: 12, fontWeight: '800', color: '#ffb800' }}>🖐️ Mikrofon İstekleri</Text>
+            <TouchableOpacity onPress={() => setMicQueueVisible(false)}>
+              <Ionicons name="close" size={18} color="rgba(255,255,255,0.4)" />
+            </TouchableOpacity>
+          </View>
+          {micQueue.map((userId: string) => {
+            const p = storeParticipants.find(x => x.userId === userId);
+            const name = p?.displayName || 'Kullanıcı';
+            return (
+              <View key={userId} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6, gap: 8 }}>
+                <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: '#6366f1', alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 12, fontWeight: '800', color: '#fff' }}>{name.charAt(0).toUpperCase()}</Text>
+                </View>
+                <Text style={{ flex: 1, fontSize: 12, fontWeight: '600', color: '#e2e8f0' }}>{name}</Text>
+                <TouchableOpacity onPress={() => { /* TODO: approve mic */ setMicQueueVisible(false); }}
+                  style={{ backgroundColor: 'rgba(34,197,94,0.15)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}>
+                  <Text style={{ fontSize: 10, fontWeight: '800', color: '#22c55e' }}>İzin Ver</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => { useStore.setState((s: any) => ({ micQueue: s.micQueue.filter((id: string) => id !== userId) })); }}
+                  style={{ backgroundColor: 'rgba(239,68,68,0.12)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}>
+                  <Text style={{ fontSize: 10, fontWeight: '800', color: '#ef4444' }}>Reddet</Text>
+                </TouchableOpacity>
+              </View>
+            );
+          })}
+        </View>
+      )}
+
+      {/* ═══ SAğDAN KAYAN KULLANICI DRAWER ═══ */}
+      {showListeners && (
+        <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={() => setShowListeners(false)}
+            style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }}
+          />
+          <View style={st.sideDrawer}>
+            <View style={st.sideDrawerHeader}>
+              <Text style={st.sideDrawerTitle}>Kullanıcılar</Text>
+              <View style={st.sideDrawerCount}>
+                <Text style={st.sideDrawerCountText}>{LISTENERS.length}</Text>
+              </View>
+              <View style={{ flex: 1 }} />
+              <TouchableOpacity onPress={() => setShowListeners(false)}>
+                <Ionicons name="close" size={20} color="rgba(255,255,255,0.5)" />
               </TouchableOpacity>
-              <Text style={{ flex: 1, fontSize: 16, fontWeight: '800', color: '#fff', textAlign: 'center' }}>Mikrofon Sırası</Text>
-              <View style={{ width: 38 }} />
             </View>
-            <MicQueuePanel />
+            <ScrollView contentContainerStyle={{ paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
+              {LISTENERS.map((p: any) => {
+                const hasAvatar = p.avatar && p.avatar.startsWith('http');
+                const initial = (p.displayName || 'K').charAt(0).toUpperCase();
+                const bgColors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6'];
+                const bgColor = bgColors[initial.charCodeAt(0) % bgColors.length];
+                const isReq = micQueue.includes(p.userId) || ((p.userId === user?.id || p.displayName === user?.displayName) && localHandRaised);
+                return (
+                  <TouchableOpacity key={p.userId} activeOpacity={0.8}
+                    onPress={() => { setShowListeners(false); openProfile(p); }}
+                    style={st.drawerItem}>
+                    <View style={[st.drawerAvatar, isReq && { borderColor: '#ffb800', borderWidth: 2 }]}>
+                      {hasAvatar ? (
+                        <Image source={{ uri: p.avatar }} style={st.drawerAvatarImg} />
+                      ) : (
+                        <View style={[st.drawerAvatarImg, { backgroundColor: bgColor, alignItems: 'center', justifyContent: 'center' }]}>
+                          <Text style={{ fontSize: 14, fontWeight: '800', color: '#fff' }}>{initial}</Text>
+                        </View>
+                      )}
+                      {isReq && (
+                        <View style={st.drawerMicBadge}>
+                          <Text style={{ fontSize: 8 }}>🖐️</Text>
+                        </View>
+                      )}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={st.drawerName} numberOfLines={1}>{p.displayName || 'Kullanıcı'}</Text>
+                      <Text style={st.drawerRole}>{p.role}</Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
           </View>
         </View>
       )}
@@ -547,14 +682,13 @@ const st = StyleSheet.create({
 
   /* DİNLEYİCİLER — Collapsible */
   listenerSection: {
-    marginHorizontal: 14, marginTop: 8,
+    marginHorizontal: 14, marginTop: 0,
   },
   listenerHeader: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingVertical: 8, paddingHorizontal: 6,
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    borderRadius: 12,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
+    paddingVertical: 6, paddingHorizontal: 6,
+    backgroundColor: 'rgba(255,255,255,0.02)',
+    borderRadius: 10,
   },
   listenerTitle: {
     fontSize: 10, fontWeight: '800', color: 'rgba(255,255,255,0.4)',
@@ -567,41 +701,42 @@ const st = StyleSheet.create({
   listenerCountText: { fontSize: 9, fontWeight: '700', color: 'rgba(255,255,255,0.4)' },
   listenerGrid: {
     flexDirection: 'row', flexWrap: 'wrap',
-    justifyContent: 'flex-start', gap: 4,
+    justifyContent: 'flex-start',
     paddingHorizontal: 2, paddingTop: 8,
   },
   listenerItem: {
     alignItems: 'center',
-    width: (width - 28 - 20) / 6,
+    width: (width - 32) / 5,
     marginBottom: 8,
   },
   listenerAvatarWrap: {
-    width: 38, height: 38, borderRadius: 19,
+    width: 44, height: 44, borderRadius: 22,
     borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.08)',
-    overflow: 'hidden' as const,
   },
-  listenerAvatarImg: { width: 38, height: 38, borderRadius: 19 },
-  listenerMicReq: {
-    position: 'absolute' as const, bottom: -1, right: -1,
-    width: 14, height: 14, borderRadius: 7,
-    backgroundColor: '#ffb800', alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1.5, borderColor: '#0a0e27',
-  },
+  listenerAvatarImg: { width: 44, height: 44, borderRadius: 22 },
+
   listenerName: {
     fontSize: 8, fontWeight: '500', color: 'rgba(255,255,255,0.45)',
-    marginTop: 3, textAlign: 'center' as const, maxWidth: 50,
+    marginTop: 3, textAlign: 'center' as const, maxWidth: 60,
   },
-  listenerItemRequesting: {
-    backgroundColor: 'rgba(255,184,0,0.06)',
-    borderRadius: 12,
-    borderWidth: 0.5,
-    borderColor: 'rgba(255,184,0,0.2)',
-    paddingVertical: 4,
+
+  listenerOverflow: {
+    alignItems: 'center',
+    width: (width - 28 - 16) / 4,
+    marginBottom: 8,
   },
-  listenerReqText: {
-    fontSize: 6, fontWeight: '800', color: '#ffb800',
-    marginTop: 1, textAlign: 'center' as const,
-    textTransform: 'uppercase' as const, letterSpacing: 0.3,
+  listenerOverflowCircle: {
+    width: 38, height: 38, borderRadius: 19,
+    backgroundColor: 'rgba(139,92,246,0.15)',
+    borderWidth: 1.5, borderColor: 'rgba(139,92,246,0.3)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  listenerOverflowText: {
+    fontSize: 12, fontWeight: '800', color: '#a78bfa',
+  },
+  listenerOverflowLabel: {
+    fontSize: 8, fontWeight: '600', color: 'rgba(167,139,250,0.6)',
+    marginTop: 3,
   },
 
   /* El kaldırma toast */
@@ -635,5 +770,90 @@ const st = StyleSheet.create({
   },
   micQueueText: {
     flex: 1, fontSize: 12, fontWeight: '600', color: '#ffb800',
+  },
+
+  /* Sağ kenar floating tab */
+  sideTab: {
+    position: 'absolute' as const,
+    right: 0,
+    top: '65%' as any,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(139,92,246,0.15)',
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderTopLeftRadius: 14,
+    borderBottomLeftRadius: 14,
+    borderWidth: 1,
+    borderRightWidth: 0,
+    borderColor: 'rgba(139,92,246,0.3)',
+  },
+  sideTabText: {
+    fontSize: 12, fontWeight: '800', color: '#a78bfa',
+  },
+
+  /* Sağdan kayan drawer */
+  sideDrawer: {
+    position: 'absolute' as const,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 280,
+    backgroundColor: 'rgba(10,14,39,0.97)',
+    borderLeftWidth: 1,
+    borderLeftColor: 'rgba(139,92,246,0.2)',
+    paddingTop: Platform.OS === 'ios' ? 54 : 36,
+  },
+  sideDrawerHeader: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.06)',
+  },
+  sideDrawerTitle: {
+    fontSize: 16, fontWeight: '800', color: '#fff',
+  },
+  sideDrawerCount: {
+    backgroundColor: 'rgba(139,92,246,0.15)',
+    paddingHorizontal: 8, paddingVertical: 3,
+    borderRadius: 10,
+  },
+  sideDrawerCountText: {
+    fontSize: 11, fontWeight: '800', color: '#a78bfa',
+  },
+
+  /* Drawer kullanıcı listesi */
+  drawerItem: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 12,
+    paddingHorizontal: 16, paddingVertical: 10,
+    borderBottomWidth: 0.5,
+    borderBottomColor: 'rgba(255,255,255,0.04)',
+  },
+  drawerAvatar: {
+    width: 40, height: 40, borderRadius: 20,
+    overflow: 'hidden' as const,
+  },
+  drawerAvatarImg: {
+    width: 40, height: 40, borderRadius: 20,
+  },
+  drawerMicBadge: {
+    position: 'absolute' as const, bottom: -2, right: -2,
+    width: 16, height: 16, borderRadius: 8,
+    backgroundColor: '#ffb800',
+    alignItems: 'center' as const, justifyContent: 'center' as const,
+    borderWidth: 2, borderColor: '#0a0e27',
+  },
+  drawerName: {
+    fontSize: 13, fontWeight: '700', color: '#fff',
+  },
+  drawerRole: {
+    fontSize: 10, fontWeight: '500', color: 'rgba(255,255,255,0.35)',
+    textTransform: 'capitalize' as const,
   },
 });

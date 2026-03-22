@@ -77,6 +77,7 @@ export default function LoginScreen() {
   const cardSlide = useRef(new Animated.Value(30)).current;
   const logoScale = useRef(new Animated.Value(0.8)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
+  const screenFade = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -144,7 +145,10 @@ export default function LoginScreen() {
         result = await authService.guestLogin({ username: nickname.trim(), gender });
       }
       loginWithSocket(result.access_token, result.user, config.DEFAULT_TENANT_ID);
-      router.replace('/home');
+      // Yumuşak fade-out geçişi
+      Animated.timing(screenFade, { toValue: 0, duration: 400, useNativeDriver: true }).start(() => {
+        router.replace('/home');
+      });
     } catch (err: any) {
       setErrorMsg(err?.message || 'Giriş başarısız. Lütfen tekrar deneyin.');
     } finally {
@@ -154,6 +158,7 @@ export default function LoginScreen() {
 
   return (
     <AppBackground>
+      <Animated.View style={{ flex: 1, opacity: screenFade }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -427,6 +432,7 @@ export default function LoginScreen() {
           </Modal>
         </ScrollView>
       </KeyboardAvoidingView>
+      </Animated.View>
     </AppBackground>
   );
 }

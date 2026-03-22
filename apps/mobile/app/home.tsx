@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView, Platform, Dimensions,
   StyleSheet, Image, RefreshControl, ActivityIndicator, Alert,
-  TextInput, Modal,
+  TextInput, Modal, Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -45,6 +45,16 @@ export default function HomeScreen() {
     exploreTenants: rawTenants, exploreLoading, fetchExploreData,
     loginWithSocket, user,
   } = useStore();
+
+  // Logo geçiş animasyonu
+  const logoFade = useRef(new Animated.Value(0)).current;
+  const logoScale = useRef(new Animated.Value(0.85)).current;
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(logoFade, { toValue: 1, duration: 600, useNativeDriver: true }),
+      Animated.spring(logoScale, { toValue: 1, friction: 8, tension: 40, useNativeDriver: true }),
+    ]).start();
+  }, []);
   const exploreTenants = Array.isArray(rawTenants) ? rawTenants : [];
 
   const allLiveRooms = [
@@ -121,7 +131,7 @@ export default function HomeScreen() {
           <Ionicons name="search" size={20} color="rgba(255,255,255,0.6)" />
         </TouchableOpacity>
         <View style={st.headerCenter}>
-          <Image source={require('../assets/images/logo.png')} style={st.headerLogo} resizeMode="contain" />
+          <Animated.Image source={require('../assets/images/logo.png')} style={[st.headerLogo, { opacity: logoFade, transform: [{ scale: logoScale }] }]} resizeMode="contain" />
         </View>
         <TouchableOpacity style={st.headerBtn} onPress={() => router.push('/profile' as any)}>
           <Ionicons name="person-circle-outline" size={24} color="rgba(255,255,255,0.6)" />
@@ -430,7 +440,7 @@ const st = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   headerCenter: { flex: 1, alignItems: 'center' },
-  headerLogo: { width: 120, height: 30 },
+  headerLogo: { width: width * 0.5, height: 44 },
 
   scroll: { paddingBottom: 16 },
 
