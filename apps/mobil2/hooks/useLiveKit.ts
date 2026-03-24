@@ -1,39 +1,49 @@
 // ═══════════════════════════════════════════════════════════
 // SopranoChat Mobil2 — useLiveKit Hook
-// Room ekranında LiveKit ses bağlantısını yönetir
+// Room ekranında LiveKit ses + data bağlantısını yönetir
 // ═══════════════════════════════════════════════════════════
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
-import { livekitService, LiveKitConnectionState } from '../services/livekit';
+import {
+  livekitService,
+  type LiveKitConnectionState,
+  type LiveKitParticipant,
+  type LiveKitChatMessage,
+} from '../services/livekit';
 
 interface UseLiveKitOptions {
   roomSlug: string | undefined;
   enabled?: boolean;
-  isSocketConnected?: boolean;
   userId?: string;
   displayName?: string;
+  role?: 'owner' | 'speaker' | 'listener';
 }
 
 interface UseLiveKitReturn {
   connectionState: LiveKitConnectionState;
   isPublishing: boolean;
   error: string | null;
+  participants: LiveKitParticipant[];
+  chatMessages: LiveKitChatMessage[];
   publishAudio: () => Promise<boolean>;
   unpublishAudio: () => Promise<void>;
   setMicEnabled: (enabled: boolean) => Promise<void>;
+  sendMessage: (text: string) => Promise<boolean>;
 }
 
 export default function useLiveKit({
   roomSlug,
   enabled = true,
-  isSocketConnected = false,
   userId,
   displayName,
+  role = 'listener',
 }: UseLiveKitOptions): UseLiveKitReturn {
   const [connectionState, setConnectionState] = useState<LiveKitConnectionState>('idle');
   const [isPublishing, setIsPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [participants, setParticipants] = useState<LiveKitParticipant[]>([]);
+  const [chatMessages, setChatMessages] = useState<LiveKitChatMessage[]>([]);
   const connectAttemptedRef = useRef(false);
   const appStateRef = useRef(AppState.currentState);
   const wasPublishingRef = useRef(false);
@@ -41,7 +51,6 @@ export default function useLiveKit({
   // ─── Connect/Disconnect lifecycle ─────────────────────────
   useEffect(() => {
     if (!roomSlug || !enabled) return;
-    if (!isSocketConnected) return;
     if (connectAttemptedRef.current && livekitService.isConnected) return;
 
     const uid = userId || `guest_${Date.now()}`;
@@ -56,12 +65,18 @@ export default function useLiveKit({
         setTimeout(() => setError(null), 5000);
       },
       onSpeakingChanged: () => {},
+      onParticipantsChanged: (p) => setParticipants(p),
+      onDataReceived: (msg) => {
+        setChatMessages(prev => [...prev.slice(-49), msg]);
+      },
     });
 
-    livekitService.connect(roomSlug, uid, name).then((success) => {
+    livekitService.connect(roomSlug, uid, name, role).then((success) => {
       if (!success) {
         setError('LiveKit bağlantısı kurulamadı');
         connectAttemptedRef.current = false;
+      } else if (role === 'owner' || role === 'speaker') {
+        setIsPublishing(true);
       }
     });
 
@@ -72,8 +87,9 @@ export default function useLiveKit({
       setConnectionState('idle');
       setIsPublishing(false);
       setError(null);
+      setParticipants([]);
     };
-  }, [roomSlug, isSocketConnected, enabled, userId, displayName]);
+  }, [roomSlug, enabled, userId, displayName, role]);
 
   // ─── App State (arka plan/ön plan) ────────────────────────
   useEffect(() => {
@@ -112,12 +128,19 @@ export default function useLiveKit({
     await livekitService.setMicEnabled(en);
   }, []);
 
+  const sendMessage = useCallback(async (text: string): Promise<boolean> => {
+    return await livekitService.sendChatMessage(text);
+  }, []);
+
   return {
     connectionState,
     isPublishing,
     error,
+    participants,
+    chatMessages,
     publishAudio,
     unpublishAudio,
     setMicEnabled,
+    sendMessage,
   };
 }

@@ -365,9 +365,9 @@ export default function LoginScreen() {
           </Animated.View>
 
           {/* ═══ KAYIT MODAL — Koyu Tema ═══ */}
-          <Modal visible={showRegister} animationType="slide" transparent>
-            <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: 20 }}>
-              <View style={styles.registerModal}>
+          <Modal visible={showRegister} animationType="slide" transparent onRequestClose={() => setShowRegister(false)}>
+            <TouchableOpacity activeOpacity={1} onPress={() => setShowRegister(false)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: 20 }}>
+              <View style={styles.registerModal} onStartShouldSetResponder={() => true}>
                 <ScrollView showsVerticalScrollIndicator={false}>
                   <Text style={{ fontSize: 18, fontWeight: '800', color: '#f1f5f9', textAlign: 'center', marginBottom: 4 }}>✨ Yeni Üyelik</Text>
                   <Text style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', textAlign: 'center', marginBottom: 16 }}>Bilgilerinizi girerek hesap oluşturun</Text>
@@ -428,7 +428,7 @@ export default function LoginScreen() {
                   </TouchableOpacity>
                 </ScrollView>
               </View>
-            </View>
+            </TouchableOpacity>
           </Modal>
         </ScrollView>
       </KeyboardAvoidingView>

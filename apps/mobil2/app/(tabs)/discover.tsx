@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo, useState } from 'react';
+import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,93 +11,56 @@ import {
   FlatList,
   Platform,
   Easing,
+  RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { COLORS, RADIUS, SPACING, FONTS } from '../constants/theme';
-import { useTheme } from '../constants/ThemeContext';
+import { COLORS, RADIUS, SPACING, FONTS } from '../../constants/theme';
+import { useTheme } from '../../constants/ThemeContext';
+import {
+  getDiscoverData,
+  type DiscoverRoom,
+  type RadarUserData,
+} from '../../services/api';
+import { EmptyState } from '../../components/UXHelpers';
 
 const { width } = Dimensions.get('window');
-const RADAR_SIZE = width * 0.72;
-
-// ─────────────────────────────────────────────────────
-// VIP users orbiting the radar
-// ─────────────────────────────────────────────────────
-interface RadarUser {
-  id: string;
-  name: string;
-  avatar: string;
-  ring: number; // 1=inner, 2=mid, 3=outer
-  angle: number; // starting angle in degrees
-  tier: 'gold' | 'silver' | 'standard';
-}
-
-const RADAR_USERS: RadarUser[] = [
-  { id: 'r1', name: 'Kaan', avatar: 'KY', ring: 1, angle: 30, tier: 'gold' },
-  { id: 'r2', name: 'Selin', avatar: 'SA', ring: 1, angle: 190, tier: 'silver' },
-  { id: 'r3', name: 'Emre', avatar: 'ED', ring: 2, angle: 75, tier: 'gold' },
-  { id: 'r4', name: 'Zeynep', avatar: 'ZÇ', ring: 2, angle: 250, tier: 'standard' },
-  { id: 'r5', name: 'Arda', avatar: 'AK', ring: 3, angle: 140, tier: 'silver' },
-  { id: 'r6', name: 'Mert', avatar: 'MÖ', ring: 3, angle: 320, tier: 'standard' },
-];
+const RADAR_SIZE = width * 0.68;
 
 // ─────────────────────────────────────────────────────
 // Neon Category Chips
 // ─────────────────────────────────────────────────────
 const CATEGORIES = [
   { id: 'all', label: '#Tümü', icon: 'apps' as const },
-  { id: 't1', label: '#CanlıMüzik', icon: 'musical-notes' as const },
-  { id: 't2', label: '#Yatırım', icon: 'trending-up' as const },
-  { id: 't3', label: '#VIPSohbet', icon: 'chatbubble-ellipses' as const },
-  { id: 't4', label: '#Oyun', icon: 'game-controller' as const },
-  { id: 't5', label: '#Podcast', icon: 'mic' as const },
-  { id: 't6', label: '#Kripto', icon: 'logo-bitcoin' as const },
+  { id: 'Müzik', label: '#CanlıMüzik', icon: 'musical-notes' as const },
+  { id: 'Yatırım', label: '#Yatırım', icon: 'trending-up' as const },
+  { id: 'Sohbet', label: '#VIPSohbet', icon: 'chatbubble-ellipses' as const },
+  { id: 'Oyun', label: '#Oyun', icon: 'game-controller' as const },
+  { id: 'Podcast', label: '#Podcast', icon: 'mic' as const },
 ];
 
 // ─────────────────────────────────────────────────────
-// Trending Locas for the Discover grid
-// ─────────────────────────────────────────────────────
-interface TrendingLoca {
-  id: string;
-  name: string;
-  owner: string;
-  avatar: string;
-  capacity: string;
-  badge: 'trend' | 'new' | 'hot' | 'elite';
-  tokens: number;
-  tags: string[]; // kategori etiketleri
-}
-
-const TRENDING_LOCAS: TrendingLoca[] = [
-  { id: 'd1', name: 'Midnight Lounge', owner: 'Kaan Yıldız', avatar: 'KY', capacity: '8/12', badge: 'trend', tokens: 45200, tags: ['t1', 't3'] },
-  { id: 'd2', name: 'Crypto Alpha', owner: 'Emre Demir', avatar: 'ED', capacity: '15/20', badge: 'hot', tokens: 38100, tags: ['t2', 't6'] },
-  { id: 'd3', name: 'Jazz & Chill', owner: 'Selin Arslan', avatar: 'SA', capacity: '6/8', badge: 'elite', tokens: 29800, tags: ['t1'] },
-  { id: 'd4', name: 'Game Vault', owner: 'Arda Kaya', avatar: 'AK', capacity: '4/10', badge: 'new', tokens: 18500, tags: ['t4'] },
-  { id: 'd5', name: 'Beat Factory', owner: 'Mert Öztürk', avatar: 'MÖ', capacity: '9/15', badge: 'trend', tokens: 32700, tags: ['t1', 't5'] },
-  { id: 'd6', name: 'Sanat Galerisi', owner: 'Elif Yılmaz', avatar: 'EY', capacity: '3/6', badge: 'new', tokens: 12400, tags: ['t3'] },
-];
-
-// ─────────────────────────────────────────────────────
-// Pulsing Radar Ring
+// Pulsing Radar Ring (geliştirilmiş animasyon)
 // ─────────────────────────────────────────────────────
 function PulsingRing({ size, delay }: { size: number; delay: number }) {
-  const opacity = useRef(new Animated.Value(0.3)).current;
-  const scale = useRef(new Animated.Value(0.95)).current;
+  const opacity = useRef(new Animated.Value(0.25)).current;
+  const scale = useRef(new Animated.Value(0.92)).current;
 
   useEffect(() => {
     const anim = Animated.loop(
       Animated.sequence([
         Animated.delay(delay),
         Animated.parallel([
-          Animated.timing(opacity, { toValue: 0.12, duration: 2500, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-          Animated.timing(scale, { toValue: 1.04, duration: 2500, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+          Animated.timing(opacity, { toValue: 0.08, duration: 2000, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+          Animated.timing(scale, { toValue: 1.06, duration: 2000, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
         ]),
         Animated.parallel([
-          Animated.timing(opacity, { toValue: 0.3, duration: 2500, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-          Animated.timing(scale, { toValue: 0.95, duration: 2500, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+          Animated.timing(opacity, { toValue: 0.25, duration: 2000, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+          Animated.timing(scale, { toValue: 0.92, duration: 2000, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
         ]),
       ])
     );
@@ -122,9 +85,48 @@ function PulsingRing({ size, delay }: { size: number; delay: number }) {
 }
 
 // ─────────────────────────────────────────────────────
+// Radar Sweep Line (tarama çizgisi)
+// ─────────────────────────────────────────────────────
+function RadarSweep() {
+  const rotation = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.timing(rotation, {
+        toValue: 1,
+        duration: 4000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    ).start();
+  }, []);
+
+  const rotate = rotation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  return (
+    <Animated.View
+      style={[
+        styles.radarSweep,
+        { transform: [{ rotate }] },
+      ]}
+    >
+      <LinearGradient
+        colors={['rgba(92,225,230,0.25)', 'rgba(92,225,230,0.0)']}
+        style={{ width: RADAR_SIZE / 2, height: 2, borderRadius: 1 }}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+      />
+    </Animated.View>
+  );
+}
+
+// ─────────────────────────────────────────────────────
 // Orbiting VIP Avatar
 // ─────────────────────────────────────────────────────
-function OrbitAvatar({ user, onPress }: { user: RadarUser; onPress?: () => void }) {
+function OrbitAvatar({ user, onPress }: { user: RadarUserData; onPress?: () => void }) {
   const wobble = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -148,11 +150,7 @@ function OrbitAvatar({ user, onPress }: { user: RadarUser; onPress?: () => void 
   const borderColor = user.tier === 'gold' ? COLORS.goldMetallic : user.tier === 'silver' ? COLORS.silverMetallic : COLORS.primaryStroke;
 
   return (
-    <TouchableOpacity
-      activeOpacity={0.7}
-      onPress={onPress}
-      style={{ position: 'absolute' }}
-    >
+    <TouchableOpacity activeOpacity={0.7} onPress={onPress} style={{ position: 'absolute' }}>
       <Animated.View
         style={[
           styles.orbitAvatar,
@@ -165,31 +163,41 @@ function OrbitAvatar({ user, onPress }: { user: RadarUser; onPress?: () => void 
           },
         ]}
       >
-        <Text style={[styles.orbitAvatarText, { fontSize: avatarSize * 0.3 }]}>{user.avatar}</Text>
+        <Text style={[styles.orbitAvatarText, { fontSize: avatarSize * 0.3 }]}>{user.initials}</Text>
       </Animated.View>
     </TouchableOpacity>
   );
 }
 
 // ─────────────────────────────────────────────────────
-// Trending Card
+// Trending Card (Premium)
 // ─────────────────────────────────────────────────────
-function TrendingCard({ loca, onPress }: { loca: TrendingLoca; onPress?: () => void }) {
+function TrendingCard({ room, onPress }: { room: DiscoverRoom; onPress?: () => void }) {
   const badgeConfig: Record<string, { label: string; colors: [string, string] }> = {
     trend: { label: '🔥 Trend', colors: [COLORS.goldMetallic, COLORS.goldLight] },
     hot: { label: '⚡ Hot', colors: ['#E05252', '#FF7070'] },
     new: { label: '✨ Yeni', colors: [COLORS.primary, COLORS.primaryDark] },
-    elite: { label: '👑 Elite', colors: [COLORS.goldMetallic, COLORS.goldLight] },
+    standard: { label: '◆ Aktif', colors: ['rgba(255,255,255,0.15)', 'rgba(255,255,255,0.05)'] },
   };
 
-  const badge = badgeConfig[loca.badge];
+  const badge = badgeConfig[room.badge || 'standard'];
+  const initials = (room.ownerDisplayName || 'A').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
   return (
     <TouchableOpacity style={styles.trendCard} activeOpacity={0.8} onPress={onPress} delayPressIn={100}>
       <LinearGradient
-        colors={['rgba(12,18,36,0.80)', 'rgba(8,14,28,0.90)']}
+        colors={['rgba(12,18,36,0.80)', 'rgba(8,14,28,0.92)']}
         style={[StyleSheet.absoluteFill, { borderRadius: 16 }]}
         pointerEvents="none"
+      />
+
+      {/* Glassmorphism border highlight */}
+      <LinearGradient
+        colors={['rgba(255,255,255,0.08)', 'transparent']}
+        style={[StyleSheet.absoluteFill, { borderRadius: 16 }]}
+        pointerEvents="none"
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
       />
 
       {/* Badge */}
@@ -205,23 +213,27 @@ function TrendingCard({ loca, onPress }: { loca: TrendingLoca; onPress?: () => v
 
       {/* Avatar */}
       <View style={styles.trendAvatar}>
-        <Text style={styles.trendAvatarText}>{loca.avatar}</Text>
+        <Text style={styles.trendAvatarText}>{initials}</Text>
       </View>
 
       {/* Info */}
-      <Text style={styles.trendName} numberOfLines={1}>{loca.name}</Text>
-      <Text style={styles.trendOwner} numberOfLines={1}>{loca.owner}</Text>
+      <Text style={styles.trendName} numberOfLines={1}>{room.name}</Text>
+      <Text style={styles.trendOwner} numberOfLines={1}>{room.ownerDisplayName || 'Anonim'}</Text>
 
       {/* Bottom row */}
       <View style={styles.trendBottom}>
         <View style={styles.trendCapacity}>
           <Ionicons name="people" size={11} color={COLORS.silverDark} />
-          <Text style={styles.trendCapText}>{loca.capacity}</Text>
+          <Text style={styles.trendCapText}>
+            {room.currentParticipants || 0}/{room.maxCapacity || 10}
+          </Text>
         </View>
-        <View style={styles.trendTokens}>
-          <Ionicons name="diamond" size={11} color={COLORS.primary} />
-          <Text style={styles.trendTokenText}>{(loca.tokens / 1000).toFixed(1)}K</Text>
-        </View>
+        {room.isPrivate && (
+          <View style={styles.trendCapacity}>
+            <Ionicons name="diamond" size={11} color={COLORS.primary} />
+            <Text style={styles.trendTokenText}>VIP</Text>
+          </View>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -235,29 +247,40 @@ export default function DiscoverScreen() {
   const insets = useSafeAreaInsets();
   const { colors: C, isDark } = useTheme();
   const scrollY = useRef(new Animated.Value(0)).current;
-  const [selectedChip, setSelectedChip] = React.useState<string>('all');
+  const [selectedChip, setSelectedChip] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [rooms, setRooms] = useState<DiscoverRoom[]>([]);
+  const [radarUsers, setRadarUsers] = useState<RadarUserData[]>([]);
 
-  const filteredLocas = useMemo(() => {
-    let result = TRENDING_LOCAS;
-    // Chip filtresi
+  const fetchData = useCallback(async () => {
+    const data = await getDiscoverData();
+    setRooms(data.rooms);
+    setRadarUsers(data.radarUsers);
+    setLoading(false);
+    setRefreshing(false);
+  }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const filteredRooms = useMemo(() => {
+    let result = rooms;
     if (selectedChip !== 'all') {
-      result = result.filter((l) => l.tags.includes(selectedChip));
+      result = result.filter(r => r.tags?.includes(selectedChip));
     }
-    // Arama filtresi
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
-        (l) => l.name.toLowerCase().includes(q) || l.owner.toLowerCase().includes(q)
+        r => r.name.toLowerCase().includes(q) || (r.ownerDisplayName || '').toLowerCase().includes(q)
       );
     }
     return result;
-  }, [searchQuery, selectedChip]);
+  }, [rooms, searchQuery, selectedChip]);
 
-  const leftCards = useMemo(() => filteredLocas.filter((_, i) => i % 2 === 0), [filteredLocas]);
-  const rightCards = useMemo(() => filteredLocas.filter((_, i) => i % 2 !== 0), [filteredLocas]);
+  const leftCards = useMemo(() => filteredRooms.filter((_, i) => i % 2 === 0), [filteredRooms]);
+  const rightCards = useMemo(() => filteredRooms.filter((_, i) => i % 2 !== 0), [filteredRooms]);
 
-  // Search bar blur as user scrolls
   const searchBlurOpacity = scrollY.interpolate({
     inputRange: [0, 80],
     outputRange: [0, 1],
@@ -274,25 +297,37 @@ export default function DiscoverScreen() {
         end={{ x: 0.5, y: 1 }}
       />
 
-      {/* ═══ FLOATING SEARCH PILL (stays on top via z-index) ═══ */}
+      {/* ═══ PREMIUM SEARCH BAR ═══ */}
       <View style={[styles.searchPillWrapper, { paddingTop: insets.top + 8 }]}>
         <Animated.View style={[styles.searchBlurBg, { opacity: searchBlurOpacity }]}>
           <BlurView intensity={isDark ? 50 : 70} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
         </Animated.View>
         <View style={styles.searchPill}>
           <LinearGradient
-            colors={['rgba(12,18,36,0.88)', 'rgba(8,14,28,0.92)']}
+            colors={['rgba(12,18,36,0.92)', 'rgba(8,14,28,0.96)']}
             style={[StyleSheet.absoluteFill, { borderRadius: 24 }]}
           />
-          <Ionicons name="search-outline" size={17} color={COLORS.silverDark} />
+          {/* Inner shadow illusion */}
+          <LinearGradient
+            colors={['rgba(0,0,0,0.15)', 'transparent']}
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 20, borderTopLeftRadius: 24, borderTopRightRadius: 24 }}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+          />
+          <Ionicons name="search-outline" size={17} color={COLORS.primary} />
           <TextInput
             style={styles.searchInput}
-            placeholder="VIP'leri, Locaları veya Etiketleri ara..."
-            placeholderTextColor={COLORS.silverDark}
+            placeholder="Locaları veya Kullanıcıları ara..."
+            placeholderTextColor={'rgba(148,163,184,0.5)'}
             selectionColor={COLORS.primary}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={18} color={COLORS.silverDark} />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
@@ -307,6 +342,15 @@ export default function DiscoverScreen() {
           { useNativeDriver: true }
         )}
         scrollEventThrottle={16}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => { setRefreshing(true); fetchData(); }}
+            tintColor={COLORS.primary}
+            colors={[COLORS.primary]}
+            progressBackgroundColor={COLORS.deepNavy}
+          />
+        }
       >
         {/* ═══ LIVE RADAR / SONAR ═══ */}
         <View style={styles.radarArea}>
@@ -314,6 +358,9 @@ export default function DiscoverScreen() {
           <PulsingRing size={RADAR_SIZE * 0.98} delay={0} />
           <PulsingRing size={RADAR_SIZE * 0.72} delay={600} />
           <PulsingRing size={RADAR_SIZE * 0.46} delay={1200} />
+
+          {/* Sweep line */}
+          <RadarSweep />
 
           {/* Center avatar */}
           <View style={styles.radarCenter}>
@@ -327,8 +374,8 @@ export default function DiscoverScreen() {
             </LinearGradient>
           </View>
 
-          {/* Orbiting VIP avatars */}
-          {RADAR_USERS.map((user) => (
+          {/* Orbiting VIP avatars (from API) */}
+          {radarUsers.map(user => (
             <OrbitAvatar
               key={user.id}
               user={user}
@@ -340,13 +387,16 @@ export default function DiscoverScreen() {
           <View style={styles.radarLabel}>
             <View style={styles.radarLiveDot} />
             <Text style={styles.radarLabelText}>Canlı Radar</Text>
+            {radarUsers.length > 0 && (
+              <Text style={styles.radarCountText}>· {radarUsers.length} aktif</Text>
+            )}
           </View>
         </View>
 
         {/* ═══ NEON CATEGORY CHIPS ═══ */}
         <FlatList
           data={CATEGORIES}
-          keyExtractor={(item) => item.id}
+          keyExtractor={item => item.id}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.chipList}
@@ -358,9 +408,7 @@ export default function DiscoverScreen() {
                 activeOpacity={0.7}
                 onPress={() => setSelectedChip(item.id)}
               >
-                {isActive && (
-                  <View style={styles.chipGlow} />
-                )}
+                {isActive && <View style={styles.chipGlow} />}
                 <Ionicons name={item.icon} size={14} color={isActive ? COLORS.primary : COLORS.silverDark} />
                 <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{item.label}</Text>
               </TouchableOpacity>
@@ -370,25 +418,44 @@ export default function DiscoverScreen() {
 
         {/* ═══ SECTION TITLE ═══ */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Trend Localar</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <LinearGradient
+              colors={[COLORS.goldMetallic, COLORS.goldLight]}
+              style={{ width: 3, height: 18, borderRadius: 2 }}
+            />
+            <Text style={styles.sectionTitle}>Trend Localar</Text>
+          </View>
           <Text style={styles.sectionSub}>En popüler mekanlar</Text>
         </View>
 
-        {/* ═══ STAGGERED GRID ═══ */}
-        <View style={styles.gridContainer}>
-          <View style={styles.gridColumn}>
-            {leftCards.map((loca) => (
-              <TrendingCard key={loca.id} loca={loca} onPress={() => router.push({ pathname: '/room', params: { id: loca.id } })} />
-            ))}
+        {/* ═══ CONTENT ═══ */}
+        {loading ? (
+          <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+            <ActivityIndicator size="large" color={COLORS.primary} />
+            <Text style={{ color: COLORS.silverDark, marginTop: 12, fontSize: 13 }}>Localar yükleniyor...</Text>
           </View>
-          <View style={[styles.gridColumn, { marginTop: SPACING.xl }]}>
-            {rightCards.map((loca) => (
-              <TrendingCard key={loca.id} loca={loca} onPress={() => router.push({ pathname: '/room', params: { id: loca.id } })} />
-            ))}
+        ) : filteredRooms.length === 0 ? (
+          <EmptyState
+            icon="compass-outline"
+            title="Sonuç bulunamadı"
+            subtitle={searchQuery ? 'Farklı bir arama deneyin' : 'Henüz trend loca yok'}
+          />
+        ) : (
+          <View style={styles.gridContainer}>
+            <View style={styles.gridColumn}>
+              {leftCards.map(room => (
+                <TrendingCard key={room.id} room={room} onPress={() => router.push({ pathname: '/room', params: { id: room.id } })} />
+              ))}
+            </View>
+            <View style={[styles.gridColumn, { marginTop: SPACING.xl }]}>
+              {rightCards.map(room => (
+                <TrendingCard key={room.id} room={room} onPress={() => router.push({ pathname: '/room', params: { id: room.id } })} />
+              ))}
+            </View>
           </View>
-        </View>
+        )}
 
-        <View style={{ height: insets.bottom + 80 }} />
+        <View style={{ height: 120 }} />
       </Animated.ScrollView>
     </View>
   );
@@ -400,7 +467,7 @@ export default function DiscoverScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.deepNavy },
 
-  /* ── Search Pill ── */
+  /* ── Search Pill (Premium Glassmorphism) ── */
   searchPillWrapper: {
     position: 'absolute',
     top: 0,
@@ -422,7 +489,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     gap: 10,
     borderWidth: 1,
-    borderColor: COLORS.glassBorder,
+    borderColor: 'rgba(255,255,255,0.08)',
     overflow: 'hidden',
   },
   searchInput: {
@@ -435,7 +502,7 @@ const styles = StyleSheet.create({
   /* ── Scroll Content ── */
   scrollContent: {
     paddingTop: 100,
-    paddingBottom: SPACING.md,
+    paddingBottom: 120,
   },
 
   /* ── Radar ── */
@@ -453,6 +520,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.primaryStroke,
     backgroundColor: 'transparent',
+  },
+  radarSweep: {
+    position: 'absolute',
+    width: RADAR_SIZE,
+    height: RADAR_SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   radarCenter: {
     position: 'absolute',
@@ -493,6 +567,11 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.medium as any,
     letterSpacing: 1,
     textTransform: 'uppercase',
+  },
+  radarCountText: {
+    color: COLORS.primary,
+    fontSize: 11,
+    fontWeight: FONTS.semibold as any,
   },
 
   /* ── Orbit Avatar ── */
@@ -588,11 +667,20 @@ const styles = StyleSheet.create({
   trendCard: {
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: 'rgba(255,255,255,0.06)',
     overflow: 'hidden',
     padding: 14,
     gap: 8,
     position: 'relative',
+    ...(Platform.OS === 'android' ? {
+      elevation: 4,
+      shadowColor: '#000',
+    } : {
+      shadowColor: 'rgba(0,0,0,0.3)',
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+    }),
   },
   trendBadge: {
     position: 'absolute',
@@ -614,9 +702,9 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: COLORS.cardGlassBg,
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
-    borderColor: COLORS.cardGlassBorder,
+    borderColor: 'rgba(255,255,255,0.10)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -650,11 +738,6 @@ const styles = StyleSheet.create({
     color: COLORS.silverDark,
     fontSize: 11,
     fontWeight: FONTS.regular as any,
-  },
-  trendTokens: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
   },
   trendTokenText: {
     color: COLORS.primary,

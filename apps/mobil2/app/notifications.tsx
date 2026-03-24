@@ -1,14 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  RefreshControl, Dimensions,
+  RefreshControl, Dimensions, ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../constants/ThemeContext';
+import { useUser } from '../contexts/UserContext';
 import { COLORS, FONTS, SPACING, RADIUS } from '../constants/theme';
+import { EmptyState } from '../components/UXHelpers';
+import { getNotifications, type NotificationData } from '../services/api';
 
 const { width } = Dimensions.get('window');
 
@@ -47,15 +50,35 @@ const NOTIF_CONFIG: Record<string, { icon: string; color: string; bg: string }> 
 export default function NotificationsScreen() {
   const router = useRouter();
   const { colors: C, isDark } = useTheme();
+  const { user } = useUser();
   const insets = useSafeAreaInsets();
-  const [notifications, setNotifications] = useState(DUMMY_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = useCallback(async () => {
+    if (!user?.id) { setLoading(false); return; }
+    const data = await getNotifications(user.id);
+    setNotifications(data.map(d => ({
+      id: d.id,
+      type: (d.type || 'system') as Notification['type'],
+      fromName: d.fromName,
+      fromAvatar: d.fromAvatar || undefined,
+      message: d.message,
+      time: d.time,
+      isRead: d.isRead,
+    })));
+    setLoading(false);
+    setRefreshing(false);
+  }, [user?.id]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   const onRefresh = () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
+    fetchData();
   };
 
   const markAllRead = () => {
@@ -98,36 +121,44 @@ export default function NotificationsScreen() {
         contentContainerStyle={{ paddingBottom: insets.bottom + 80, paddingHorizontal: 14 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />}
       >
-        {notifications.map((notif) => {
-          const config = NOTIF_CONFIG[notif.type];
-          return (
-            <TouchableOpacity
-              key={notif.id}
-              style={[styles.notifCard, !notif.isRead && styles.notifUnread]}
-              activeOpacity={0.7}
-              onPress={() => {
-                setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, isRead: true } : n));
-              }}
-            >
-              {/* Icon */}
-              <View style={[styles.notifIcon, { backgroundColor: config.bg }]}>
-                <Ionicons name={config.icon as any} size={18} color={config.color} />
-              </View>
+        {notifications.length === 0 ? (
+          <EmptyState
+            icon="notifications-off-outline"
+            title="Bildirim yok"
+            subtitle="Yeni takipçiler, hediyeler ve etiketlemeler burada görünecek"
+          />
+        ) : (
+          notifications.map((notif) => {
+            const config = NOTIF_CONFIG[notif.type];
+            return (
+              <TouchableOpacity
+                key={notif.id}
+                style={[styles.notifCard, !notif.isRead && styles.notifUnread]}
+                activeOpacity={0.7}
+                onPress={() => {
+                  setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, isRead: true } : n));
+                }}
+              >
+                {/* Icon */}
+                <View style={[styles.notifIcon, { backgroundColor: config.bg }]}>
+                  <Ionicons name={config.icon as any} size={18} color={config.color} />
+                </View>
 
-              {/* Content */}
-              <View style={styles.notifContent}>
-                <Text style={styles.notifText}>
-                  <Text style={styles.notifName}>{notif.fromName}</Text>
-                  {' '}{notif.message}
-                </Text>
-                <Text style={styles.notifTime}>{notif.time}</Text>
-              </View>
+                {/* Content */}
+                <View style={styles.notifContent}>
+                  <Text style={styles.notifText}>
+                    <Text style={styles.notifName}>{notif.fromName}</Text>
+                    {' '}{notif.message}
+                  </Text>
+                  <Text style={styles.notifTime}>{notif.time}</Text>
+                </View>
 
-              {/* Unread dot */}
-              {!notif.isRead && <View style={styles.notifDot} />}
-            </TouchableOpacity>
-          );
-        })}
+                {/* Unread dot */}
+                {!notif.isRead && <View style={styles.notifDot} />}
+              </TouchableOpacity>
+            );
+          })
+        )}
       </ScrollView>
     </View>
   );

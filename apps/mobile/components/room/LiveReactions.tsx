@@ -120,5 +120,5 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
     alignItems: 'center', justifyContent: 'center',
   },
-  reactionEmoji: { fontSize: 18 },
+  reactionEmoji: { fontSize: 20 },
 });

@@ -5,11 +5,12 @@
 
 import React, { useState } from 'react';
 import {
-  View, Text, TouchableOpacity, Modal, Image, ScrollView,
+  View, Text, TouchableOpacity, Image, ScrollView,
   StyleSheet, Dimensions, Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import SwipeableBottomSheet from '../shared/SwipeableBottomSheet';
 import { getRoleIcon, getRoleColor, getRoleLabel, getRoleLevel, canPerformAction } from '../../utils/roleHelpers';
 import useStore from '../../store';
 import type { Participant } from '../../services/realtimeService';
@@ -123,158 +124,141 @@ export default function UserProfileModal({ visible, onClose, participant }: User
   });
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <TouchableOpacity style={st.overlay} activeOpacity={1} onPress={() => { setOpenSubmenu(null); onClose(); }}>
-        <TouchableOpacity style={st.sheet} activeOpacity={1} onPress={() => setOpenSubmenu(null)}>
-          {/* Handle bar */}
-          <View style={st.handleBar} />
+    <SwipeableBottomSheet visible={visible} onClose={onClose} heightPercent={0.65}>
+      <View style={st.sheetContent} onStartShouldSetResponder={() => true}>
+        {/* Profil Başlığı */}
+        <View style={st.profileSection}>
+          {/* Avatar */}
+          <View style={[st.avatarWrap, { borderColor: getRoleColor(targetRole) + '60' }]}>
+            <Image
+              source={{ uri: participant.avatar?.startsWith('http') ? participant.avatar : 'https://sopranochat.com/avatars/neutral_1.png' }}
+              style={st.avatar}
+            />
+            {/* Online dot */}
+            <View style={st.onlineDot} />
+          </View>
 
-          {/* Profil Başlığı */}
-          <View style={st.profileSection}>
-            {/* Avatar */}
-            <View style={[st.avatarWrap, { borderColor: getRoleColor(targetRole) + '60' }]}>
-              <Image
-                source={{ uri: participant.avatar?.startsWith('http') ? participant.avatar : 'https://sopranochat.com/avatars/neutral_1.png' }}
-                style={st.avatar}
-              />
-              {/* Online dot */}
-              <View style={st.onlineDot} />
+          {/* İsim + Rol */}
+          <View style={st.nameSection}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              {getRoleIcon(targetRole) ? <Text style={{ fontSize: 16 }}>{getRoleIcon(targetRole)}</Text> : null}
+              <Text style={[st.userName, { color: participant.nameColor || '#f1f5f9' }]}>
+                {participant.displayName}
+              </Text>
             </View>
-
-            {/* İsim + Rol */}
-            <View style={st.nameSection}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                {getRoleIcon(targetRole) ? <Text style={{ fontSize: 16 }}>{getRoleIcon(targetRole)}</Text> : null}
-                <Text style={[st.userName, { color: participant.nameColor || '#f1f5f9' }]}>
-                  {participant.displayName}
-                </Text>
-              </View>
-              <View style={[st.roleBadge, { backgroundColor: getRoleColor(targetRole) + '18', borderColor: getRoleColor(targetRole) + '40' }]}>
-                <Text style={[st.roleText, { color: getRoleColor(targetRole) }]}>
-                  {getRoleLabel(targetRole)}
-                </Text>
-              </View>
-            </View>
-
-            {/* Durum bilgileri */}
-            <View style={st.statusRow}>
-              {participant.isMuted && (
-                <View style={[st.statusChip, { backgroundColor: 'rgba(239,68,68,0.12)', borderColor: 'rgba(239,68,68,0.25)' }]}>
-                  <Ionicons name="mic-off" size={11} color="#ef4444" />
-                  <Text style={{ fontSize: 10, fontWeight: '600', color: '#ef4444' }}>Susturulmuş</Text>
-                </View>
-              )}
-              {participant.isGagged && (
-                <View style={[st.statusChip, { backgroundColor: 'rgba(249,115,22,0.12)', borderColor: 'rgba(249,115,22,0.25)' }]}>
-                  <Ionicons name="chatbubble-outline" size={11} color="#f97316" />
-                  <Text style={{ fontSize: 10, fontWeight: '600', color: '#f97316' }}>Yazma Yasağı</Text>
-                </View>
-              )}
-              {participant.platform && (
-                <View style={[st.statusChip, { backgroundColor: 'rgba(99,102,241,0.12)', borderColor: 'rgba(99,102,241,0.25)' }]}>
-                  <Ionicons name={participant.platform === 'mobile' ? 'phone-portrait' : 'desktop'} size={11} color="#6366f1" />
-                  <Text style={{ fontSize: 10, fontWeight: '600', color: '#6366f1' }}>{participant.platform === 'mobile' ? 'Mobil' : 'Web'}</Text>
-                </View>
-              )}
+            <View style={[st.roleBadge, { backgroundColor: getRoleColor(targetRole) + '18', borderColor: getRoleColor(targetRole) + '40' }]}>
+              <Text style={[st.roleText, { color: getRoleColor(targetRole) }]}>
+                {getRoleLabel(targetRole)}
+              </Text>
             </View>
           </View>
 
-          {/* Ayırıcı */}
-          {availableActions.length > 0 && <View style={st.divider} />}
+          {/* Durum bilgileri */}
+          <View style={st.statusRow}>
+            {participant.isMuted && (
+              <View style={[st.statusChip, { backgroundColor: 'rgba(239,68,68,0.12)', borderColor: 'rgba(239,68,68,0.25)' }]}>
+                <Ionicons name="mic-off" size={11} color="#ef4444" />
+                <Text style={{ fontSize: 10, fontWeight: '600', color: '#ef4444' }}>Susturulmuş</Text>
+              </View>
+            )}
+            {participant.isGagged && (
+              <View style={[st.statusChip, { backgroundColor: 'rgba(249,115,22,0.12)', borderColor: 'rgba(249,115,22,0.25)' }]}>
+                <Ionicons name="chatbubble-outline" size={11} color="#f97316" />
+                <Text style={{ fontSize: 10, fontWeight: '600', color: '#f97316' }}>Yazma Yasağı</Text>
+              </View>
+            )}
+            {participant.platform && (
+              <View style={[st.statusChip, { backgroundColor: 'rgba(99,102,241,0.12)', borderColor: 'rgba(99,102,241,0.25)' }]}>
+                <Ionicons name={participant.platform === 'mobile' ? 'phone-portrait' : 'desktop'} size={11} color="#6366f1" />
+                <Text style={{ fontSize: 10, fontWeight: '600', color: '#6366f1' }}>{participant.platform === 'mobile' ? 'Mobil' : 'Web'}</Text>
+              </View>
+            )}
+          </View>
+        </View>
 
-          {/* Moderation Aksiyonları */}
-          {availableActions.length > 0 && (
-            <ScrollView style={st.actionsScroll} showsVerticalScrollIndicator={false}>
-              <Text style={st.sectionLabel}>Moderasyon</Text>
-              {availableActions.map(action => (
-                <View key={action.id}>
-                  <TouchableOpacity
-                    style={st.actionBtn}
-                    activeOpacity={0.7}
-                    onPress={() => {
-                      if (action.submenu) {
-                        setOpenSubmenu(openSubmenu === action.id ? null : action.id);
-                      } else {
-                        handleAction(action.id);
-                      }
-                    }}
-                  >
-                    <View style={[st.actionIconWrap, { backgroundColor: action.color + '15' }]}>
-                      <Ionicons name={action.icon as any} size={16} color={action.color} />
-                    </View>
-                    <Text style={[st.actionLabel, action.danger && { color: action.color }]}>{action.label}</Text>
-                    {action.submenu && (
-                      <Ionicons
-                        name={openSubmenu === action.id ? 'chevron-up' : 'chevron-down'}
-                        size={14} color="rgba(71,85,105,0.3)"
-                      />
-                    )}
-                  </TouchableOpacity>
+        {/* Ayırıcı */}
+        {availableActions.length > 0 && <View style={st.divider} />}
 
-                  {/* Alt menü */}
-                  {action.submenu && openSubmenu === action.id && (
-                    <View style={st.submenu}>
-                      {action.submenu
-                        .filter(sub => {
-                          if (sub.id.startsWith('role-')) return myLevel > targetLevel;
-                          return canPerformAction(sub.id, myRole, targetRole, isSelf);
-                        })
-                        .map(sub => (
-                          <TouchableOpacity key={sub.id} style={st.subBtn} activeOpacity={0.7} onPress={() => handleAction(sub.id)}>
-                            <Ionicons name={sub.icon as any} size={13} color={sub.color} />
-                            <Text style={[st.subLabel, { color: sub.color }]}>{sub.label}</Text>
-                          </TouchableOpacity>
-                        ))}
-                    </View>
+        {/* Moderation Aksiyonları */}
+        {availableActions.length > 0 && (
+          <ScrollView style={st.actionsScroll} showsVerticalScrollIndicator={false}>
+            <Text style={st.sectionLabel}>Moderasyon</Text>
+            {availableActions.map(action => (
+              <View key={action.id}>
+                <TouchableOpacity
+                  style={st.actionBtn}
+                  activeOpacity={0.7}
+                  onPress={() => {
+                    if (action.submenu) {
+                      setOpenSubmenu(openSubmenu === action.id ? null : action.id);
+                    } else {
+                      handleAction(action.id);
+                    }
+                  }}
+                >
+                  <View style={[st.actionIconWrap, { backgroundColor: action.color + '15' }]}>
+                    <Ionicons name={action.icon as any} size={16} color={action.color} />
+                  </View>
+                  <Text style={[st.actionLabel, action.danger && { color: action.color }]}>{action.label}</Text>
+                  {action.submenu && (
+                    <Ionicons
+                      name={openSubmenu === action.id ? 'chevron-up' : 'chevron-down'}
+                      size={14} color="rgba(71,85,105,0.3)"
+                    />
                   )}
-                </View>
-              ))}
-            </ScrollView>
-          )}
+                </TouchableOpacity>
 
-          {/* Kapat butonu */}
-          <TouchableOpacity style={st.closeBtn} onPress={onClose} activeOpacity={0.8}>
-            <Text style={st.closeBtnText}>Kapat</Text>
-          </TouchableOpacity>
+                {/* Alt menü */}
+                {action.submenu && openSubmenu === action.id && (
+                  <View style={st.submenu}>
+                    {action.submenu
+                      .filter(sub => {
+                        if (sub.id.startsWith('role-')) return myLevel > targetLevel;
+                        return canPerformAction(sub.id, myRole, targetRole, isSelf);
+                      })
+                      .map(sub => (
+                        <TouchableOpacity key={sub.id} style={st.subBtn} activeOpacity={0.7} onPress={() => handleAction(sub.id)}>
+                          <Ionicons name={sub.icon as any} size={13} color={sub.color} />
+                          <Text style={[st.subLabel, { color: sub.color }]}>{sub.label}</Text>
+                        </TouchableOpacity>
+                      ))}
+                  </View>
+                )}
+              </View>
+            ))}
+          </ScrollView>
+        )}
+
+        {/* Kapat butonu */}
+        <TouchableOpacity style={st.closeBtn} onPress={onClose} activeOpacity={0.8}>
+          <Text style={st.closeBtnText}>Kapat</Text>
         </TouchableOpacity>
-      </TouchableOpacity>
-    </Modal>
+      </View>
+    </SwipeableBottomSheet>
   );
 }
 
-/* ═══ STİLLER ═══ */
+/* ═══ STİLLER — KOYU TEMA ═══ */
 const st = StyleSheet.create({
-  overlay: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    paddingHorizontal: 20, paddingTop: 12, paddingBottom: 30,
-    maxHeight: '75%',
-    borderTopWidth: 1, borderColor: 'rgba(148,163,184,0.15)',
-    shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.1, shadowRadius: 16, elevation: 10,
-  },
-  handleBar: {
-    width: 36, height: 4, borderRadius: 2,
-    backgroundColor: 'rgba(148,163,184,0.2)',
-    alignSelf: 'center', marginBottom: 16,
+  sheetContent: {
+    flex: 1,
+    paddingHorizontal: 20, paddingBottom: 30,
   },
   profileSection: { alignItems: 'center', paddingBottom: 16 },
   avatarWrap: {
     width: 80, height: 80, borderRadius: 40,
-    borderWidth: 3, backgroundColor: '#f8fafc',
+    borderWidth: 3, backgroundColor: 'rgba(255,255,255,0.05)',
     alignItems: 'center', justifyContent: 'center',
+    overflow: 'hidden',
   },
   avatar: { width: 72, height: 72, borderRadius: 36 },
   onlineDot: {
     position: 'absolute', bottom: 2, right: 2,
     width: 14, height: 14, borderRadius: 7,
-    backgroundColor: '#22c55e', borderWidth: 2.5, borderColor: '#fff',
+    backgroundColor: '#22c55e', borderWidth: 2.5, borderColor: 'rgba(15,20,35,0.98)',
   },
   nameSection: { alignItems: 'center', marginTop: 10, gap: 6 },
-  userName: { fontSize: 18, fontWeight: '800', color: '#1e293b' },
+  userName: { fontSize: 18, fontWeight: '800', color: '#f1f5f9' },
   roleBadge: {
     paddingHorizontal: 12, paddingVertical: 4,
     borderRadius: 8, borderWidth: 1,
@@ -287,12 +271,12 @@ const st = StyleSheet.create({
     borderRadius: 6, borderWidth: 0.5,
   },
   divider: {
-    height: 1, backgroundColor: 'rgba(148,163,184,0.12)',
+    height: 1, backgroundColor: 'rgba(255,255,255,0.06)',
     marginVertical: 8,
   },
   actionsScroll: { maxHeight: 280 },
   sectionLabel: {
-    fontSize: 10, fontWeight: '700', color: 'rgba(71,85,105,0.6)',
+    fontSize: 10, fontWeight: '700', color: 'rgba(255,255,255,0.35)',
     letterSpacing: 1, textTransform: 'uppercase',
     marginBottom: 8, marginLeft: 4,
   },
@@ -305,12 +289,12 @@ const st = StyleSheet.create({
     width: 32, height: 32, borderRadius: 10,
     alignItems: 'center', justifyContent: 'center',
   },
-  actionLabel: { flex: 1, fontSize: 14, fontWeight: '600', color: '#334155' },
+  actionLabel: { flex: 1, fontSize: 14, fontWeight: '600', color: '#e2e8f0' },
   submenu: {
     marginLeft: 44, marginBottom: 4,
-    backgroundColor: 'rgba(99,102,241,0.04)',
+    backgroundColor: 'rgba(99,102,241,0.06)',
     borderRadius: 10, paddingVertical: 4, paddingHorizontal: 8,
-    borderWidth: 0.5, borderColor: 'rgba(99,102,241,0.1)',
+    borderWidth: 0.5, borderColor: 'rgba(99,102,241,0.15)',
   },
   subBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
@@ -320,8 +304,8 @@ const st = StyleSheet.create({
   closeBtn: {
     marginTop: 12, alignItems: 'center',
     paddingVertical: 12, borderRadius: 12,
-    backgroundColor: 'rgba(148,163,184,0.08)',
-    borderWidth: 0.5, borderColor: 'rgba(148,163,184,0.12)',
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.08)',
   },
-  closeBtnText: { fontSize: 14, fontWeight: '700', color: '#94a3b8' },
+  closeBtnText: { fontSize: 14, fontWeight: '700', color: 'rgba(255,255,255,0.4)' },
 });

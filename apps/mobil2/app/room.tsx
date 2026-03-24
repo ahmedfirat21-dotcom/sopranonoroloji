@@ -22,33 +22,13 @@ import { COLORS, RADIUS, SPACING, FONTS } from '../constants/theme';
 import { useTheme } from '../constants/ThemeContext';
 import { useUser } from '../contexts/UserContext';
 import useLiveKit from '../hooks/useLiveKit';
-import { DUMMY_LOCALAR } from '../constants/types';
 import GiftVaultSheet from '../components/GiftVaultSheet';
 import LottieGiftOverlay from '../components/LottieGiftOverlay';
 import EmojiReactions from '../components/EmojiReactions';
-import {
-  connectSocket, disconnectSocket, joinRoom as socketJoinRoom,
-  leaveRoom as socketLeaveRoom, sendChatMessage,
-  onParticipantsUpdate, onChatMessage, onParticipantJoined, onParticipantLeft,
-  type RoomParticipant, type ChatMessage,
-} from '../services/socket';
 
 const { width, height } = Dimensions.get('window');
 
-// ─────────────────────────────────────────────────────
-// Dummy Chat Messages
-// ─────────────────────────────────────────────────────
-const DUMMY_MESSAGES = [
-  { id: '1', user: 'Emre D.', text: 'Bu locadaki atmosfer bir başka 🔥', time: '21:24' },
-  { id: '2', user: 'Selin A.', text: 'Abi vokal muhteşem', time: '21:25' },
-  { id: '3', user: 'Arda K.', text: 'Sonraki şarkı ne olsun?', time: '21:26' },
-  { id: '4', user: 'Mert Ö.', text: 'Chill vibes tonight ✨', time: '21:27' },
-  { id: '5', user: 'Elif Y.', text: 'Kaan bey yine formsunuz', time: '21:28' },
-];
-
-// ─────────────────────────────────────────────────────
-// Dummy Seat Data
-// ─────────────────────────────────────────────────────
+// Seat interface
 interface Seat {
   id: string;
   name: string;
@@ -60,14 +40,6 @@ interface Seat {
   camOn?: boolean;
   avatar?: string;
 }
-
-const DUMMY_SEATS: Seat[] = [
-  { id: 's1', name: 'Kaan Yıldız', isSpeaking: true, isOwner: true, role: 'owner', muted: false },
-  { id: 's2', name: 'Emre Demir', isSpeaking: false, role: 'vip', muted: true },
-  { id: 's3', name: 'Selin Arslan', isSpeaking: true, role: 'member', muted: false },
-  { id: 's4', name: 'Arda Kaya', isSpeaking: false, role: 'guest', handRaised: true },
-  { id: 's5', name: 'Mert Öztürk', isSpeaking: false, role: 'member', muted: true },
-];
 
 // Rol renkleri
 const ROLE_COLORS: Record<string, string> = {
@@ -257,16 +229,10 @@ export default function RoomScreen() {
   const { colors: C, isDark } = useTheme();
   const { user, token } = useUser();
   const insets = useSafeAreaInsets();
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const loca = DUMMY_LOCALAR.find((l) => l.id === id) || DUMMY_LOCALAR[0];
+  const { id, title } = useLocalSearchParams<{ id: string; title?: string }>();
+  const roomName = title || 'Loca';
   const [vaultVisible, setVaultVisible] = useState(false);
   const [activeGiftAnimation, setActiveGiftAnimation] = useState<string | null>(null);
-
-  // Socket state
-  const [seats, setSeats] = useState<Seat[]>(DUMMY_SEATS);
-  const [messages, setMessages] = useState(DUMMY_MESSAGES);
-  const [chatInput, setChatInput] = useState('');
-  const [isConnected, setIsConnected] = useState(false);
 
   // Room kontrolleri
   const [handRaised, setHandRaised] = useState(false);
@@ -276,7 +242,37 @@ export default function RoomScreen() {
   const [selectedUser, setSelectedUser] = useState<Seat | null>(null);
   const [showMicQueue, setShowMicQueue] = useState(false);
   const [showEmojiBar, setShowEmojiBar] = useState(false);
-  const isOwner = seats[0]?.id === 's1'; // TODO: backend'den gelecek
+  const [chatInput, setChatInput] = useState('');
+  const isOwner = true; // TODO: backend'den oda sahibi bilgisi gelecek
+
+  // LiveKit ses + data bağlantısı
+  const liveKit = useLiveKit({
+    roomSlug: id || 'default-room',
+    enabled: true,
+    userId: user?.id || user?.username,
+    displayName: user?.displayName,
+    role: isOwner ? 'owner' : 'listener',
+  });
+
+  // LiveKit participants → Seat mapping
+  const seats: Seat[] = liveKit.participants.length > 0
+    ? liveKit.participants.map((p, i) => ({
+        id: p.identity,
+        name: p.name,
+        isSpeaking: p.isSpeaking,
+        isOwner: i === 0 && p.isLocal,
+        role: (p.audioEnabled ? 'member' : 'guest') as Seat['role'],
+        muted: !p.audioEnabled,
+      }))
+    : [{
+        id: user?.id || 'me',
+        name: user?.displayName || 'Sen',
+        isSpeaking: false,
+        isOwner: true,
+        role: 'owner' as const,
+        muted: true,
+      }];
+
 
   // El kaldır/indir toggle
   const toggleHandRaise = () => {
@@ -297,104 +293,24 @@ export default function RoomScreen() {
     setIsMuted(!isMuted);
     if (liveKit.isPublishing) {
       await liveKit.setMicEnabled(isMuted);
+    } else if (isMuted) {
+      // İlk kez mikrofon açılıyorsa publish et
+      const ok = await liveKit.publishAudio();
+      if (ok) setIsMuted(false);
     }
   };
 
-  // Oda sahibi: Mikrofon ver (el kaldırana)
-  const grantMic = (userId: string) => {
-    setMicQueue(prev => prev.filter(id => id !== userId));
-    setSeats(prev => prev.map(s =>
-      s.id === userId ? { ...s, isSpeaking: true, handRaised: false, muted: false } : s
-    ));
-  };
-
-  // Oda sahibi: Sustur
-  const muteSeat = (seatId: string) => {
-    setSeats(prev => prev.map(s =>
-      s.id === seatId ? { ...s, muted: true, isSpeaking: false } : s
-    ));
-  };
-
-  // Oda sahibi: At
-  const kickSeat = (seatId: string) => {
-    setSeats(prev => prev.filter(s => s.id !== seatId));
-    setSelectedUser(null);
-  };
-
-  // LiveKit ses bağlantısı
-  const liveKit = useLiveKit({
-    roomSlug: loca.locaAdi.toLowerCase().replace(/\s+/g, '-'),
-    enabled: true,
-    isSocketConnected: isConnected,
-    userId: user?.id || user?.username,
-    displayName: user?.displayName,
-  });
-
-  // Socket bağlantısı ve oda katılımı
-  useEffect(() => {
-    try {
-      const socket = connectSocket(token || undefined);
-
-      socket.on('connect', () => {
-        setIsConnected(true);
-        // Odaya katıl
-        socketJoinRoom(
-          loca.locaAdi.toLowerCase().replace(/\s+/g, '-'),
-          user?.avatarUrl,
-          user?.gender,
-        );
-      });
-
-      socket.on('disconnect', () => setIsConnected(false));
-
-      // Katılımcı listesi güncellemesi
-      const offParticipants = onParticipantsUpdate((participants) => {
-        const mapped: Seat[] = participants.map((p, i) => ({
-          id: p.socketId,
-          name: p.displayName,
-          isSpeaking: false,
-          isOwner: i === 0,
-        }));
-        if (mapped.length > 0) setSeats(mapped);
-      });
-
-      // Canlı mesajlar
-      const offChat = onChatMessage((msg) => {
-        setMessages(prev => [
-          ...prev.slice(-19),
-          {
-            id: msg.id,
-            user: msg.displayName,
-            text: msg.text,
-            time: new Date(msg.timestamp).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
-          },
-        ]);
-      });
-
-      return () => {
-        offParticipants();
-        offChat();
-        socketLeaveRoom();
-      };
-    } catch (e) {
-      console.warn('[Room] Socket bağlantı hatası:', e);
-    }
-  }, []);
-
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!chatInput.trim()) return;
-    sendChatMessage(chatInput.trim());
-    // Kendi mesajımızı hemen göster (optimistic)
-    setMessages(prev => [
-      ...prev.slice(-19),
-      {
-        id: `local_${Date.now()}`,
-        user: user?.displayName || 'Sen',
-        text: chatInput.trim(),
-        time: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
-      },
-    ]);
+    const text = chatInput.trim();
     setChatInput('');
+    
+    // Kendi mesajımızı hemen göster (optimistic)
+    // LiveKit DataChannel ile gönder
+    const sent = await liveKit.sendMessage(text);
+    if (!sent) {
+      console.warn('[Room] Mesaj gönderilemedi');
+    }
   };
 
   // Panel slide-up animation
@@ -418,7 +334,7 @@ export default function RoomScreen() {
   }, []);
 
   const handleClose = () => {
-    socketLeaveRoom();
+    // Oda bağlantısı kesildi
     Animated.parallel([
       Animated.timing(panelY, {
         toValue: height,
@@ -499,12 +415,12 @@ export default function RoomScreen() {
             <View style={styles.headerAvatarRow}>
               <View style={styles.headerAvatar}>
                 <Text style={styles.headerAvatarText}>
-                  {loca.sahipAdi.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+                  {(user?.displayName || roomName).split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()}
                 </Text>
               </View>
               <View style={styles.headerInfo}>
                 <Text style={styles.headerTitle} numberOfLines={1}>
-                  {loca.locaAdi}
+                  {roomName}
                 </Text>
                 <View style={styles.tokenRow}>
                   <Ionicons name="diamond" size={12} color={COLORS.primary} />
@@ -520,12 +436,44 @@ export default function RoomScreen() {
             <View style={styles.headerBadge}>
               <View style={{
                 width: 6, height: 6, borderRadius: 3,
-                backgroundColor: isConnected ? '#4ADE80' : '#F87171',
+                backgroundColor: liveKit.connectionState === 'connected' ? '#4ADE80' : '#F87171',
                 marginRight: 4,
               }} />
               <Ionicons name="people" size={14} color={COLORS.silverLight} />
               <Text style={styles.headerBadgeText}>
                 {seats.length}
+              </Text>
+            </View>
+
+            {/* LiveKit Durum */}
+            <View style={[styles.headerBadge, {
+              backgroundColor: liveKit.connectionState === 'connected'
+                ? 'rgba(74,222,128,0.15)'
+                : liveKit.connectionState === 'connecting'
+                ? 'rgba(251,191,36,0.15)'
+                : 'rgba(248,113,113,0.15)',
+            }]}>
+              <View style={{
+                width: 6, height: 6, borderRadius: 3,
+                backgroundColor:
+                  liveKit.connectionState === 'connected' ? '#4ADE80'
+                  : liveKit.connectionState === 'connecting' ? '#FBBF24'
+                  : '#F87171',
+              }} />
+              <Ionicons
+                name={liveKit.connectionState === 'connected' ? 'volume-high' : 'volume-mute'}
+                size={13}
+                color={liveKit.connectionState === 'connected' ? '#4ADE80' : COLORS.silverLight}
+                style={{ marginLeft: 3 }}
+              />
+              <Text style={[styles.headerBadgeText, {
+                color: liveKit.connectionState === 'connected' ? '#4ADE80'
+                  : liveKit.connectionState === 'connecting' ? '#FBBF24'
+                  : '#F87171',
+              }]}>
+                {liveKit.connectionState === 'connected' ? 'Ses' 
+                 : liveKit.connectionState === 'connecting' ? '...' 
+                 : 'Ses Yok'}
               </Text>
             </View>
 
@@ -575,18 +523,26 @@ export default function RoomScreen() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={styles.chatScroll}
+            onTouchStart={() => showEmojiBar && setShowEmojiBar(false)}
           >
-            {DUMMY_MESSAGES.map((msg, index) => {
-              const opacityVal = Math.min(1, 0.4 + (index / DUMMY_MESSAGES.length) * 0.6);
-              return (
-                <ChatBubble
-                  key={msg.id}
-                  user={msg.user}
-                  text={msg.text}
-                  opacity={opacityVal}
-                />
-              );
-            })}
+            {liveKit.chatMessages.length === 0 ? (
+              <View style={{ alignItems: 'center', paddingVertical: 30 }}>
+                <Ionicons name="chatbubble-ellipses-outline" size={28} color="rgba(255,255,255,0.15)" />
+                <Text style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12, marginTop: 8 }}>Henüz mesaj yok — ilk mesajı sen at!</Text>
+              </View>
+            ) : (
+              liveKit.chatMessages.map((msg, index) => {
+                const opacityVal = Math.min(1, 0.4 + (index / Math.max(liveKit.chatMessages.length, 1)) * 0.6);
+                return (
+                  <ChatBubble
+                    key={msg.id}
+                    user={msg.senderName}
+                    text={msg.text}
+                    opacity={opacityVal}
+                  />
+                );
+              })
+            )}
           </ScrollView>
         </View>
 
@@ -614,7 +570,7 @@ export default function RoomScreen() {
                   <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600', flex: 1 }}>{uid === (user?.id || 'me') ? 'Sen' : `Kullanıcı ${i + 1}`}</Text>
                   {i === 0 && <View style={{ backgroundColor: 'rgba(251,191,36,0.15)', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6 }}><Text style={{ fontSize: 9, fontWeight: '700', color: '#FBBF24' }}>Sıradaki</Text></View>}
                   {isOwner && (
-                    <TouchableOpacity onPress={() => grantMic(uid)} style={styles.grantMicBtn}>
+                    <TouchableOpacity onPress={() => { /* TODO: grantMic via LiveKit */ }} style={styles.grantMicBtn}>
                       <Ionicons name="mic" size={12} color="#22C55E" />
                     </TouchableOpacity>
                   )}
@@ -650,15 +606,15 @@ export default function RoomScreen() {
               {/* Mod aksiyonları (sadece owner görür) */}
               {isOwner && !selectedUser.isOwner && (
                 <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
-                  <TouchableOpacity style={[styles.modBtn, { backgroundColor: 'rgba(34,197,94,0.12)' }]} onPress={() => grantMic(selectedUser.id)}>
+                  <TouchableOpacity style={[styles.modBtn, { backgroundColor: 'rgba(34,197,94,0.12)' }]} onPress={() => { /* TODO: grantMic */ }}>
                     <Ionicons name="mic" size={14} color="#22C55E" />
                     <Text style={{ color: '#22C55E', fontSize: 11, fontWeight: '600' }}>Mik Ver</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={[styles.modBtn, { backgroundColor: 'rgba(245,158,11,0.12)' }]} onPress={() => { muteSeat(selectedUser.id); setSelectedUser(null); }}>
+                  <TouchableOpacity style={[styles.modBtn, { backgroundColor: 'rgba(245,158,11,0.12)' }]} onPress={() => { setSelectedUser(null); }}>
                     <Ionicons name="mic-off" size={14} color="#F59E0B" />
                     <Text style={{ color: '#F59E0B', fontSize: 11, fontWeight: '600' }}>Sustur</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={[styles.modBtn, { backgroundColor: 'rgba(239,68,68,0.12)' }]} onPress={() => kickSeat(selectedUser.id)}>
+                  <TouchableOpacity style={[styles.modBtn, { backgroundColor: 'rgba(239,68,68,0.12)' }]} onPress={() => { setSelectedUser(null); }}>
                     <Ionicons name="exit-outline" size={14} color="#EF4444" />
                     <Text style={{ color: '#EF4444', fontSize: 11, fontWeight: '600' }}>At</Text>
                   </TouchableOpacity>

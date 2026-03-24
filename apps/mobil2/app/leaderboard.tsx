@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,39 +8,30 @@ import {
   TouchableOpacity,
   Easing,
   Platform,
+  RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { COLORS, RADIUS, SPACING, FONTS } from '../constants/theme';
 import { useUser } from '../contexts/UserContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getLeaderboard, type LeaderboardEntry, type LeaderboardType } from '../services/api';
 
 const { width, height } = Dimensions.get('window');
 
 // ─────────────────────────────────────────────────────
-// Leaderboard Dummy Data
+// Yardımcı: isimden baş harfleri al
 // ─────────────────────────────────────────────────────
-interface LeaderUser {
-  id: string;
-  name: string;
-  tokens: number;
-  avatar: string; // initials
+function getInitials(name: string): string {
+  return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 }
-
-const DUMMY_LEADERS: LeaderUser[] = [
-  { id: 'l1', name: 'Kaan Yıldız', tokens: 87500, avatar: 'KY' },
-  { id: 'l2', name: 'Selin Arslan', tokens: 64200, avatar: 'SA' },
-  { id: 'l3', name: 'Emre Demir', tokens: 51800, avatar: 'ED' },
-  { id: 'l4', name: 'Mert Öztürk', tokens: 45300, avatar: 'MÖ' },
-  { id: 'l5', name: 'Zeynep Çelik', tokens: 38700, avatar: 'ZÇ' },
-  { id: 'l6', name: 'Arda Kaya', tokens: 31200, avatar: 'AK' },
-  { id: 'l7', name: 'Elif Yılmaz', tokens: 27800, avatar: 'EY' },
-  { id: 'l8', name: 'Burak Şahin', tokens: 24100, avatar: 'BŞ' },
-  { id: 'l9', name: 'Ceren Aydın', tokens: 21500, avatar: 'CA' },
-  { id: 'l10', name: 'Deniz Koç', tokens: 18900, avatar: 'DK' },
-  { id: 'l11', name: 'Gizem Demir', tokens: 16400, avatar: 'GD' },
-  { id: 'l12', name: 'Hakan Aksoy', tokens: 14200, avatar: 'HA' },
-];
+function getScore(entry: LeaderboardEntry, type: LeaderboardType): number {
+  if (type === 'gifts') return entry.giftsSent;
+  if (type === 'duels') return entry.duelWins;
+  return entry.points;
+}
 
 // ─────────────────────────────────────────────────────
 // Crown / Medal Icon — 3D feel
@@ -67,10 +58,12 @@ function PodiumAvatar({
   user,
   rank,
   size,
+  score,
 }: {
-  user: LeaderUser;
+  user: LeaderboardEntry;
   rank: 1 | 2 | 3;
   size: number;
+  score: number;
 }) {
   const ringGlow = useRef(new Animated.Value(0.5)).current;
 
@@ -129,7 +122,7 @@ function PodiumAvatar({
             start={{ x: 0.3, y: 0 }}
             end={{ x: 0.7, y: 1 }}
           >
-            <Text style={[styles.podiumInitials, { fontSize: size * 0.3 }]}>{user.avatar}</Text>
+            <Text style={[styles.podiumInitials, { fontSize: size * 0.3 }]}>{getInitials(user.name)}</Text>
           </LinearGradient>
         </LinearGradient>
       </View>
@@ -145,7 +138,7 @@ function PodiumAvatar({
       </Text>
       <View style={styles.podiumTokenRow}>
         <Ionicons name="diamond" size={12} color={COLORS.primary} />
-        <Text style={styles.podiumTokens}>{(user.tokens / 1000).toFixed(1)}K</Text>
+        <Text style={styles.podiumTokens}>{(score / 1000).toFixed(1)}K</Text>
       </View>
     </View>
   );
@@ -154,7 +147,7 @@ function PodiumAvatar({
 // ─────────────────────────────────────────────────────
 // Rank Row (4+)
 // ─────────────────────────────────────────────────────
-function RankRow({ user, rank, opacity }: { user: LeaderUser; rank: number; opacity: number }) {
+function RankRow({ user, rank, opacity, score }: { user: LeaderboardEntry; rank: number; opacity: number; score: number }) {
   return (
     <View style={[styles.rankRow, { opacity }]}>
       <LinearGradient
@@ -163,14 +156,14 @@ function RankRow({ user, rank, opacity }: { user: LeaderUser; rank: number; opac
       />
       <Text style={styles.rankNumber}>{rank}</Text>
       <View style={styles.rankAvatar}>
-        <Text style={styles.rankAvatarText}>{user.avatar}</Text>
+        <Text style={styles.rankAvatarText}>{getInitials(user.name)}</Text>
       </View>
       <View style={styles.rankInfo}>
         <Text style={styles.rankName}>{user.name}</Text>
       </View>
       <View style={styles.rankTokens}>
         <Ionicons name="diamond" size={14} color={COLORS.primary} />
-        <Text style={styles.rankTokenText}>{user.tokens.toLocaleString()}</Text>
+        <Text style={styles.rankTokenText}>{score.toLocaleString()}</Text>
       </View>
     </View>
   );
@@ -182,12 +175,27 @@ function RankRow({ user, rank, opacity }: { user: LeaderUser; rank: number; opac
 export default function LeaderboardScreen() {
   const router = useRouter();
   const scrollY = useRef(new Animated.Value(0)).current;
-  const [mainTab, setMainTab] = useState<'spenders' | 'earners'>('spenders');
-  const [timeTab, setTimeTab] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
+  const [mainTab, setMainTab] = useState<LeaderboardType>('points');
   const { user } = useUser();
+  const insets = useSafeAreaInsets();
+  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [leaders, setLeaders] = useState<LeaderboardEntry[]>([]);
 
-  const top3 = useMemo(() => DUMMY_LEADERS.slice(0, 3), []);
-  const rest = useMemo(() => DUMMY_LEADERS.slice(3), []);
+  const fetchData = useCallback(async () => {
+    const data = await getLeaderboard(mainTab, 50);
+    setLeaders(data);
+    setLoading(false);
+    setRefreshing(false);
+  }, [mainTab]);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchData();
+  }, [fetchData]);
+
+  const top3 = useMemo(() => leaders.slice(0, 3), [leaders]);
+  const rest = useMemo(() => leaders.slice(3), [leaders]);
 
   // Parallax for podium
   const podiumTranslateY = scrollY.interpolate({
@@ -212,7 +220,7 @@ export default function LeaderboardScreen() {
       />
 
       {/* ═══ TOP BAR ═══ */}
-      <View style={styles.topBar}>
+      <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
         <TouchableOpacity style={styles.backBtn} activeOpacity={0.7} onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={22} color={COLORS.silver} />
         </TouchableOpacity>
@@ -220,11 +228,10 @@ export default function LeaderboardScreen() {
         <View style={{ width: 34 }} />
       </View>
 
-      {/* ═══ FILTER TABS (2-layer) ═══ */}
+      {/* ═══ FILTER TABS ═══ */}
       <View style={styles.filterArea}>
-        {/* Main tabs */}
         <View style={styles.filterRow}>
-          {(['spenders', 'earners'] as const).map((tab) => {
+          {([['points', 'Puan'] as const, ['gifts', 'Hediyeler'] as const, ['duels', 'Düellolar'] as const]).map(([tab, label]) => {
             const isActive = mainTab === tab;
             return (
               <TouchableOpacity
@@ -242,27 +249,7 @@ export default function LeaderboardScreen() {
                   />
                 )}
                 <Text style={[styles.filterText, isActive && styles.filterTextActive]}>
-                  {tab === 'spenders' ? 'En Çok Harcayanlar' : 'En Çok Kazananlar'}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        {/* Time tabs */}
-        <View style={styles.filterRow}>
-          {(['daily', 'weekly', 'monthly'] as const).map((tab) => {
-            const isActive = timeTab === tab;
-            const labels = { daily: 'Günlük', weekly: 'Haftalık', monthly: 'Aylık' };
-            return (
-              <TouchableOpacity
-                key={tab}
-                style={[styles.timePill, isActive && styles.timePillActive]}
-                activeOpacity={0.8}
-                onPress={() => setTimeTab(tab)}
-              >
-                <Text style={[styles.timeText, isActive && styles.timeTextActive]}>
-                  {labels[tab]}
+                  {label}
                 </Text>
               </TouchableOpacity>
             );
@@ -280,61 +267,85 @@ export default function LeaderboardScreen() {
         )}
         scrollEventThrottle={16}
         contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => { setRefreshing(true); fetchData(); }}
+            tintColor={COLORS.primary}
+            colors={[COLORS.primary]}
+          />
+        }
       >
-        {/* ═══ PODIUM — TOP 3 ═══ */}
-        <Animated.View
-          style={[
-            styles.podiumArea,
-            { transform: [{ translateY: podiumTranslateY }], opacity: podiumOpacity },
-          ]}
-        >
-          {/* Ambient glow */}
-          <View style={styles.podiumAmbient} />
-
-          {/* 2nd — left */}
-          <View style={styles.podiumSide}>
-            <PodiumAvatar user={top3[1]} rank={2} size={64} />
-            <View style={[styles.podiumPillar, styles.podiumPillar2]}>
-              <LinearGradient
-                colors={['rgba(192,192,192,0.12)', 'rgba(192,192,192,0.04)']}
-                style={[StyleSheet.absoluteFill, { borderTopLeftRadius: 12, borderTopRightRadius: 12 }]}
-              />
-            </View>
+        {loading ? (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
+            <ActivityIndicator size="large" color={COLORS.primary} />
+            <Text style={{ color: COLORS.silverDark, marginTop: 12, fontSize: 13 }}>Liderler yükleniyor...</Text>
           </View>
-
-          {/* 1st — center */}
-          <View style={styles.podiumCenter}>
-            <PodiumAvatar user={top3[0]} rank={1} size={80} />
-            <View style={[styles.podiumPillar, styles.podiumPillar1]}>
-              <LinearGradient
-                colors={['rgba(207,181,59,0.15)', 'rgba(207,181,59,0.04)']}
-                style={[StyleSheet.absoluteFill, { borderTopLeftRadius: 12, borderTopRightRadius: 12 }]}
-              />
-            </View>
+        ) : leaders.length === 0 ? (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
+            <Ionicons name="trophy-outline" size={48} color={COLORS.silverDark} />
+            <Text style={{ color: COLORS.silverDark, marginTop: 12, fontSize: 14 }}>Henüz sıralama verisi yok</Text>
           </View>
+        ) : (
+          <>
+            {/* ═══ PODIUM — TOP 3 ═══ */}
+            {top3.length >= 3 && (
+              <Animated.View
+                style={[
+                  styles.podiumArea,
+                  { transform: [{ translateY: podiumTranslateY }], opacity: podiumOpacity },
+                ]}
+              >
+                {/* Ambient glow */}
+                <View style={styles.podiumAmbient} />
 
-          {/* 3rd — right */}
-          <View style={styles.podiumSide}>
-            <PodiumAvatar user={top3[2]} rank={3} size={64} />
-            <View style={[styles.podiumPillar, styles.podiumPillar3]}>
-              <LinearGradient
-                colors={['rgba(205,127,50,0.12)', 'rgba(205,127,50,0.04)']}
-                style={[StyleSheet.absoluteFill, { borderTopLeftRadius: 12, borderTopRightRadius: 12 }]}
-              />
+                {/* 2nd — left */}
+                <View style={styles.podiumSide}>
+                  <PodiumAvatar user={top3[1]} rank={2} size={64} score={getScore(top3[1], mainTab)} />
+                  <View style={[styles.podiumPillar, styles.podiumPillar2]}>
+                    <LinearGradient
+                      colors={['rgba(192,192,192,0.12)', 'rgba(192,192,192,0.04)']}
+                      style={[StyleSheet.absoluteFill, { borderTopLeftRadius: 12, borderTopRightRadius: 12 }]}
+                    />
+                  </View>
+                </View>
+
+                {/* 1st — center */}
+                <View style={styles.podiumCenter}>
+                  <PodiumAvatar user={top3[0]} rank={1} size={80} score={getScore(top3[0], mainTab)} />
+                  <View style={[styles.podiumPillar, styles.podiumPillar1]}>
+                    <LinearGradient
+                      colors={['rgba(207,181,59,0.15)', 'rgba(207,181,59,0.04)']}
+                      style={[StyleSheet.absoluteFill, { borderTopLeftRadius: 12, borderTopRightRadius: 12 }]}
+                    />
+                  </View>
+                </View>
+
+                {/* 3rd — right */}
+                <View style={styles.podiumSide}>
+                  <PodiumAvatar user={top3[2]} rank={3} size={64} score={getScore(top3[2], mainTab)} />
+                  <View style={[styles.podiumPillar, styles.podiumPillar3]}>
+                    <LinearGradient
+                      colors={['rgba(205,127,50,0.12)', 'rgba(205,127,50,0.04)']}
+                      style={[StyleSheet.absoluteFill, { borderTopLeftRadius: 12, borderTopRightRadius: 12 }]}
+                    />
+                  </View>
+                </View>
+              </Animated.View>
+            )}
+
+            {/* ═══ RANK LIST (4+) ═══ */}
+            <View style={styles.rankListArea}>
+              {rest.map((entry, index) => {
+                const rank = index + 4;
+                const opacityVal = Math.max(0.6, 1 - index * 0.04);
+                return (
+                  <RankRow key={entry.id} user={entry} rank={rank} opacity={opacityVal} score={getScore(entry, mainTab)} />
+                );
+              })}
             </View>
-          </View>
-        </Animated.View>
-
-        {/* ═══ RANK LIST (4+) ═══ */}
-        <View style={styles.rankListArea}>
-          {rest.map((user, index) => {
-            const rank = index + 4;
-            const opacityVal = Math.max(0.6, 1 - index * 0.04);
-            return (
-              <RankRow key={user.id} user={user} rank={rank} opacity={opacityVal} />
-            );
-          })}
-        </View>
+          </>
+        )}
 
         {/* Bottom padding for sticky bar */}
         <View style={{ height: 100 }} />
@@ -385,7 +396,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.md,
-    paddingTop: Platform.OS === 'android' ? 44 : 56,
+    paddingTop: SPACING.md,
     paddingBottom: 10,
   },
   backBtn: {

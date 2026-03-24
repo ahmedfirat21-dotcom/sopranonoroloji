@@ -15,7 +15,9 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, RADIUS, SPACING, FONTS } from '../constants/theme';
+import { hapticLight } from '../utils/haptics';
 
 const { width } = Dimensions.get('window');
 
@@ -130,6 +132,7 @@ export default function ChatScreen() {
   const [messages, setMessages] = useState<ChatMessage[]>(DUMMY_CHAT);
   const isAlly = isAlliance === '1';
   const scrollRef = useRef<ScrollView>(null);
+  const insets = useSafeAreaInsets();
 
   // Entrance animation
   const slideIn = useRef(new Animated.Value(width * 0.3)).current;
@@ -159,7 +162,7 @@ export default function ChatScreen() {
 
       <Animated.View style={[{ flex: 1 }, { transform: [{ translateX: slideIn }], opacity: fadeIn }]}>
         {/* ═══ TOP BAR ═══ */}
-        <View style={styles.topBar}>
+        <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
           <TouchableOpacity style={styles.backBtn} activeOpacity={0.7} onPress={() => router.back()}>
             <Ionicons name="chevron-back" size={22} color={COLORS.silver} />
           </TouchableOpacity>
@@ -203,7 +206,7 @@ export default function ChatScreen() {
         </ScrollView>
 
         {/* ═══ FLOATING INPUT PILL ═══ */}
-        <View style={styles.inputArea}>
+        <View style={[styles.inputArea, { paddingBottom: Math.max(insets.bottom, 12) + 8 }]}>
           <View style={styles.inputPill}>
             <LinearGradient
               colors={['rgba(12,18,36,0.92)', 'rgba(8,14,28,0.95)']}
@@ -225,6 +228,7 @@ export default function ChatScreen() {
               activeOpacity={0.7}
               onPress={() => {
                 if (!messageText.trim()) return;
+                hapticLight();
                 const newMsg: ChatMessage = {
                   id: `m${Date.now()}`,
                   text: messageText.trim(),
@@ -275,7 +279,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.md,
-    paddingTop: Platform.OS === 'android' ? 44 : 56,
+    paddingTop: SPACING.md,
     paddingBottom: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(255,255,255,0.04)',
@@ -445,7 +449,7 @@ const styles = StyleSheet.create({
   /* ── Floating Input ── */
   inputArea: {
     paddingHorizontal: SPACING.md,
-    paddingBottom: Platform.OS === 'android' ? 36 : SPACING.lg,
+    paddingBottom: SPACING.md,
     paddingTop: SPACING.sm,
   },
   inputPill: {

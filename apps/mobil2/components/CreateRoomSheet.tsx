@@ -10,6 +10,9 @@ import {
   ScrollView,
   Easing,
   PanResponder,
+  Modal,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -18,6 +21,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, RADIUS, SPACING, FONTS } from '../constants/theme';
 import { useTheme } from '../constants/ThemeContext';
 import { useRouter } from 'expo-router';
+import { useUser } from '../contexts/UserContext';
+import { hapticSuccess, hapticError } from '../utils/haptics';
+import { createRoom } from '../services/api';
 
 const { width, height } = Dimensions.get('window');
 
@@ -99,16 +105,19 @@ function IgnitionGlow() {
 interface CreateRoomSheetProps {
   visible: boolean;
   onClose: () => void;
+  onRoomCreated?: () => void;
 }
 
-export default function CreateRoomSheet({ visible, onClose }: CreateRoomSheetProps) {
+export default function CreateRoomSheet({ visible, onClose, onRoomCreated }: CreateRoomSheetProps) {
   const insets = useSafeAreaInsets();
   const { colors: C, isDark } = useTheme();
   const router = useRouter();
+  const { user } = useUser();
   const [roomTitle, setRoomTitle] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('sohbet');
   const [selectedCapacity, setSelectedCapacity] = useState(8);
   const [visaOnly, setVisaOnly] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
 
   const sheetY = useRef(new Animated.Value(height)).current;
@@ -152,6 +161,13 @@ export default function CreateRoomSheet({ visible, onClose }: CreateRoomSheetPro
   if (!visible) return null;
 
   return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+      onRequestClose={closeSheet}
+    >
     <View style={StyleSheet.absoluteFill}>
       {/* Overlay */}
       <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]}>
@@ -339,15 +355,42 @@ export default function CreateRoomSheet({ visible, onClose }: CreateRoomSheetPro
         <View style={[styles.ignitionArea, { paddingBottom: Math.max(insets.bottom, 12) + SPACING.md }]}>
           <IgnitionGlow />
           <TouchableOpacity
-            style={styles.ignitionBtn}
+            style={[styles.ignitionBtn, isCreating && { opacity: 0.6 }]}
             activeOpacity={0.85}
-            onPress={() => {
-              // Oda oluştur ve yönlendir
-              const newRoomId = `room-${Date.now()}`;
-              closeSheet();
-              setTimeout(() => {
-                router.push({ pathname: '/room', params: { id: newRoomId, title: roomTitle || 'Yeni Loca' } });
-              }, 350);
+            disabled={isCreating}
+            onPress={async () => {
+              if (!roomTitle.trim()) {
+                Alert.alert('Loca İsmi', 'Lütfen locanıza bir isim verin');
+                hapticError();
+                return;
+              }
+              if (!user?.id) {
+                Alert.alert('Giriş Gerekli', 'Oda oluşturmak için giriş yapmalısınız');
+                hapticError();
+                return;
+              }
+
+              setIsCreating(true);
+              const result = await createRoom({
+                name: roomTitle.trim(),
+                category: selectedCategory,
+                maxParticipants: selectedCapacity,
+                speakerVisaPrice: visaOnly ? 500 : 0,
+                ownerId: user.id,
+              });
+              setIsCreating(false);
+
+              if (result.success && result.room) {
+                hapticSuccess();
+                onRoomCreated?.();
+                closeSheet();
+                setTimeout(() => {
+                  router.push({ pathname: '/room', params: { id: result.room!.id, title: result.room!.name } });
+                }, 350);
+              } else {
+                hapticError();
+                Alert.alert('Hata', result.error || 'Oda oluşturulamadı');
+              }
             }}
           >
             <LinearGradient
@@ -357,12 +400,17 @@ export default function CreateRoomSheet({ visible, onClose }: CreateRoomSheetPro
               end={{ x: 1, y: 1 }}
             />
             <IgnitionShimmer />
-            <Ionicons name="radio" size={20} color={COLORS.deepNavy} style={{ zIndex: 1 }} />
-            <Text style={styles.ignitionText}>Locayı Aç — Yayını Başlat</Text>
+            {isCreating ? (
+              <ActivityIndicator color={COLORS.deepNavy} size="small" style={{ zIndex: 1 }} />
+            ) : (
+              <Ionicons name="radio" size={20} color={COLORS.deepNavy} style={{ zIndex: 1 }} />
+            )}
+            <Text style={styles.ignitionText}>{isCreating ? 'Oluşturuluyor...' : 'Locayı Aç — Yayını Başlat'}</Text>
           </TouchableOpacity>
         </View>
       </Animated.View>
     </View>
+    </Modal>
   );
 }
 

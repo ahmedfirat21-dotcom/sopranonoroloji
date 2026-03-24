@@ -13,10 +13,9 @@ import { COLORS, FONTS, SPACING, RADIUS } from '../constants/theme';
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const { colors: C, isDark } = useTheme();
+  const { colors: C, isDark, toggleTheme } = useTheme();
   const { user, logout } = useUser();
   const insets = useSafeAreaInsets();
-  const [darkModeLocal, setDarkModeLocal] = useState(isDark);
 
   const [pushEnabled, setPushEnabled] = useState(true);
   const [dmEnabled, setDmEnabled] = useState(true);
@@ -115,7 +114,7 @@ export default function SettingsScreen() {
         {/* Görünüm & Dil */}
         <Text style={styles.sectionTitle}>GÖRÜNÜM & DİL</Text>
         <View style={styles.section}>
-          <SettingRow icon="moon" label="Karanlık Mod" toggle toggleValue={darkModeLocal} onPress={() => setDarkModeLocal(!darkModeLocal)} />
+          <SettingRow icon="moon" label="Karanlık Mod" toggle toggleValue={isDark} onPress={toggleTheme} />
           <SettingRow icon="language" label="Dil" value={selectedLang} onPress={handleLanguage} />
         </View>
 

@@ -1,16 +1,24 @@
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
 // SopranoChat Mobil2 — User Context
-// Offline-first: Önce lokal kaydet, sonra backend'e gönder
-// ═══════════════════════════════════════════════════════
+// Firebase Auth + Offline-first: Önce lokal kaydet, sonra backend'e gönder
+// ═══════════════════════════════════════════════════════════
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { guestLogin, updateProfile, type UserData, type AuthResponse } from '../services/auth';
+import {
+  type FirebaseUser,
+  type AuthResult,
+  onAuthStateChanged as firebaseOnAuthStateChanged,
+  firebaseSignOut,
+  getIdToken,
+} from '../services/firebaseAuth';
 
 const STORAGE_KEYS = {
   TOKEN: '@soprano_token',
   USER: '@soprano_user',
   PROFILE_EXTRA: '@soprano_profile_extra',
+  AUTH_PROVIDER: '@soprano_auth_provider',
 };
 
 export interface ProfileExtra {
@@ -28,12 +36,15 @@ export interface LocalUser {
   id: string;
   username: string;
   displayName: string;
+  email?: string;
   avatarUrl?: string;  // lokal dosya URI veya remote URL
   gender?: string;
+  phoneNumber?: string;
   role: string;
   walletBalance: number;
   points: number;
   isVip: boolean;
+  authProvider?: 'guest' | 'google' | 'apple' | 'phone';
 }
 
 interface UserContextType {
@@ -45,6 +56,7 @@ interface UserContextType {
 
   // Auth
   login: (username: string, avatar?: string, gender?: string) => Promise<void>;
+  loginWithFirebase: (authResult: AuthResult, provider: 'google' | 'apple' | 'phone') => Promise<{ isNewUser: boolean }>;
   update: (payload: { displayName?: string; avatar?: string; gender?: string; bio?: string }) => Promise<void>;
   saveProfileExtra: (extra: ProfileExtra) => Promise<void>;
   logout: () => Promise<void>;
@@ -57,6 +69,7 @@ const UserContext = createContext<UserContextType>({
   isLoading: true,
   isLoggedIn: false,
   login: async () => {},
+  loginWithFirebase: async () => ({ isNewUser: false }),
   update: async () => {},
   saveProfileExtra: async () => {},
   logout: async () => {},
@@ -88,9 +101,95 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     })();
   }, []);
 
-  // Giriş — ÖNCE LOKAL KAYDET, sonra backend'e dene
+  // Firebase auth state değişikliklerini izle
+  useEffect(() => {
+    const unsubscribe = firebaseOnAuthStateChanged(async (firebaseUser: FirebaseUser | null) => {
+      if (!firebaseUser) {
+        // Firebase'den çıkış yapılmışsa ve provider firebase ise temizle
+        const savedUser = await AsyncStorage.getItem(STORAGE_KEYS.USER);
+        if (savedUser) {
+          const parsed = JSON.parse(savedUser);
+          if (parsed.authProvider && parsed.authProvider !== 'guest') {
+            // Firebase user çıkış yapmış — lokal temizle
+            setUser(null);
+            setToken(null);
+            await AsyncStorage.multiRemove([STORAGE_KEYS.TOKEN, STORAGE_KEYS.USER]);
+          }
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // ─── Firebase ile giriş ──────────────────────────────────────
+  const loginWithFirebase = useCallback(async (
+    authResult: AuthResult,
+    provider: 'google' | 'apple' | 'phone',
+  ): Promise<{ isNewUser: boolean }> => {
+    if (!authResult.success || !authResult.user || !authResult.token) {
+      throw new Error(authResult.error || 'Firebase giriş başarısız');
+    }
+
+    const fbUser = authResult.user;
+
+    // Firebase user → LocalUser mapping
+    const localUser: LocalUser = {
+      id: fbUser.uid,
+      username: fbUser.email?.split('@')[0] || fbUser.phoneNumber || fbUser.uid.slice(0, 8),
+      displayName: fbUser.displayName || '',
+      email: fbUser.email || undefined,
+      avatarUrl: fbUser.photoURL || undefined,
+      phoneNumber: fbUser.phoneNumber || undefined,
+      gender: undefined,
+      role: 'member',
+      walletBalance: 0,
+      points: 0,
+      isVip: false,
+      authProvider: provider,
+    };
+
+    // Lokal kaydet
+    setUser(localUser);
+    setToken(authResult.token);
+    await AsyncStorage.multiSet([
+      [STORAGE_KEYS.TOKEN, authResult.token],
+      [STORAGE_KEYS.USER, JSON.stringify(localUser)],
+      [STORAGE_KEYS.AUTH_PROVIDER, provider],
+    ]);
+
+    console.log(`[UserContext] Firebase ${provider} giriş başarılı: ${localUser.displayName || localUser.username}`);
+
+    // Backend'e Firebase token gönder (opsiyonel — backend hazır olunca aktif edilecek)
+    try {
+      const result: AuthResponse = await guestLogin(
+        localUser.username,
+        localUser.avatarUrl,
+        localUser.gender,
+      );
+      // Backend'den gelen güncel veriyi uygula
+      const mergedUser: LocalUser = {
+        ...localUser,
+        walletBalance: result.user.walletBalance || 0,
+        points: result.user.points || 0,
+        isVip: result.user.isVip || false,
+        role: result.user.role || 'member',
+      };
+      setUser(mergedUser);
+      setToken(result.access_token);
+      await AsyncStorage.multiSet([
+        [STORAGE_KEYS.TOKEN, result.access_token],
+        [STORAGE_KEYS.USER, JSON.stringify(mergedUser)],
+      ]);
+    } catch (e: any) {
+      console.warn('[UserContext] Backend sync başarısız, lokal devam:', e.message);
+    }
+
+    return { isNewUser: authResult.isNewUser || false };
+  }, []);
+
+  // ─── Misafir girişi (eski mantık korundu) ─────────────────────
   const login = useCallback(async (username: string, avatar?: string, gender?: string) => {
-    // 1. Lokal kullanıcı oluştur (hemen yansısın)
     const localUser: LocalUser = {
       id: `local_${Date.now()}`,
       username: username.toLowerCase().replace(/\s+/g, '_'),
@@ -101,17 +200,18 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       walletBalance: 0,
       points: 0,
       isVip: false,
+      authProvider: 'guest',
     };
 
     setUser(localUser);
     await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(localUser));
 
-    // 2. Backend'e gönder (başarısız olursa lokal veri kalır)
     try {
       const result: AuthResponse = await guestLogin(username, avatar, gender);
       const remoteUser: LocalUser = {
         ...result.user,
-        avatarUrl: avatar || result.user.avatarUrl, // Lokal fotoğraf URI'sını koru
+        avatarUrl: avatar || result.user.avatarUrl,
+        authProvider: 'guest',
       };
       setUser(remoteUser);
       setToken(result.access_token);
@@ -119,16 +219,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         [STORAGE_KEYS.TOKEN, result.access_token],
         [STORAGE_KEYS.USER, JSON.stringify(remoteUser)],
       ]);
-      console.log('[UserContext] Backend giriş başarılı:', result.user.displayName);
     } catch (e: any) {
       console.warn('[UserContext] Backend giriş başarısız, lokal devam:', e.message);
-      // Lokal user zaten kaydedildi — uygulama çalışmaya devam eder
     }
   }, []);
 
   // Profil güncelle
   const update = useCallback(async (payload: { displayName?: string; avatar?: string; gender?: string; bio?: string }) => {
-    // Lokal güncelle
     if (user) {
       const updated: LocalUser = {
         ...user,
@@ -140,14 +237,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updated));
     }
 
-    // Bio'yu profileExtra'ya kaydet
     if (payload.bio !== undefined) {
       const merged = { ...profileExtra, bio: payload.bio };
       setProfileExtra(merged);
       await AsyncStorage.setItem(STORAGE_KEYS.PROFILE_EXTRA, JSON.stringify(merged));
     }
 
-    // Backend'e dene
     if (token) {
       try {
         await updateProfile(token, payload);
@@ -164,8 +259,15 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     await AsyncStorage.setItem(STORAGE_KEYS.PROFILE_EXTRA, JSON.stringify(merged));
   }, [profileExtra]);
 
-  // Çıkış
+  // Çıkış — Firebase + lokal temizle
   const logout = useCallback(async () => {
+    // Firebase sign out
+    try {
+      await firebaseSignOut();
+    } catch (e: any) {
+      console.warn('[UserContext] Firebase çıkış hatası:', e.message);
+    }
+
     setUser(null);
     setToken(null);
     setProfileExtra({});
@@ -173,6 +275,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       STORAGE_KEYS.TOKEN,
       STORAGE_KEYS.USER,
       STORAGE_KEYS.PROFILE_EXTRA,
+      STORAGE_KEYS.AUTH_PROVIDER,
     ]);
   }, []);
 
@@ -185,6 +288,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         isLoggedIn: !!user,
         login,
+        loginWithFirebase,
         update,
         saveProfileExtra,
         logout,

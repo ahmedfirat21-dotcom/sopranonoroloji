@@ -278,7 +278,7 @@ export default function SetupScreen() {
     } finally {
       setIsSaving(false);
     }
-    router.replace('/home');
+    router.replace('/(tabs)');
   };
 
   return (

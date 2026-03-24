@@ -160,7 +160,7 @@ const s = StyleSheet.create({
   centerBtn: {
     width: 50,
     height: 50,
-    borderRadius: 18,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#8b5cf6',

@@ -311,13 +311,9 @@ export default function ActiveSpeaker(props: ActiveSpeakerProps) {
     <View style={s.container}>
       {/* ── AY KATMANI ── */}
       <Animated.View style={[s.avatarOuter, { transform: [{ scale: Animated.multiply(breathe, moonScale) }], opacity: moonOpacity }]}>
-        {/* Glow — 6 katman + blur */}
-        <Animated.View style={{ ...StyleSheet.absoluteFillObject, margin: -55, borderRadius: 999, backgroundColor: '#ffe8a0', opacity: Animated.multiply(glowPulse, 0.04), shadowColor: '#ffe8a0', shadowOpacity: 0.3, shadowRadius: 25, elevation: 8 }} />
-        <Animated.View style={{ ...StyleSheet.absoluteFillObject, margin: -42, borderRadius: 999, backgroundColor: '#ffedba', opacity: Animated.multiply(glowPulse, 0.06), shadowColor: '#ffedba', shadowOpacity: 0.3, shadowRadius: 20, elevation: 7 }} />
-        <Animated.View style={{ ...StyleSheet.absoluteFillObject, margin: -30, borderRadius: 999, backgroundColor: '#fff2cc', opacity: Animated.multiply(glowPulse, 0.09), shadowColor: '#fff2cc', shadowOpacity: 0.4, shadowRadius: 16, elevation: 6 }} />
-        <Animated.View style={{ ...StyleSheet.absoluteFillObject, margin: -20, borderRadius: 999, backgroundColor: '#fff5db', opacity: Animated.multiply(glowPulse, 0.13), shadowColor: '#fff5db', shadowOpacity: 0.4, shadowRadius: 12, elevation: 5 }} />
-        <Animated.View style={{ ...StyleSheet.absoluteFillObject, margin: -12, borderRadius: 999, backgroundColor: '#fffae8', opacity: Animated.multiply(glowPulse, 0.18), shadowColor: '#fffae8', shadowOpacity: 0.5, shadowRadius: 10, elevation: 4 }} />
-        <Animated.View style={{ ...StyleSheet.absoluteFillObject, margin: -5, borderRadius: 999, backgroundColor: '#fffdf2', opacity: Animated.multiply(glowPulse, 0.25), shadowColor: '#fffdf2', shadowOpacity: 0.5, shadowRadius: 8, elevation: 3 }} />
+        {/* Glow — 2 katman (eskiden 6 idi, sadeleştirildi) */}
+        <Animated.View style={{ ...StyleSheet.absoluteFillObject, margin: -30, borderRadius: 999, backgroundColor: '#fff2cc', opacity: Animated.multiply(glowPulse, 0.08), shadowColor: '#fff2cc', shadowOpacity: 0.3, shadowRadius: 16, elevation: 5 }} />
+        <Animated.View style={{ ...StyleSheet.absoluteFillObject, margin: -10, borderRadius: 999, backgroundColor: '#fffae8', opacity: Animated.multiply(glowPulse, 0.18), shadowColor: '#fffae8', shadowOpacity: 0.4, shadowRadius: 10, elevation: 3 }} />
         <View style={{ width: MOON_S, height: MOON_S, borderRadius: MOON_S / 2, overflow: 'hidden' }}>
           <Animated.Image
             source={require('../../assets/moon.png')}
@@ -407,13 +403,13 @@ const s = StyleSheet.create({
   },
   avatarImg: { width: AVATAR_SIZE - 8, height: AVATAR_SIZE - 8, borderRadius: (AVATAR_SIZE - 8) / 2 },
   micBadge: {
-    position: 'absolute', bottom: 2, right: 8,
+    position: 'absolute', bottom: 2, right: 2,
     width: 26, height: 26, borderRadius: 13,
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 2.5, borderColor: '#0a0e27',
   },
   roleBadge: {
-    position: 'absolute', top: 0, left: 8,
+    position: 'absolute', top: 2, left: 2,
     minWidth: 22, height: 22, borderRadius: 11,
     alignItems: 'center', justifyContent: 'center',
     paddingHorizontal: 3, borderWidth: 2, borderColor: '#0a0e27',

@@ -1,10 +1,8 @@
 // ═══════════════════════════════════════════════════════════
-// SopranoChat Mobil2 — LiveKit Audio Service (Singleton)
-// WebRTC ses katmanı — socket altyapısından bağımsız
+// SopranoChat Mobil2 — LiveKit Audio + Data Service (Singleton)
+// WebRTC ses + DataChannel (chat/katılımcılar)
 //
-// ⚠️  livekit-client paketi henüz yüklü DEĞİL.
-// Tüm LiveKit fonksiyonları lazy-load + try-catch ile korunur.
-// Paket yüklendiğinde otomatik çalışmaya başlar.
+// livekit-client lazy-load ile korunur.
 // ═══════════════════════════════════════════════════════════
 
 import { Platform, PermissionsAndroid } from 'react-native';
@@ -14,10 +12,29 @@ const BASE_URL = 'https://sopranochat.com';
 // ─── Types ──────────────────────────────────────────────────
 export type LiveKitConnectionState = 'idle' | 'connecting' | 'connected' | 'reconnecting' | 'disconnected' | 'error';
 
+export interface LiveKitParticipant {
+  identity: string;
+  name: string;
+  isSpeaking: boolean;
+  isLocal: boolean;
+  audioEnabled: boolean;
+  metadata?: any;
+}
+
+export interface LiveKitChatMessage {
+  id: string;
+  sender: string;
+  senderName: string;
+  text: string;
+  timestamp: number;
+}
+
 export interface LiveKitCallbacks {
   onConnectionStateChanged?: (state: LiveKitConnectionState) => void;
   onSpeakingChanged?: (participantId: string, isSpeaking: boolean) => void;
   onError?: (error: string) => void;
+  onParticipantsChanged?: (participants: LiveKitParticipant[]) => void;
+  onDataReceived?: (message: LiveKitChatMessage) => void;
 }
 
 // ─── Debug Logger ───────────────────────────────────────────
@@ -48,6 +65,11 @@ function getLK(): any {
   }
 }
 
+// Helper
+function safeParseJSON(str: string): any {
+  try { return JSON.parse(str); } catch { return undefined; }
+}
+
 // ─── Service ────────────────────────────────────────────────
 class LiveKitAudioService {
   private room: any = null;
@@ -56,7 +78,7 @@ class LiveKitAudioService {
   private isMicPublished = false;
 
   // ── Connect ──────────────────────────────────────────────
-  async connect(roomName: string, userId: string, displayName: string): Promise<boolean> {
+  async connect(roomName: string, userId: string, displayName: string, role: 'owner' | 'speaker' | 'listener' = 'listener'): Promise<boolean> {
     const lk = getLK();
     if (!lk) {
       warn('LiveKit kullanılamıyor — paket yüklü değil');
@@ -72,7 +94,7 @@ class LiveKitAudioService {
 
       this.setState('connecting');
 
-      const token = await this.fetchToken(roomName, userId);
+      const token = await this.fetchToken(roomName, userId, role);
       if (!token) {
         this.setState('error');
         return false;
@@ -86,7 +108,17 @@ class LiveKitAudioService {
       });
 
       this.setState('connected');
-      log('Bağlandı:', roomName);
+      log('Bağlandı:', roomName, 'Rol:', role);
+
+      // Owner ise otomatik mikrofon aç
+      if (role === 'owner' || role === 'speaker') {
+        const published = await this.publishAudio();
+        log('Otomatik ses yayını:', published ? 'başarılı' : 'başarısız');
+      }
+
+      // İlk katılımcı listesini yayınla
+      this.emitParticipants();
+
       return true;
     } catch (err: any) {
       warn('Bağlantı hatası:', err.message);
@@ -176,6 +208,67 @@ class LiveKitAudioService {
     }
   }
 
+  // ── Send Data (Chat Message) ─────────────────────────────
+  async sendChatMessage(text: string): Promise<boolean> {
+    const lk = getLK();
+    if (!lk || !this.room || this.room.state !== lk.ConnectionState.Connected) {
+      warn('Data gönderilemedi — bağlı değil');
+      return false;
+    }
+    try {
+      const msg: LiveKitChatMessage = {
+        id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        sender: this.room.localParticipant.identity,
+        senderName: this.room.localParticipant.name || this.room.localParticipant.identity,
+        text,
+        timestamp: Date.now(),
+      };
+      const data = new TextEncoder().encode(JSON.stringify({ type: 'chat', payload: msg }));
+      await this.room.localParticipant.publishData(data, { reliable: true });
+      log('Mesaj gönderildi:', text.slice(0, 30));
+      return true;
+    } catch (err: any) {
+      warn('Data gönderim hatası:', err.message);
+      return false;
+    }
+  }
+
+  // ── Get Participants ─────────────────────────────────────
+  getParticipants(): LiveKitParticipant[] {
+    if (!this.room) return [];
+    const participants: LiveKitParticipant[] = [];
+
+    // Yerel katılımcı
+    const lp = this.room.localParticipant;
+    if (lp) {
+      participants.push({
+        identity: lp.identity,
+        name: lp.name || lp.identity,
+        isSpeaking: lp.isSpeaking || false,
+        isLocal: true,
+        audioEnabled: this.isMicPublished,
+        metadata: lp.metadata ? safeParseJSON(lp.metadata) : undefined,
+      });
+    }
+
+    // Uzak katılımcılar
+    for (const [, p] of this.room.remoteParticipants) {
+      const hasAudio = Array.from(p.audioTrackPublications?.values?.() || []).some(
+        (pub: any) => pub.track && !pub.isMuted
+      );
+      participants.push({
+        identity: p.identity,
+        name: p.name || p.identity,
+        isSpeaking: p.isSpeaking || false,
+        isLocal: false,
+        audioEnabled: hasAudio,
+        metadata: p.metadata ? safeParseJSON(p.metadata) : undefined,
+      });
+    }
+
+    return participants;
+  }
+
   // ── Getters ──────────────────────────────────────────────
   get isConnected(): boolean {
     const lk = getLK();
@@ -206,9 +299,14 @@ class LiveKitAudioService {
     this.callbacks.onConnectionStateChanged?.(s);
   }
 
-  private async fetchToken(room: string, username: string): Promise<string | null> {
+  private emitParticipants(): void {
+    const participants = this.getParticipants();
+    this.callbacks.onParticipantsChanged?.(participants);
+  }
+
+  private async fetchToken(room: string, username: string, role: 'owner' | 'speaker' | 'listener' = 'listener'): Promise<string | null> {
     try {
-      const url = `${BASE_URL}/api/livekit/get-token?roomName=${encodeURIComponent(room)}&participantName=${encodeURIComponent(username)}&role=listener`;
+      const url = `${BASE_URL}/api/livekit/get-token?roomName=${encodeURIComponent(room)}&participantName=${encodeURIComponent(username)}&role=${role}`;
       log('Token alınıyor:', url);
       const res = await fetch(url);
       if (!res.ok) {
@@ -272,8 +370,20 @@ class LiveKitAudioService {
             warn('Ses bağlama hatası:', err.message);
           }
         }
+        this.emitParticipants();
       },
     );
+
+    // Katılımcı olayları
+    this.room.on(lk.RoomEvent.ParticipantConnected, (participant: any) => {
+      log('Katılımcı bağlandı:', participant.identity);
+      this.emitParticipants();
+    });
+
+    this.room.on(lk.RoomEvent.ParticipantDisconnected, (participant: any) => {
+      log('Katılımcı ayrıldı:', participant.identity);
+      this.emitParticipants();
+    });
 
     this.room.on(lk.RoomEvent.ActiveSpeakersChanged, (speakers: any[]) => {
       if (this.room) {
@@ -281,6 +391,25 @@ class LiveKitAudioService {
           const speaking = speakers.some((s: any) => s.identity === p.identity);
           this.callbacks.onSpeakingChanged?.(p.identity, speaking);
         }
+        const localSpeaking = speakers.some(
+          (s: any) => s.identity === this.room.localParticipant.identity
+        );
+        this.callbacks.onSpeakingChanged?.(this.room.localParticipant.identity, localSpeaking);
+        this.emitParticipants();
+      }
+    });
+
+    // DataChannel — Chat mesajları
+    this.room.on(lk.RoomEvent.DataReceived, (payload: Uint8Array, participant: any) => {
+      try {
+        const text = new TextDecoder().decode(payload);
+        const parsed = JSON.parse(text);
+        if (parsed.type === 'chat' && parsed.payload) {
+          log('Mesaj alındı:', parsed.payload.text?.slice(0, 30));
+          this.callbacks.onDataReceived?.(parsed.payload as LiveKitChatMessage);
+        }
+      } catch (err: any) {
+        warn('Data parse hatası:', err.message);
       }
     });
 
@@ -292,6 +421,7 @@ class LiveKitAudioService {
     this.room.on(lk.RoomEvent.Reconnected, () => {
       log('Yeniden bağlandı');
       this.setState('connected');
+      this.emitParticipants();
     });
   }
 }

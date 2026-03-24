@@ -159,7 +159,7 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
   },
   emojiBtn: {
-    padding: 2,
+    padding: 4,
   },
   chatInput: {
     flex: 1, fontSize: 13, fontWeight: '500', color: '#fff',

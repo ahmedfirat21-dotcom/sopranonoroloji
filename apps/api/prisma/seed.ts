@@ -85,6 +85,26 @@ async function main() {
     });
     console.log('✅ System settings created');
 
+    // 5. Apple Review Test Account
+    const reviewer = await prisma.user.upsert({
+        where: { tenantId_email: { tenantId: tenant.id, email: 'reviewer@sopranochat.com' } },
+        update: {
+            balance: 5000,
+            isPremium: true,
+        },
+        create: {
+            tenantId: tenant.id,
+            displayName: 'AppleReviewer',
+            email: 'reviewer@sopranochat.com',
+            passwordHash: hashPassword('SopranoTest2026!'),
+            role: 'admin',
+            isOnline: false,
+            balance: 5000,
+            isPremium: true,
+        },
+    });
+    console.log(`✅ Apple Reviewer: ${reviewer.displayName} (balance: 5000, VIP: true)`);
+
     console.log('🎉 Seed complete!');
 }
 

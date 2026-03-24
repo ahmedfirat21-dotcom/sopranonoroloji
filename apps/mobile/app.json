@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "SopranoChat",
+    "name": "Soprano Mobil1",
     "slug": "sopranochat",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/ikon.png",
-    "scheme": "sopranochat",
+    "scheme": "sopranochat-m1",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,

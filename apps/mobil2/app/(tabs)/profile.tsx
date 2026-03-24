@@ -18,10 +18,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { COLORS, RADIUS, SPACING, FONTS } from '../constants/theme';
-import { useTheme } from '../constants/ThemeContext';
-import { useUser } from '../contexts/UserContext';
-import WalletVIPSheet from '../components/WalletVIPSheet';
+import { COLORS, RADIUS, SPACING, FONTS } from '../../constants/theme';
+import { useTheme } from '../../constants/ThemeContext';
+import { useUser } from '../../contexts/UserContext';
+import WalletVIPSheet from '../../components/WalletVIPSheet';
 
 const { width } = Dimensions.get('window');
 
@@ -501,7 +501,7 @@ export default function ProfileScreen() {
 // ═════════════════════════════════════════════════════
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.deepNavy },
-  scrollContent: { paddingBottom: 100 },
+  scrollContent: { paddingBottom: 120 },
 
   /* ── Top Bar ── */
   topBar: {

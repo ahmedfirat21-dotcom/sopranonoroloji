@@ -5,8 +5,9 @@
 
 import React, { useState } from 'react';
 import {
-  View, Text, TouchableOpacity, ScrollView, Modal, StyleSheet, Pressable,
+  View, Text, TouchableOpacity, ScrollView, StyleSheet,
 } from 'react-native';
+import SwipeableBottomSheet from '../shared/SwipeableBottomSheet';
 
 interface Props {
   visible: boolean;
@@ -40,63 +41,48 @@ export default function EmojiPicker({ visible, onSelect, onClose }: Props) {
   if (!visible) return null;
 
   return (
-    <Modal transparent visible={visible} animationType="slide" onRequestClose={onClose}>
-      <Pressable style={s.overlay} onPress={onClose}>
-        <View style={s.container} onStartShouldSetResponder={() => true}>
-          {/* Başlık */}
-          <View style={s.header}>
-            <Text style={s.title}>Emoji Seç</Text>
-            <TouchableOpacity onPress={onClose} style={s.closeBtn}>
-              <Text style={s.closeBtnText}>✕</Text>
-            </TouchableOpacity>
-          </View>
+    <SwipeableBottomSheet visible={visible} onClose={onClose} heightPercent={0.45}>
+      {/* Başlık */}
+      <View style={s.header}>
+        <Text style={s.title}>Emoji Seç</Text>
+        <TouchableOpacity onPress={onClose} style={s.closeBtn}>
+          <Text style={s.closeBtnText}>✕</Text>
+        </TouchableOpacity>
+      </View>
 
-          {/* Kategori Tab'ları */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.catBar}>
-            {CATEGORIES.map((cat) => (
-              <TouchableOpacity
-                key={cat.id}
-                style={[s.catBtn, activeCategory === cat.id && s.catBtnActive]}
-                onPress={() => setActiveCategory(cat.id)}
-                activeOpacity={0.7}
-              >
-                <Text style={s.catIcon}>{cat.icon}</Text>
-                <Text style={[s.catLabel, activeCategory === cat.id && s.catLabelActive]}>{cat.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+      {/* Kategori Tab'ları */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.catBar}>
+        {CATEGORIES.map((cat) => (
+          <TouchableOpacity
+            key={cat.id}
+            style={[s.catBtn, activeCategory === cat.id && s.catBtnActive]}
+            onPress={() => setActiveCategory(cat.id)}
+            activeOpacity={0.7}
+          >
+            <Text style={s.catIcon}>{cat.icon}</Text>
+            <Text style={[s.catLabel, activeCategory === cat.id && s.catLabelActive]}>{cat.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
 
-          {/* Emoji Grid */}
-          <View style={s.grid}>
-            {EMOJIS[activeCategory].map((emoji, i) => (
-              <TouchableOpacity
-                key={`${emoji}_${i}`}
-                style={s.emojiBtn}
-                onPress={() => { onSelect(emoji); onClose(); }}
-                activeOpacity={0.6}
-              >
-                <Text style={s.emoji}>{emoji}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-      </Pressable>
-    </Modal>
+      {/* Emoji Grid */}
+      <View style={s.grid}>
+        {EMOJIS[activeCategory].map((emoji, i) => (
+          <TouchableOpacity
+            key={`${emoji}_${i}`}
+            style={s.emojiBtn}
+            onPress={() => { onSelect(emoji); onClose(); }}
+            activeOpacity={0.6}
+          >
+            <Text style={s.emoji}>{emoji}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </SwipeableBottomSheet>
   );
 }
 
 const s = StyleSheet.create({
-  overlay: {
-    flex: 1, justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.4)',
-  },
-  container: {
-    backgroundColor: 'rgba(15,20,35,0.98)',
-    borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    paddingBottom: 30, paddingTop: 12,
-    borderTopWidth: 1, borderColor: 'rgba(123,159,239,0.1)',
-    maxHeight: '50%',
-  },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: 16, paddingBottom: 8,

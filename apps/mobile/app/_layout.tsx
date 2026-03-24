@@ -8,6 +8,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, View, Image, Dimensions, StyleSheet } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useAuth } from '../hooks/useAuth';
 import { useAppState } from '../hooks/useAppState';
 import { useStore } from '../store';
@@ -113,12 +114,14 @@ function RootLayoutInner() {
   });
 
   return (
-    <SafeAreaProvider>
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#0a0e27' }} edges={['bottom']}>
-        <Slot />
-      </SafeAreaView>
-      <StatusBar style="light" />
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#0a0e27' }} edges={['bottom']}>
+          <Slot />
+        </SafeAreaView>
+        <StatusBar style="light" />
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 

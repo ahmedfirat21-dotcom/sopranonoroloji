@@ -9,6 +9,7 @@ import {
   Easing,
   ScrollView,
   PanResponder,
+  Modal,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -412,7 +413,13 @@ export default function WalletVIPSheet({ visible, onClose }: WalletVIPSheetProps
   if (!visible) return null;
 
   return (
-    <>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+      onRequestClose={closeSheet}
+    >
       {/* AlertBanner */}
       <AlertBanner
         visible={alertVisible}
@@ -621,7 +628,7 @@ export default function WalletVIPSheet({ visible, onClose }: WalletVIPSheetProps
         </View>
         </Animated.View>
       </View>
-    </>
+    </Modal>
   );
 }
 

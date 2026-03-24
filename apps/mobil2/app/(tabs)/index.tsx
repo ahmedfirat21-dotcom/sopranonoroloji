@@ -19,13 +19,16 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { COLORS, RADIUS, SPACING, FONTS } from '../constants/theme';
-import { useTheme } from '../constants/ThemeContext';
-import { useUser } from '../contexts/UserContext';
-import { DUMMY_LOCALAR, Loca } from '../constants/types';
-import WalletVIPSheet from '../components/WalletVIPSheet';
-import CreateRoomSheet from '../components/CreateRoomSheet';
-import { getPublicRooms, type RoomData } from '../services/api';
+import { COLORS, RADIUS, SPACING, FONTS } from '../../constants/theme';
+import { useTheme } from '../../constants/ThemeContext';
+import { useUser } from '../../contexts/UserContext';
+import { Loca } from '../../constants/types';
+import WalletVIPSheet from '../../components/WalletVIPSheet';
+import CreateRoomSheet from '../../components/CreateRoomSheet';
+import { getPublicRooms, type RoomData } from '../../services/api';
+import { EmptyState, SkeletonList } from '../../components/UXHelpers';
+import AlertBanner from '../../components/AlertBanner';
+import { hapticLight, hapticMedium, hapticError } from '../../utils/haptics';
 
 const { width, height } = Dimensions.get('window');
 const CARD_HORIZONTAL_GAP = 10;
@@ -72,28 +75,22 @@ function LiveDot() {
 // Turu Badge
 // ─────────────────────────────────────────────────────
 function TuruBadge({ turu }: { turu: Loca['locaTuru'] }) {
-  const badgeColor =
-    turu === 'VIP'
-      ? COLORS.vipGold
-      : turu === 'Elite'
-      ? COLORS.elitePurple
-      : COLORS.silver;
-  const glowColor =
-    turu === 'VIP'
-      ? COLORS.vipGoldGlow
-      : turu === 'Elite'
-      ? COLORS.elitePurpleGlow
-      : 'transparent';
+  const config = {
+    VIP: { colors: [COLORS.goldMetallic, COLORS.goldLight] as [string, string], text: '#1A1F35', border: COLORS.goldMetallic },
+    Elite: { colors: ['#A855F7', '#7C3AED'] as [string, string], text: '#fff', border: '#A855F7' },
+    Standart: { colors: ['rgba(92,225,230,0.15)', 'rgba(92,225,230,0.05)'] as [string, string], text: COLORS.primary, border: COLORS.primaryStroke },
+  };
+  const c = config[turu] || config.Standart;
 
   return (
-    <View style={[styles.turuBadge, { borderColor: badgeColor }]}>
-      <View
-        style={[
-          styles.turuGlow,
-          { backgroundColor: glowColor },
-        ]}
+    <View style={[styles.turuBadge, { borderColor: c.border }]}>
+      <LinearGradient
+        colors={c.colors}
+        style={[StyleSheet.absoluteFill, { borderRadius: 20 }]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
       />
-      <Text style={[styles.turuText, { color: badgeColor }]}>{turu}</Text>
+      <Text style={[styles.turuText, { color: c.text }]}>{turu}</Text>
     </View>
   );
 }
@@ -214,19 +211,40 @@ function HeroCard({ loca, onPress }: { loca: Loca; onPress: () => void }) {
 // Loca Card (Grid item)
 // ─────────────────────────────────────────────────────
 function LocaCard({ loca, isLeft, onPress }: { loca: Loca; isLeft: boolean; onPress: () => void }) {
-  // Staggered: left cards taller, right cards shorter for asymmetry
   const cardHeight = isLeft ? 190 : 160;
+  const glowColor =
+    loca.locaTuru === 'VIP' ? COLORS.goldGlow
+    : loca.locaTuru === 'Elite' ? 'rgba(168,85,247,0.12)'
+    : COLORS.primaryGlow;
 
   return (
     <TouchableOpacity activeOpacity={0.7} style={{ marginBottom: CARD_HORIZONTAL_GAP }} onPress={onPress} delayPressIn={100}>
       <View style={[styles.locaCard, { height: cardHeight }]}>
-        {/* Glass border highlight top */}
+        {/* Glassmorphism gradient border highlight */}
         <LinearGradient
-          colors={['rgba(92,225,230,0.06)', 'transparent']}
+          colors={['rgba(255,255,255,0.10)', 'rgba(255,255,255,0.02)', 'transparent']}
+          style={[StyleSheet.absoluteFill, { borderRadius: RADIUS.md }]}
+          pointerEvents="none"
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        />
+
+        {/* Radial corner glow when Live */}
+        {loca.isLive && (
+          <View style={{
+            position: 'absolute', top: -20, right: -20,
+            width: 80, height: 80, borderRadius: 40,
+            backgroundColor: glowColor, opacity: 0.35,
+          }} />
+        )}
+
+        {/* Inner depth gradient */}
+        <LinearGradient
+          colors={['rgba(15,22,42,0.0)', 'rgba(6,11,24,0.6)']}
           style={[StyleSheet.absoluteFill, { borderRadius: RADIUS.md }]}
           pointerEvents="none"
           start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 0.4 }}
+          end={{ x: 0.5, y: 1 }}
         />
 
         {/* Top: Live dot + Turu */}
@@ -247,6 +265,7 @@ function LocaCard({ loca, isLeft, onPress }: { loca: Loca; isLeft: boolean; onPr
                 ? COLORS.elitePurple
                 : COLORS.primaryStroke
             }
+            avatarUrl={loca.sahipAvatar || undefined}
           />
           <Text style={styles.locaCardName} numberOfLines={1}>
             {loca.locaAdi}
@@ -259,11 +278,7 @@ function LocaCard({ loca, isLeft, onPress }: { loca: Loca; isLeft: boolean; onPr
         {/* Bottom: Capacity */}
         <View style={styles.locaCardBottom}>
           <View style={styles.capacityRow}>
-            <Ionicons
-              name="people-outline"
-              size={12}
-              color={COLORS.silverLight}
-            />
+            <Ionicons name="people-outline" size={12} color={COLORS.silverLight} />
             <Text style={styles.capacityText}>
               {loca.anlikKapasite}/{loca.maksKapasite}
             </Text>
@@ -274,46 +289,7 @@ function LocaCard({ loca, isLeft, onPress }: { loca: Loca; isLeft: boolean; onPr
   );
 }
 
-// ─────────────────────────────────────────────────────
-// Center Create Button
-// ─────────────────────────────────────────────────────
-function CenterButton({ onPress }: { onPress?: () => void }) {
-  const glow = useRef(new Animated.Value(0.5)).current;
 
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(glow, {
-          toValue: 1,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(glow, {
-          toValue: 0.5,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, []);
-
-  return (
-    <View style={styles.centerBtnWrapper}>
-      {/* Outer glow */}
-      <Animated.View style={[styles.centerGlow, { opacity: glow }]} />
-      <TouchableOpacity activeOpacity={0.8} onPress={onPress}>
-        <LinearGradient
-          colors={[COLORS.primary, COLORS.primaryDark]}
-          style={styles.centerBtn}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
-          <Ionicons name="add" size={28} color={COLORS.deepNavy} />
-        </LinearGradient>
-      </TouchableOpacity>
-    </View>
-  );
-}
 
 // ═════════════════════════════════════════════════════
 // HOME SCREEN
@@ -327,9 +303,10 @@ export default function HomeScreen() {
   const fadeIn = useRef(new Animated.Value(0)).current;
   const [walletVisible, setWalletVisible] = useState(false);
   const [createRoomVisible, setCreateRoomVisible] = useState(false);
-  const [localar, setLocalar] = useState<Loca[]>(DUMMY_LOCALAR);
+  const [localar, setLocalar] = useState<Loca[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [apiError, setApiError] = useState('');
 
   // Entrance animation
   useEffect(() => {
@@ -361,7 +338,9 @@ export default function HomeScreen() {
         console.log(`[Home] ${rooms.length} oda backend'den yüklendi`);
       }
     } catch (e: any) {
-      console.warn('[Home] Oda verisi alınamadı, dummy kullanılıyor:', e.message);
+      console.warn('[Home] Oda verisi alınamadı:', e.message);
+      setApiError('Sunucuya bağlanılamadı — çevrimdışı mod');
+      hapticError();
     } finally {
       setIsLoading(false);
     }
@@ -432,53 +411,78 @@ export default function HomeScreen() {
           />
         }
       >
-        {/* Greetings / Section title */}
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: C.white }]}>Öne Çıkanlar</Text>
-          <Text style={[styles.sectionSubtitle, { color: C.silverDark }]}>VIP & Elite Localar</Text>
-        </View>
+        {/* ─── Öne Çıkanlar (VIP) — Coşullu render ─── */}
+        {vipLocalar.length > 0 && (
+          <>
+            <View style={styles.sectionHeader}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <LinearGradient
+                  colors={[COLORS.goldMetallic, COLORS.goldLight]}
+                  style={{ width: 3, height: 18, borderRadius: 2 }}
+                />
+                <Text style={[styles.sectionTitle, { color: C.white }]}>Öne Çıkanlar</Text>
+              </View>
+              <Text style={[styles.sectionSubtitle, { color: C.silverDark }]}>VIP & Elite Localar</Text>
+            </View>
 
-        {/* ─── Hero Carousel ─── */}
-        <FlatList
-          data={vipLocalar}
-          keyExtractor={(item) => item.id}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.carouselContainer}
-          snapToInterval={width * 0.78 + SPACING.sm}
-          decelerationRate="fast"
-          renderItem={({ item }) => (
-            <HeroCard
-              loca={item}
-              onPress={() => router.push({ pathname: '/room', params: { id: item.id } })}
+            <FlatList
+              data={vipLocalar}
+              keyExtractor={(item) => item.id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.carouselContainer}
+              snapToInterval={width * 0.78 + SPACING.sm}
+              decelerationRate="fast"
+              renderItem={({ item }) => (
+                <HeroCard
+                  loca={item}
+                  onPress={() => router.push({ pathname: '/room', params: { id: item.id } })}
+                />
+              )}
             />
-          )}
-        />
+          </>
+        )}
 
         {/* ─── Grid Section Title ─── */}
         <View style={[styles.sectionHeader, { marginTop: SPACING.lg }]}>
-          <Text style={[styles.sectionTitle, { color: C.white }]}>Loca Vitrini</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <LinearGradient
+              colors={[COLORS.primary, COLORS.primaryDark]}
+              style={{ width: 3, height: 18, borderRadius: 2 }}
+            />
+            <Text style={[styles.sectionTitle, { color: C.white }]}>Loca Vitrini</Text>
+          </View>
           <Text style={[styles.sectionSubtitle, { color: C.silverDark }]}>Tüm aktif localar</Text>
         </View>
 
         {/* ─── Staggered Grid ─── */}
-        <View style={styles.gridContainer}>
-          {/* Left Column */}
-          <View style={styles.gridColumn}>
-            {leftColumn.map((loca) => (
-              <LocaCard key={loca.id} loca={loca} isLeft onPress={() => router.push({ pathname: '/room', params: { id: loca.id } })} />
-            ))}
+        {isLoading ? (
+          <SkeletonList count={4} />
+        ) : gridLocalar.length === 0 ? (
+          <EmptyState
+            icon="home-outline"
+            title="Henüz aktif loca yok"
+            subtitle="İlk locayı sen kur, sahneyi al!"
+          />
+        ) : (
+          <View style={styles.gridContainer}>
+            {/* Left Column */}
+            <View style={styles.gridColumn}>
+              {leftColumn.map((loca) => (
+                <LocaCard key={loca.id} loca={loca} isLeft onPress={() => router.push({ pathname: '/room', params: { id: loca.id } })} />
+              ))}
+            </View>
+            {/* Right Column — offset for stagger effect */}
+            <View style={[styles.gridColumn, { marginTop: SPACING.xl }]}>
+              {rightColumn.map((loca) => (
+                <LocaCard key={loca.id} loca={loca} isLeft={false} onPress={() => router.push({ pathname: '/room', params: { id: loca.id } })} />
+              ))}
+            </View>
           </View>
-          {/* Right Column — offset for stagger effect */}
-          <View style={[styles.gridColumn, { marginTop: SPACING.xl }]}>
-            {rightColumn.map((loca) => (
-              <LocaCard key={loca.id} loca={loca} isLeft={false} onPress={() => router.push({ pathname: '/room', params: { id: loca.id } })} />
-            ))}
-          </View>
-        </View>
+        )}
 
         {/* Bottom spacing for nav */}
-        <View style={{ height: 100 }} />
+        <View style={{ height: 120 }} />
       </Animated.ScrollView>
 
       {/* ─── Luxury Top Bar (overlay) ─── */}
@@ -508,7 +512,7 @@ export default function HomeScreen() {
 
         {/* Center: Logo */}
         <Image
-          source={require('../assets/images/logo.png')}
+          source={require('../../assets/images/logo.png')}
           style={styles.topBarLogo}
           resizeMode="contain"
         />
@@ -526,67 +530,23 @@ export default function HomeScreen() {
           </TouchableOpacity>
           <TouchableOpacity style={styles.topBarIconBtn} activeOpacity={0.6} onPress={() => setWalletVisible(true)}>
             <View>
+              {/* Altın parlama halkası */}
+              <View style={{
+                position: 'absolute', top: -4, left: -4, right: -4, bottom: -4,
+                borderRadius: 14, backgroundColor: COLORS.goldGlow, opacity: 0.35,
+              }} />
               <Ionicons
                 name="wallet-outline"
                 size={21}
                 color={COLORS.goldMetallic}
               />
-              {/* Gold dot */}
               <View style={styles.notifDot} />
             </View>
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* ─── Floating Bottom Navigation ─── */}
-      <View style={[styles.bottomNavWrapper, { bottom: Math.max(insets.bottom, 8) + 4 }]}>
-        <View style={styles.bottomNav}>
-          <BlurView
-            intensity={isDark ? 40 : 70}
-            tint={isDark ? 'dark' : 'light'}
-            style={[StyleSheet.absoluteFill, { borderRadius: RADIUS.xl }]}
-          />
-          {/* Subtle glow top edge */}
-          <LinearGradient
-            colors={isDark ? ['rgba(92,225,230,0.08)', 'transparent'] : ['rgba(5,163,164,0.06)', 'transparent']}
-            style={styles.navTopGlow}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 1 }}
-          />
 
-          {/* Nav Items */}
-          <TouchableOpacity style={styles.navItem} activeOpacity={0.7}>
-            <Ionicons name="home" size={22} color={C.primary} />
-            <Text style={[styles.navLabel, styles.navLabelActive, { color: C.primary }]}>Lobi</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.navItem} activeOpacity={0.7} onPress={() => router.push('/discover')}>
-            <Ionicons name="compass-outline" size={22} color={C.silverDark} />
-            <Text style={[styles.navLabel, { color: C.silverDark }]}>Keşfet</Text>
-          </TouchableOpacity>
-
-          {/* Center Create Button */}
-          <CenterButton onPress={() => setCreateRoomVisible(true)} />
-
-          <TouchableOpacity style={styles.navItem} activeOpacity={0.7} onPress={() => router.push('/messages')}>
-            <Ionicons
-              name="chatbubbles-outline"
-              size={22}
-              color={C.silverDark}
-            />
-            <Text style={[styles.navLabel, { color: C.silverDark }]}>Mesajlar</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.navItem} activeOpacity={0.7} onPress={() => router.push('/profile')}>
-            <Ionicons
-              name="person-outline"
-              size={22}
-              color={C.silverDark}
-            />
-            <Text style={[styles.navLabel, { color: C.silverDark }]}>Profil</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
 
       {/* ─── Wallet & VIP Sheet ─── */}
       <WalletVIPSheet
@@ -598,6 +558,17 @@ export default function HomeScreen() {
       <CreateRoomSheet
         visible={createRoomVisible}
         onClose={() => setCreateRoomVisible(false)}
+        onRoomCreated={loadRooms}
+      />
+
+      {/* ─── Alert Banner ─── */}
+      <AlertBanner
+        visible={!!apiError}
+        message={apiError}
+        type="warning"
+        actionLabel="Tekrar Dene"
+        onAction={() => { setApiError(''); loadRooms(); }}
+        onHide={() => setApiError('')}
       />
     </View>
   );
@@ -617,7 +588,7 @@ const styles = StyleSheet.create({
   /* ── Scroll ── */
   scrollContent: {
     paddingTop: TOP_BAR_H + SPACING.sm,
-    paddingBottom: SPACING.xxl,
+    paddingBottom: 120,
   },
 
   /* ── Top Bar ── */
@@ -698,15 +669,24 @@ const styles = StyleSheet.create({
   },
   heroCard: {
     width: width * 0.78,
-    height: 180,
-    backgroundColor: COLORS.heroCardBg,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.heroCardBorder,
+    height: 190,
+    backgroundColor: 'rgba(14,20,38,0.85)',
+    borderRadius: RADIUS.lg + 2,
+    borderWidth: 1.5,
+    borderColor: 'rgba(207,181,59,0.20)',
     marginRight: SPACING.sm,
     padding: SPACING.md,
     justifyContent: 'space-between',
     overflow: 'hidden',
+    ...(Platform.OS === 'android' ? {
+      elevation: 10,
+      shadowColor: '#000',
+    } : {
+      shadowColor: 'rgba(207,181,59,0.15)',
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.4,
+      shadowRadius: 16,
+    }),
   },
   heroTopRow: {
     flexDirection: 'row',
@@ -775,23 +755,21 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
-  /* ── Turu Badge ── */
+  /* ── Turu Badge (Premium) ── */
   turuBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: RADIUS.full,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 20,
     borderWidth: 1,
     overflow: 'hidden',
     position: 'relative',
   },
-  turuGlow: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: RADIUS.full,
-  },
   turuText: {
-    fontSize: 10,
-    fontWeight: FONTS.bold as any,
-    letterSpacing: 1,
+    fontSize: 9,
+    fontWeight: FONTS.heavy as any,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    zIndex: 1,
   },
 
   /* ── Avatar ── */
@@ -828,15 +806,24 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  /* ── Loca Card ── */
+  /* ── Loca Card (Premium Glassmorphism) ── */
   locaCard: {
-    backgroundColor: COLORS.cardGlassBg,
-    borderRadius: RADIUS.md,
+    backgroundColor: 'rgba(12,18,36,0.75)',
+    borderRadius: RADIUS.md + 2,
     borderWidth: 1,
-    borderColor: COLORS.cardGlassBorder,
+    borderColor: 'rgba(255,255,255,0.10)',
     padding: 14,
     justifyContent: 'space-between',
     overflow: 'hidden',
+    ...(Platform.OS === 'android' ? {
+      elevation: 6,
+      shadowColor: '#000',
+    } : {
+      shadowColor: 'rgba(0,0,0,0.4)',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.35,
+      shadowRadius: 10,
+    }),
   },
   locaCardTop: {
     flexDirection: 'row',
@@ -878,11 +865,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     height: 64,
     borderRadius: RADIUS.xl,
-    backgroundColor: COLORS.navBarBg,
+    backgroundColor: Platform.OS === 'android' ? 'rgba(10,16,30,0.97)' : COLORS.navBarBg,
     borderWidth: 1,
-    borderColor: COLORS.navBarBorder,
+    borderColor: 'rgba(255,255,255,0.08)',
     overflow: 'visible',
     paddingHorizontal: SPACING.sm,
+    ...(Platform.OS === 'android' ? {
+      elevation: 12,
+      shadowColor: '#000',
+    } : {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: -4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 12,
+    }),
   },
   navTopGlow: {
     position: 'absolute',
@@ -908,30 +904,40 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
   },
 
-  /* ── Center Button ── */
+  /* ── Center Button (Premium) ── */
   centerBtnWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -18,
+    marginTop: -20,
     flex: 1,
   },
   centerGlow: {
     position: 'absolute',
-    width: 66,
-    height: 66,
-    borderRadius: 33,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: COLORS.primaryGlow,
+  },
+  centerGlowOuter: {
+    position: 'absolute',
+    width: 90,
+    height: 90,
+    borderRadius: 45,
     backgroundColor: COLORS.primaryGlow,
   },
   centerBtn: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
     shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 14,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.20)',
   },
 });

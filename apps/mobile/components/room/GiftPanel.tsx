@@ -1,15 +1,11 @@
-/* ═══════════════════════════════════════════════════════════
-   SopranoChat Mobil — GiftPanel (Koyu Tema)
-   Hediye gönderme bottom sheet — kategori, bakiye, grid
-   ═══════════════════════════════════════════════════════════ */
-
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  View, Text, TouchableOpacity, ScrollView, Modal, StyleSheet,
-  Pressable, ActivityIndicator, Image, Dimensions, Alert,
+  View, Text, TouchableOpacity, ScrollView, StyleSheet,
+  ActivityIndicator, Image, Dimensions, Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import useStore from '../../store';
+import SwipeableBottomSheet from '../shared/SwipeableBottomSheet';
 import type { Participant } from '../../services/realtimeService';
 
 const { width } = Dimensions.get('window');
@@ -127,185 +123,163 @@ export default function GiftPanel({ visible, targetUser, onClose, onOpenShop }: 
 
   const selectableUsers = participants.filter(p => p.userId !== user?.id);
 
-  if (!visible) return null;
-
   return (
-    <Modal transparent visible={visible} animationType="slide" onRequestClose={onClose}>
-      <Pressable style={s.overlay} onPress={onClose}>
-        <View style={s.container} onStartShouldSetResponder={() => true}>
-          {/* Drag handle */}
-          <View style={s.dragHandle} />
-
-          {/* Header */}
-          <View style={s.header}>
-            <View style={s.headerLeft}>
-              <Text style={{ fontSize: 20 }}>🎁</Text>
-              <View>
-                <Text style={s.headerTitle}>Hediye Gönder</Text>
-                {receiverName && (
-                  <Text style={s.headerSub}>→ {receiverName}</Text>
-                )}
-              </View>
-            </View>
-            <TouchableOpacity onPress={onClose} style={s.closeBtn}>
-              <Ionicons name="close" size={16} color="rgba(255,255,255,0.5)" />
-            </TouchableOpacity>
-          </View>
-
-          {/* Balance + Mağaza */}
-          <View style={s.balanceRow}>
-            <View style={s.balanceItem}>
-              <Text style={{ fontSize: 14 }}>🪙</Text>
-              <Text style={s.balanceVal}>{balance.toLocaleString()}</Text>
-              <Text style={s.balanceLabel}>Jeton</Text>
-            </View>
-            <View style={s.divider} />
-            <View style={s.balanceItem}>
-              <Text style={{ fontSize: 14 }}>⭐</Text>
-              <Text style={[s.balanceVal, { color: '#a855f7' }]}>{points.toLocaleString()}</Text>
-              <Text style={s.balanceLabel}>Puan</Text>
-            </View>
-            <View style={{ flex: 1 }} />
-            <TouchableOpacity
-              style={s.shopBtn}
-              onPress={() => { onClose(); onOpenShop(); }}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="storefront-outline" size={14} color="#818cf8" />
-              <Text style={s.shopBtnText}>Mağaza</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Kullanıcı Seçimi */}
-          {!targetUser && (
-            <TouchableOpacity
-              style={s.userSelectBtn}
-              onPress={() => setShowUserPicker(!showUserPicker)}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="person-outline" size={14} color="#818cf8" />
-              <Text style={s.userSelectText}>
-                {receiverName || 'Alıcı seç...'}
-              </Text>
-              <Ionicons name={showUserPicker ? 'chevron-up' : 'chevron-down'} size={14} color="rgba(255,255,255,0.3)" />
-            </TouchableOpacity>
-          )}
-
-          {/* Kullanıcı Picker */}
-          {showUserPicker && (
-            <ScrollView style={s.userList} nestedScrollEnabled>
-              {selectableUsers.length === 0 ? (
-                <Text style={s.emptyText}>Odada başka kullanıcı yok</Text>
-              ) : (
-                selectableUsers.map(p => (
-                  <TouchableOpacity
-                    key={p.userId}
-                    style={[s.userItem, selectedReceiver === p.userId && s.userItemActive]}
-                    onPress={() => { setSelectedReceiver(p.userId); setShowUserPicker(false); }}
-                  >
-                    <Image source={{ uri: p.avatar || 'https://sopranochat.com/avatars/neutral_1.png' }} style={s.userAvatar} />
-                    <Text style={s.userItemName}>{p.displayName}</Text>
-                    {selectedReceiver === p.userId && (
-                      <Ionicons name="checkmark-circle" size={16} color="#818cf8" />
-                    )}
-                  </TouchableOpacity>
-                ))
-              )}
-            </ScrollView>
-          )}
-
-          {/* Kategori Tabs */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.catBar}>
-            {categories.map(cat => (
-              <TouchableOpacity
-                key={cat}
-                style={[s.catBtn, activeCategory === cat && s.catBtnActive]}
-                onPress={() => setActiveCategory(cat)}
-                activeOpacity={0.7}
-              >
-                <Text style={s.catIcon}>{cat === 'all' ? '🎯' : CATEGORY_LABELS[cat]?.icon || '📦'}</Text>
-                <Text style={[s.catLabel, activeCategory === cat && s.catLabelActive]}>
-                  {cat === 'all' ? 'Tümü' : CATEGORY_LABELS[cat]?.label || cat}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-
-          {/* Gift Grid */}
-          <ScrollView style={s.gridScroll} nestedScrollEnabled>
-            <View style={s.grid}>
-              {filteredGifts.length === 0 ? (
-                <View style={s.emptyState}>
-                  <ActivityIndicator color="#818cf8" />
-                  <Text style={s.emptyText}>Yükleniyor...</Text>
-                </View>
-              ) : (
-                filteredGifts.map(gift => {
-                  const canAfford = balance >= gift.price;
-                  const isSending = sending === gift.id;
-                  const catColor = CATEGORY_LABELS[gift.category]?.color || '#6b7280';
-
-                  return (
-                    <TouchableOpacity
-                      key={gift.id}
-                      style={[
-                        s.giftCard,
-                        !canAfford && s.giftCardDisabled,
-                        isSending && s.giftCardSending,
-                      ]}
-                      onPress={() => canAfford && selectedReceiver && handleSend(gift.id, gift.price)}
-                      disabled={!canAfford || !selectedReceiver || !!sending}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={s.giftEmoji}>{gift.emoji}</Text>
-                      <Text style={s.giftName} numberOfLines={1}>{gift.name}</Text>
-                      <View style={[s.giftPrice, { borderColor: catColor + '30' }]}>
-                        <Text style={{ fontSize: 8 }}>🪙</Text>
-                        <Text style={[s.giftPriceText, { color: catColor }]}>{gift.price}</Text>
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })
-              )}
-            </View>
-
-            {/* Uyarılar */}
-            {balance <= 0 && giftList.length > 0 && (
-              <View style={s.warningBox}>
-                <Ionicons name="warning-outline" size={14} color="#f59e0b" />
-                <Text style={s.warningText}>Jeton bakiyeniz yetersiz. Mağazadan jeton alabilirsiniz.</Text>
-              </View>
+    <SwipeableBottomSheet visible={visible} onClose={onClose} heightPercent={0.85}>
+      {/* Header */}
+      <View style={s.header}>
+        <View style={s.headerLeft}>
+          <Text style={{ fontSize: 20 }}>🎁</Text>
+          <View>
+            <Text style={s.headerTitle}>Hediye Gönder</Text>
+            {receiverName && (
+              <Text style={s.headerSub}>→ {receiverName}</Text>
             )}
-
-            {!selectedReceiver && giftList.length > 0 && (
-              <View style={s.warningBox}>
-                <Ionicons name="person-outline" size={14} color="#818cf8" />
-                <Text style={s.warningText}>Lütfen önce alıcı seçin.</Text>
-              </View>
-            )}
-          </ScrollView>
+          </View>
         </View>
-      </Pressable>
-    </Modal>
+        <TouchableOpacity onPress={onClose} style={s.closeBtn}>
+          <Ionicons name="close" size={16} color="rgba(255,255,255,0.5)" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Balance + Mağaza */}
+      <View style={s.balanceRow}>
+        <View style={s.balanceItem}>
+          <Text style={{ fontSize: 14 }}>🪙</Text>
+          <Text style={s.balanceVal}>{balance.toLocaleString()}</Text>
+          <Text style={s.balanceLabel}>Jeton</Text>
+        </View>
+        <View style={s.divider} />
+        <View style={s.balanceItem}>
+          <Text style={{ fontSize: 14 }}>⭐</Text>
+          <Text style={[s.balanceVal, { color: '#a855f7' }]}>{points.toLocaleString()}</Text>
+          <Text style={s.balanceLabel}>Puan</Text>
+        </View>
+        <View style={{ flex: 1 }} />
+        <TouchableOpacity
+          style={s.shopBtn}
+          onPress={() => { onClose(); onOpenShop(); }}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="storefront-outline" size={14} color="#818cf8" />
+          <Text style={s.shopBtnText}>Mağaza</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Kullanıcı Seçimi */}
+      {!targetUser && (
+        <TouchableOpacity
+          style={s.userSelectBtn}
+          onPress={() => setShowUserPicker(!showUserPicker)}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="person-outline" size={14} color="#818cf8" />
+          <Text style={s.userSelectText}>
+            {receiverName || 'Alıcı seç...'}
+          </Text>
+          <Ionicons name={showUserPicker ? 'chevron-up' : 'chevron-down'} size={14} color="rgba(255,255,255,0.3)" />
+        </TouchableOpacity>
+      )}
+
+      {/* Kullanıcı Picker */}
+      {showUserPicker && (
+        <ScrollView style={s.userList} nestedScrollEnabled>
+          {selectableUsers.length === 0 ? (
+            <Text style={s.emptyText}>Odada başka kullanıcı yok</Text>
+          ) : (
+            selectableUsers.map(p => (
+              <TouchableOpacity
+                key={p.userId}
+                style={[s.userItem, selectedReceiver === p.userId && s.userItemActive]}
+                onPress={() => { setSelectedReceiver(p.userId); setShowUserPicker(false); }}
+              >
+                <Image source={{ uri: p.avatar || 'https://sopranochat.com/avatars/neutral_1.png' }} style={s.userAvatar} />
+                <Text style={s.userItemName}>{p.displayName}</Text>
+                {selectedReceiver === p.userId && (
+                  <Ionicons name="checkmark-circle" size={16} color="#818cf8" />
+                )}
+              </TouchableOpacity>
+            ))
+          )}
+        </ScrollView>
+      )}
+
+      {/* Kategori Tabs */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.catBar}>
+        {categories.map(cat => (
+          <TouchableOpacity
+            key={cat}
+            style={[s.catBtn, activeCategory === cat && s.catBtnActive]}
+            onPress={() => setActiveCategory(cat)}
+            activeOpacity={0.7}
+          >
+            <Text style={s.catIcon}>{cat === 'all' ? '🎯' : CATEGORY_LABELS[cat]?.icon || '📦'}</Text>
+            <Text style={[s.catLabel, activeCategory === cat && s.catLabelActive]}>
+              {cat === 'all' ? 'Tümü' : CATEGORY_LABELS[cat]?.label || cat}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      {/* Gift Grid */}
+      <ScrollView style={s.gridScroll} nestedScrollEnabled>
+        <View style={s.grid}>
+          {filteredGifts.length === 0 ? (
+            <View style={s.emptyState}>
+              <ActivityIndicator color="#818cf8" />
+              <Text style={s.emptyText}>Yükleniyor...</Text>
+            </View>
+          ) : (
+            filteredGifts.map(gift => {
+              const canAfford = balance >= gift.price;
+              const isSending = sending === gift.id;
+              const catColor = CATEGORY_LABELS[gift.category]?.color || '#6b7280';
+
+              return (
+                <TouchableOpacity
+                  key={gift.id}
+                  style={[
+                    s.giftCard,
+                    !canAfford && s.giftCardDisabled,
+                    isSending && s.giftCardSending,
+                  ]}
+                  onPress={() => canAfford && selectedReceiver && handleSend(gift.id, gift.price)}
+                  disabled={!canAfford || !selectedReceiver || !!sending}
+                  activeOpacity={0.7}
+                >
+                  <Text style={s.giftEmoji}>{gift.emoji}</Text>
+                  <Text style={s.giftName} numberOfLines={1}>{gift.name}</Text>
+                  <View style={[s.giftPrice, { borderColor: catColor + '30' }]}>
+                    <Text style={{ fontSize: 8 }}>🪙</Text>
+                    <Text style={[s.giftPriceText, { color: catColor }]}>{gift.price}</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })
+          )}
+        </View>
+
+        {/* Uyarılar */}
+        {balance <= 0 && giftList.length > 0 && (
+          <View style={s.warningBox}>
+            <Ionicons name="warning-outline" size={14} color="#f59e0b" />
+            <Text style={s.warningText}>Jeton bakiyeniz yetersiz. Mağazadan jeton alabilirsiniz.</Text>
+          </View>
+        )}
+
+        {!selectedReceiver && giftList.length > 0 && (
+          <View style={s.warningBox}>
+            <Ionicons name="person-outline" size={14} color="#818cf8" />
+            <Text style={s.warningText}>Lütfen önce alıcı seçin.</Text>
+          </View>
+        )}
+      </ScrollView>
+    </SwipeableBottomSheet>
   );
 }
 
-const CARD_W = (width - 24 - 24) / 4; // 4 sütun
+const CARD_W = (width - 24 - 18) / 4; // 4 sütun, 3 gap × 6px
 
 const s = StyleSheet.create({
-  overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.6)' },
-  container: {
-    backgroundColor: 'rgba(15,20,35,0.98)',
-    borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    height: '90%', paddingBottom: 16,
-    borderTopWidth: 1, borderColor: 'rgba(139,92,246,0.15)',
-  },
-
-  dragHandle: {
-    width: 36, height: 4, borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    alignSelf: 'center', marginTop: 10, marginBottom: 6,
-  },
 
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',

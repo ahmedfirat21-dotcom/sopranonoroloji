@@ -31,44 +31,7 @@ import type { Participant } from '../services/realtimeService';
 const { width, height: H } = Dimensions.get('window');
 const DEFAULT_AVATAR = 'https://sopranochat.com/avatars/neutral_1.png';
 
-/* ═══════════════════════════════════════════════════════════
-   PARILTILI ARKA PLAN YILDIZLARI
-   ═══════════════════════════════════════════════════════════ */
-function Sparkles() {
-  const sparkles = useRef(
-    Array.from({ length: 22 }, (_, i) => ({
-      id: i,
-      left: Math.random() * 100,
-      top: Math.random() * 100,
-      size: 1 + Math.random() * 2,
-      opacity: new Animated.Value(Math.random() * 0.4),
-      delay: Math.random() * 4000,
-    }))
-  ).current;
 
-  useEffect(() => {
-    sparkles.forEach(s => {
-      Animated.loop(Animated.sequence([
-        Animated.delay(s.delay),
-        Animated.timing(s.opacity, { toValue: 0.6, duration: 1500, useNativeDriver: true }),
-        Animated.timing(s.opacity, { toValue: 0.03, duration: 2000, useNativeDriver: true }),
-      ])).start();
-    });
-  }, []);
-
-  return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      {sparkles.map(s => (
-        <Animated.View key={s.id} style={{
-          position: 'absolute',
-          left: `${s.left}%` as any, top: `${s.top}%` as any,
-          width: s.size, height: s.size, borderRadius: s.size / 2,
-          backgroundColor: '#fff', opacity: s.opacity,
-        }} />
-      ))}
-    </View>
-  );
-}
 
 /* ═══════════════════════════════════════════════════════════
    ANA EKRAN — Modern Oda Tasarımı
@@ -294,7 +257,7 @@ export default function RoomScreen() {
         locations={[0, 0.25, 0.5, 0.75, 1]}
         style={StyleSheet.absoluteFill as any}
       />
-      <Sparkles />
+
 
       {/* Bannerlar */}
       {connectionError && <View style={st.banner}><Text style={st.bannerText}>⚠️ Bağlantı kurulamadı</Text></View>}
@@ -706,14 +669,15 @@ const st = StyleSheet.create({
   },
   listenerItem: {
     alignItems: 'center',
-    width: (width - 32) / 5,
+    width: (width - 28) / 5,
     marginBottom: 8,
   },
   listenerAvatarWrap: {
     width: 44, height: 44, borderRadius: 22,
     borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.08)',
+    overflow: 'hidden',
   },
-  listenerAvatarImg: { width: 44, height: 44, borderRadius: 22 },
+  listenerAvatarImg: { width: 41, height: 41, borderRadius: 20.5 },
 
   listenerName: {
     fontSize: 8, fontWeight: '500', color: 'rgba(255,255,255,0.45)',

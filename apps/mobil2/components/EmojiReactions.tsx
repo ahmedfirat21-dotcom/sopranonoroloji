@@ -3,11 +3,12 @@
    Ekranda uçuşan emoji reaksiyon animasyonları
    ═══════════════════════════════════════════════════════════ */
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Animated,
-  Dimensions, Easing,
+  Dimensions, Easing, ScrollView,
 } from 'react-native';
+import { COLORS } from '../constants/theme';
 
 const { width } = Dimensions.get('window');
 
@@ -50,6 +51,27 @@ interface EmojiReactionsProps {
 export default function EmojiReactions({ onEmojiSent, showBar }: EmojiReactionsProps) {
   const [floatingEmojis, setFloatingEmojis] = useState<FloatingEmoji[]>([]);
   const idRef = useRef(0);
+
+  // ── Açılış/kapanış animasyonu ──
+  const barHeight = useRef(new Animated.Value(0)).current;
+  const barOpacity = useRef(new Animated.Value(0)).current;
+  const barScale = useRef(new Animated.Value(0.85)).current;
+
+  useEffect(() => {
+    if (showBar) {
+      Animated.parallel([
+        Animated.spring(barHeight, { toValue: 54, friction: 10, tension: 80, useNativeDriver: false }),
+        Animated.timing(barOpacity, { toValue: 1, duration: 200, useNativeDriver: false }),
+        Animated.spring(barScale, { toValue: 1, friction: 8, tension: 100, useNativeDriver: false }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(barHeight, { toValue: 0, duration: 180, easing: Easing.in(Easing.ease), useNativeDriver: false }),
+        Animated.timing(barOpacity, { toValue: 0, duration: 120, useNativeDriver: false }),
+        Animated.timing(barScale, { toValue: 0.85, duration: 150, useNativeDriver: false }),
+      ]).start();
+    }
+  }, [showBar]);
 
   const sendEmoji = useCallback((emoji: string) => {
     const id = `emoji_${idRef.current++}`;
@@ -103,9 +125,23 @@ export default function EmojiReactions({ onEmojiSent, showBar }: EmojiReactionsP
         <FloatingEmojiView key={e.id} emoji={e.emoji} x={e.x} translateY={e.translateY} opacity={e.opacity} scale={e.scale} />
       ))}
 
-      {/* Quick reaction bar — input satırının hemen üstünde, inline akışta gösterilecek */}
-      {showBar && (
-        <View style={styles.emojiBar}>
+      {/* Quick reaction bar — animasyonlu açılış/kapanış */}
+      <Animated.View
+        style={[
+          styles.emojiBarWrap,
+          {
+            height: barHeight,
+            opacity: barOpacity,
+            transform: [{ scale: barScale }],
+          },
+        ]}
+      >
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.emojiBarContent}
+          bounces={false}
+        >
           {QUICK_EMOJIS.map(emoji => (
             <TouchableOpacity
               key={emoji}
@@ -116,8 +152,8 @@ export default function EmojiReactions({ onEmojiSent, showBar }: EmojiReactionsP
               <Text style={styles.emojiBtnText}>{emoji}</Text>
             </TouchableOpacity>
           ))}
-        </View>
-      )}
+        </ScrollView>
+      </Animated.View>
     </>
   );
 }
@@ -131,17 +167,21 @@ const styles = StyleSheet.create({
   floatingEmojiText: {
     fontSize: 28,
   },
-  emojiBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+  emojiBarWrap: {
+    overflow: 'hidden',
     marginHorizontal: 14,
     marginBottom: 6,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.75)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  emojiBarContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    gap: 4,
+    height: '100%',
   },
   emojiBtn: {
     width: 38,
@@ -149,7 +189,7 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
   },
   emojiBtnText: {
     fontSize: 20,

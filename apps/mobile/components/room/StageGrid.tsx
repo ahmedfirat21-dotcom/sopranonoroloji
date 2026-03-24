@@ -232,7 +232,7 @@ const s = StyleSheet.create({
     borderWidth: 2, borderColor: 'rgba(255,255,255,0.12)',
     overflow: 'hidden',
   },
-  avatarImg: { width: AVATAR, height: AVATAR, borderRadius: AVATAR / 2 },
+  avatarImg: { width: AVATAR - 4, height: AVATAR - 4, borderRadius: (AVATAR - 4) / 2 },
 
   micBadge: {
     position: 'absolute', bottom: 0, right: 0,

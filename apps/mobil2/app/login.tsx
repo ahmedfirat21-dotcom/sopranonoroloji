@@ -27,7 +27,7 @@ export default function LoginScreen() {
   // Zaten giriş yapmışsa home'a yönlendir
   useEffect(() => {
     if (isLoggedIn) {
-      router.replace('/home');
+      router.replace('/(tabs)');
     }
   }, [isLoggedIn]);
 
@@ -76,11 +76,11 @@ export default function LoginScreen() {
       const guestNames = ['Misafir', 'Ziyaretçi', 'Konuk', 'Gezgin'];
       const randomName = guestNames[Math.floor(Math.random() * guestNames.length)] + '_' + Math.floor(Math.random() * 9999);
       await login(randomName);
-      router.replace('/home');
+      router.replace('/(tabs)');
     } catch (e: any) {
       console.warn('[Login] Misafir giriş hatası:', e.message);
       // Hata olsa bile home'a git (offline mod)
-      router.replace('/home');
+      router.replace('/(tabs)');
     } finally {
       setGuestLoading(false);
     }

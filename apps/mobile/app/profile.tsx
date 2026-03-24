@@ -176,7 +176,7 @@ const st = StyleSheet.create({
   },
   avatarWrap: { position: 'relative', marginBottom: 12 },
   avatar: {
-    width: 80, height: 80, borderRadius: 28,
+    width: 80, height: 80, borderRadius: 40,
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 3, borderColor: 'rgba(139,92,246,0.3)',
   },

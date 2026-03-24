@@ -196,7 +196,7 @@ export interface RoomData {
 export async function getPublicRooms(): Promise<RoomData[]> {
   try {
     const response = await fetchWithTimeout(
-      `${BASE_URL}/rooms/public`,
+      `${BASE_URL}/api/rooms/public`,
       { method: 'GET' },
     );
 
@@ -220,56 +220,161 @@ export async function getPublicRooms(): Promise<RoomData[]> {
 // ─────────────────────────────────────────────────────
 
 export interface LeaderboardEntry {
-  userId: string;
-  displayName: string;
-  avatarUrl?: string;
-  points: number;
   rank: number;
-  isVip: boolean;
+  id: string;
+  name: string;
+  avatar: string | null;
+  points: number;
+  giftsSent: number;
+  giftsReceived: number;
+  duelWins: number;
+  duelLosses: number;
+  isPremium: boolean;
+  role: string;
+  isOnline: boolean;
 }
 
+export type LeaderboardType = 'points' | 'gifts' | 'duels';
+
 export async function getLeaderboard(
-  type: 'spenders' | 'earners' = 'spenders',
-  period: 'daily' | 'weekly' | 'monthly' = 'weekly',
+  type: LeaderboardType = 'points',
+  limit: number = 50,
 ): Promise<LeaderboardEntry[]> {
   try {
     const response = await fetchWithTimeout(
-      `${BASE_URL}/api/economy/leaderboard?type=${type}&period=${period}`,
+      `${BASE_URL}/api/leaderboard?type=${type}&limit=${limit}`,
       { method: 'GET' },
     );
-
-    const data = await response.json();
-    if (!response.ok) {
-      console.warn('[API] Liderlik alınamadı:', data?.error || response.status);
-      return [];
-    }
-    return Array.isArray(data) ? data : [];
-  } catch (error: any) {
-    console.warn('[API] Liderlik hatası:', error.message);
+    if (!response.ok) return [];
+    return (await response.json()) as LeaderboardEntry[];
+  } catch {
     return [];
   }
 }
 
 // ─────────────────────────────────────────────────────
 // API: Popüler/Trend Odalar (Discover)
-// GET /rooms/discover
+// GET /api/rooms/discover
 // ─────────────────────────────────────────────────────
 
-export async function getDiscoverRooms(): Promise<RoomData[]> {
+export interface DiscoverRoom extends RoomData {
+  badge?: 'trend' | 'hot' | 'new' | 'standard';
+}
+
+export interface RadarUserData {
+  id: string;
+  name: string;
+  avatar: string | null;
+  initials: string;
+  ring: number;
+  angle: number;
+  tier: 'gold' | 'silver' | 'standard';
+}
+
+export interface DiscoverResponse {
+  rooms: DiscoverRoom[];
+  radarUsers: RadarUserData[];
+}
+
+export async function getDiscoverData(): Promise<DiscoverResponse> {
   try {
     const response = await fetchWithTimeout(
-      `${BASE_URL}/rooms/discover`,
+      `${BASE_URL}/api/rooms/discover`,
       { method: 'GET' },
     );
 
     const data = await response.json();
     if (!response.ok) {
-      console.warn('[API] Discover odaları alınamadı:', data?.error || response.status);
-      return [];
+      console.warn('[API] Discover alınamadı:', data?.error || response.status);
+      // Fallback: public rooms kullan
+      const rooms = await getPublicRooms();
+      return { rooms, radarUsers: [] };
     }
-    return Array.isArray(data) ? data : [];
+    return {
+      rooms: data.rooms || [],
+      radarUsers: data.radarUsers || [],
+    };
   } catch (error: any) {
     console.warn('[API] Discover hatası:', error.message);
+    // Fallback
+    const rooms = await getPublicRooms();
+    return { rooms, radarUsers: [] };
+  }
+}
+
+// ─────────────────────────────────────────────────────
+// API: Oda Oluştur
+// POST /api/rooms/create
+// ─────────────────────────────────────────────────────
+
+export interface CreateRoomPayload {
+  name: string;
+  category?: string;
+  maxParticipants?: number;
+  speakerVisaPrice?: number;
+  ownerId: string;
+  tenantId?: string;
+}
+
+export interface CreateRoomResponse {
+  success: boolean;
+  room?: RoomData & { speakerVisaPrice?: number };
+  error?: string;
+}
+
+export async function createRoom(payload: CreateRoomPayload): Promise<CreateRoomResponse> {
+  try {
+    const response = await fetchWithTimeout(
+      `${BASE_URL}/api/rooms/create`,
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      },
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data.error || `Oda oluşturulamadı (${response.status})`,
+      };
+    }
+
+    return data as CreateRoomResponse;
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      return { success: false, error: 'Bağlantı zaman aşımına uğradı' };
+    }
+    return { success: false, error: error.message || 'Ağ hatası oluştu' };
+  }
+}
+
+// ─────────────────────────────────────────────────────
+// Notifications (Read from backend)
+// ─────────────────────────────────────────────────────
+
+export interface NotificationData {
+  id: string;
+  type: string;
+  fromName: string;
+  message: string;
+  time: string;
+  isRead: boolean;
+  fromAvatar?: string | null;
+}
+
+export async function getNotifications(
+  userId: string,
+): Promise<NotificationData[]> {
+  try {
+    const response = await fetchWithTimeout(
+      `${BASE_URL}/api/notifications?userId=${userId}`,
+      { method: 'GET' },
+    );
+    if (!response.ok) return [];
+    return (await response.json()) as NotificationData[];
+  } catch {
     return [];
   }
 }

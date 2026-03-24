@@ -14,7 +14,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { COLORS, RADIUS, SPACING, FONTS } from '../constants/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { COLORS, RADIUS, SPACING, FONTS } from '../../constants/theme';
+import { EmptyState, SkeletonList } from '../../components/UXHelpers';
 
 const { width } = Dimensions.get('window');
 
@@ -143,6 +145,7 @@ function ChatRow({
 // ═════════════════════════════════════════════════════
 export default function MessagesScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const scrollY = useRef(new Animated.Value(0)).current;
   const [refreshing, setRefreshing] = useState(false);
   const unreadTotal = DUMMY_CONVERSATIONS.reduce((sum, c) => sum + c.unread, 0);
@@ -178,7 +181,7 @@ export default function MessagesScreen() {
         }
       >
         {/* Header */}
-        <View style={styles.headerArea}>
+        <View style={[styles.headerArea, { paddingTop: insets.top + 4 }]}>
           <View style={styles.headerRow}>
             <TouchableOpacity style={styles.backBtn} activeOpacity={0.7} onPress={() => router.back()}>
               <Ionicons name="chevron-back" size={22} color={COLORS.silver} />
@@ -203,15 +206,23 @@ export default function MessagesScreen() {
 
         {/* Conversations */}
         <View style={styles.listArea}>
-          {DUMMY_CONVERSATIONS.map((convo, index) => (
-            <React.Fragment key={convo.id}>
-              <ChatRow
-                convo={convo}
-                onPress={() => router.push({ pathname: '/chat', params: { id: convo.id, name: convo.name, avatar: convo.avatar, isAlliance: convo.isAlliance ? '1' : '0' } })}
-              />
-              {!!(index < DUMMY_CONVERSATIONS.length - 1) && <View style={styles.divider} />}
-            </React.Fragment>
-          ))}
+          {DUMMY_CONVERSATIONS.length === 0 ? (
+            <EmptyState
+              icon="chatbubbles-outline"
+              title="Henüz mesaj yok"
+              subtitle="Keşfet'ten birini takip et ve ilk mesajını gönder!"
+            />
+          ) : (
+            DUMMY_CONVERSATIONS.map((convo, index) => (
+              <React.Fragment key={convo.id}>
+                <ChatRow
+                  convo={convo}
+                  onPress={() => router.push({ pathname: '/chat', params: { id: convo.id, name: convo.name, avatar: convo.avatar, isAlliance: convo.isAlliance ? '1' : '0' } })}
+                />
+                {!!(index < DUMMY_CONVERSATIONS.length - 1) && <View style={styles.divider} />}
+              </React.Fragment>
+            ))
+          )}
         </View>
 
         <View style={{ height: 100 }} />
@@ -231,11 +242,11 @@ export default function MessagesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.deepNavy },
 
-  scrollContent: { paddingBottom: SPACING.md },
+  scrollContent: { paddingBottom: 120 },
 
   /* ── Header ── */
   headerArea: {
-    paddingTop: Platform.OS === 'android' ? 44 : 56,
+    paddingTop: SPACING.md,
     paddingHorizontal: SPACING.md,
     gap: 12,
     paddingBottom: SPACING.sm,

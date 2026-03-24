@@ -34,6 +34,8 @@ enum ParticipantRole {
   HOST
   MODERATOR
   PARTICIPANT
+  SPEAKER
+  LISTENER
 }
 
 enum BanType {
@@ -63,6 +65,14 @@ enum DuelResult {
   CHALLENGER_WIN
   OPPONENT_WIN
   DRAW
+}
+
+enum TransactionType {
+  VISA_PURCHASE    // Mikrofon vizesi satın alma
+  GIFT             // Hediye gönderimi
+  TOP_UP           // Bakiye yükleme
+  COMMISSION       // Platform komisyonu
+  REFUND           // İade
 }
 
 enum FriendshipStatus {
@@ -208,6 +218,8 @@ model User {
   friendshipsReceived Friendship[]  @relation("FriendshipsReceived")
   dmsSent            DirectMessage[] @relation("DMsSent")
   dmsReceived        DirectMessage[] @relation("DMsReceived")
+  economySent        EconomyTransaction[] @relation("EconomySent")
+  economyReceived    EconomyTransaction[] @relation("EconomyReceived")
 
   @@unique([tenantId, externalId])             // Tenant başına benzersiz external ID
   @@unique([tenantId, email])
@@ -249,6 +261,7 @@ model Room {
   micLimit        Int?                         // Mikrofon kullanıcı limiti
   cameraLimit     Int?                         // Kamera kullanıcı limiti
   maxParticipants Int?                         // null ise tenant limitine düşer
+  speakerVisaPrice Int           @default(500)  // Mikrofon açma yetkisinin jeton fiyatı
 
   // Erişim
   accessRestrictions Json?                     // { minLevel: 1, requiredRole: [], bannedUsers: [] }
@@ -833,4 +846,32 @@ model DirectMessage {
   @@index([senderId, receiverId])
   @@index([receiverId, isRead])
   @@index([tenantId])
+}
+
+// ─────────────────────────────────────────────
+// ECONOMY TRANSACTION (Ekonomi Kayıtları)
+// ─────────────────────────────────────────────
+
+model EconomyTransaction {
+  id            String          @id @default(cuid())
+  tenantId      String
+
+  senderId      String                           // Ödeme yapan kullanıcı
+  sender        User            @relation("EconomySent", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId    String?                          // Ödeme alan (hediye/vize => oda sahibi)
+  receiver      User?           @relation("EconomyReceived", fields: [receiverId], references: [id], onDelete: SetNull)
+
+  roomId        String?                          // İlgili oda (varsa)
+  amount        Decimal         @db.Decimal(10,2) // İşlem tutarı
+  commission    Decimal?        @db.Decimal(10,2) // Platform komisyonu
+  type          TransactionType                  // VISA_PURCHASE, GIFT, TOP_UP, COMMISSION
+  description   String?                          // Açıklama
+  metadata      Json?                            // Ek bilgiler
+
+  createdAt     DateTime        @default(now())
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([tenantId, type])
+  @@index([tenantId, createdAt])
 }

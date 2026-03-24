@@ -471,7 +471,7 @@ const st = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
   },
   comCardExpanded: { borderBottomLeftRadius: 0, borderBottomRightRadius: 0, marginBottom: 0, borderBottomWidth: 0 },
-  comLogoImg: { width: 50, height: 50, borderRadius: 14 },
+  comLogoImg: { width: 50, height: 50, borderRadius: 16 },
   comAvatar: { width: 50, height: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   comInfo: { flex: 1 },
   comName: { fontSize: 15, fontWeight: '800', color: '#f1f5f9', marginBottom: 4 },
