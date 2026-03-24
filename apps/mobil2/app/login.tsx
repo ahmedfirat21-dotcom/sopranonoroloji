@@ -149,18 +149,8 @@ export default function LoginScreen() {
 
   // Misafir girişi — rastgele isimle direkt giriş
   const handleGuestLogin = async () => {
-    setGuestLoading(true);
-    try {
-      const guestNames = ['Misafir', 'Ziyaretçi', 'Konuk', 'Gezgin'];
-      const randomName = guestNames[Math.floor(Math.random() * guestNames.length)] + '_' + Math.floor(Math.random() * 9999);
-      await login(randomName);
-      router.replace('/(tabs)');
-    } catch (e: any) {
-      console.warn('[Login] Misafir giriş hatası:', e.message);
-      router.replace('/(tabs)');
-    } finally {
-      setGuestLoading(false);
-    }
+    // login() çağırmıyoruz — setup'a gidip orada isim/avatar/cinsiyet seçtikten sonra login yapılacak
+    router.push('/setup');
   };
 
   return (
@@ -370,26 +360,26 @@ const s = StyleSheet.create({
     borderColor: COLORS.glassBorder,
   },
   panelInner: {
-    padding: SPACING.lg,
+    padding: SPACING.md,
     backgroundColor: COLORS.glassBg,
   },
   panelTitle: {
     color: COLORS.white,
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: FONTS.bold,
     textAlign: 'center',
-    marginBottom: SPACING.xs,
+    marginBottom: 4,
   },
   panelSubtitle: {
     color: COLORS.silverLight,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: FONTS.regular,
     textAlign: 'center',
-    marginBottom: SPACING.xl,
-    lineHeight: 18,
+    marginBottom: SPACING.md,
+    lineHeight: 16,
   },
   authBtn: {
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.sm,
     borderRadius: RADIUS.md,
     borderWidth: 1,
     borderColor: COLORS.primaryStroke,
@@ -400,12 +390,12 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 14,
-    gap: 12,
+    paddingVertical: 11,
+    gap: 10,
   },
   authBtnText: {
     color: COLORS.white,
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: FONTS.medium,
   },
   divider: {

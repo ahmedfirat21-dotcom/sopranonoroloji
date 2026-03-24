@@ -295,7 +295,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         profileExtra,
         isLoading,
         isLoggedIn: !!user,
-        isProfileComplete: !!user?.isProfileComplete,
+        isProfileComplete: !!(user?.isProfileComplete || (user?.displayName && user.displayName.trim().length > 0)),
         login,
         loginWithFirebase,
         update,

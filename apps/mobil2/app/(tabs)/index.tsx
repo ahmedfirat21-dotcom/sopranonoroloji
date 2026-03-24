@@ -15,6 +15,7 @@ import {
   RefreshControl,
   ActivityIndicator,
   ScrollView,
+  TextInput,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -192,6 +193,8 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading,  setIsLoading]  = useState(false);
   const [apiError,   setApiError]   = useState('');
+  const [searchOpen,  setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // FAB event listener
   useEffect(() => {
@@ -226,9 +229,16 @@ export default function HomeScreen() {
     setRefreshing(false);
   }, [loadRooms]);
 
+  // Arama filtresi
+  const filteredRooms = useMemo(() => {
+    if (!searchQuery.trim()) return rooms;
+    const q = searchQuery.toLowerCase();
+    return rooms.filter(r => r.baslik.toLowerCase().includes(q) || r.host.isim.toLowerCase().includes(q));
+  }, [rooms, searchQuery]);
+
   // Keşfet ile aynı: staggered 2 sütunlu grid
-  const leftCards  = useMemo(() => rooms.filter((_, i) => i % 2 === 0), [rooms]);
-  const rightCards = useMemo(() => rooms.filter((_, i) => i % 2 !== 0), [rooms]);
+  const leftCards  = useMemo(() => filteredRooms.filter((_, i) => i % 2 === 0), [filteredRooms]);
+  const rightCards = useMemo(() => filteredRooms.filter((_, i) => i % 2 !== 0), [filteredRooms]);
 
   return (
     <View style={st.container}>
@@ -256,17 +266,35 @@ export default function HomeScreen() {
           />
         }
       >
-        {/* Section Title */}
-        <View style={st.sectionHeader}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <LinearGradient
-              colors={[COLORS.primary, COLORS.primaryDark]}
-              style={{ width: 3, height: 18, borderRadius: 2 }}
+        {/* Section Title / Search */}
+        {searchOpen ? (
+          <View style={st.searchBarWrap}>
+            <Ionicons name="search-outline" size={16} color={COLORS.primary} />
+            <TextInput
+              style={st.searchInput}
+              placeholder="Loca veya ev sahibi ara..."
+              placeholderTextColor={COLORS.silverDark}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoFocus
+              selectionColor={COLORS.primary}
             />
-            <Text style={st.sectionTitle}>Aktif Localar</Text>
+            <TouchableOpacity onPress={() => { setSearchOpen(false); setSearchQuery(''); }}>
+              <Ionicons name="close-circle" size={18} color={COLORS.silverDark} />
+            </TouchableOpacity>
           </View>
-          <Text style={st.sectionSub}>Şu an yayında olan mekanlar</Text>
-        </View>
+        ) : (
+          <View style={st.sectionHeader}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <LinearGradient
+                colors={[COLORS.primary, COLORS.primaryDark]}
+                style={{ width: 3, height: 18, borderRadius: 2 }}
+              />
+              <Text style={st.sectionTitle}>Aktif Localar</Text>
+            </View>
+            <Text style={st.sectionSub}>Şu an yayında olan mekanlar</Text>
+          </View>
+        )}
 
         {/* Keşfet ile aynı staggered grid */}
         {rooms.length === 0 ? (
@@ -335,10 +363,10 @@ export default function HomeScreen() {
 
           {/* Sağ: Arama + Bildirim */}
           <View style={st.headerRight}>
-            <TouchableOpacity style={st.iconBtn} onPress={() => {}} activeOpacity={0.7}>
-              <Ionicons name="search-outline" size={20} color={COLORS.silverDark} />
+            <TouchableOpacity style={st.iconBtn} onPress={() => setSearchOpen(!searchOpen)} activeOpacity={0.7}>
+              <Ionicons name={searchOpen ? 'close-outline' : 'search-outline'} size={20} color={searchOpen ? COLORS.primary : COLORS.silverDark} />
             </TouchableOpacity>
-            <TouchableOpacity style={st.iconBtn} onPress={() => router.push('/notifications')} activeOpacity={0.7}>
+            <TouchableOpacity style={st.iconBtn} onPress={() => router.navigate('/notifications' as any)} activeOpacity={0.7}>
               <Ionicons name="notifications-outline" size={20} color={COLORS.silverDark} />
               <View style={st.notifDot} />
             </TouchableOpacity>
@@ -477,4 +505,24 @@ const st = StyleSheet.create({
   /* Ses Dalgası */
   wave: { flexDirection: 'row', alignItems: 'flex-end', gap: 2, height: 14 },
   waveBar: { width: 3, borderRadius: 1.5, backgroundColor: COLORS.primary },
+
+  /* Arama çubuğu */
+  searchBarWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    height: 42,
+    gap: 10,
+    marginHorizontal: SPACING.md,
+    marginBottom: SPACING.sm,
+    borderWidth: 1,
+    borderColor: COLORS.primaryStroke,
+  },
+  searchInput: {
+    flex: 1,
+    color: COLORS.white,
+    fontSize: 14,
+  },
 });

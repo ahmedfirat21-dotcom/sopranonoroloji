@@ -323,7 +323,7 @@ export default function GiftVaultSheet({ visible, onClose, onPlayAnimation }: Gi
 
       {/* Modal */}
       {visible && (
-        <View style={StyleSheet.absoluteFill}>
+        <View style={[StyleSheet.absoluteFill, { zIndex: 300 }]}>
           {/* Overlay */}
           <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]}>
             <TouchableOpacity
@@ -521,7 +521,7 @@ const styles = StyleSheet.create({
   /* ── Overlay ── */
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    zIndex: 0,
+    zIndex: 300,
   },
   overlayDark: {
     ...StyleSheet.absoluteFillObject,
@@ -538,7 +538,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     overflow: 'hidden',
-    zIndex: 1,
+    zIndex: 301,
   },
   sheetTopGlow: {
     position: 'absolute',

@@ -1,4 +1,9 @@
-import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+/**
+ * SopranoChat — Room.tsx
+ * Canlı Oda Ekranı
+ */
+
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,1162 +13,780 @@ import {
   TouchableOpacity,
   TextInput,
   ScrollView,
-  Platform,
   Easing,
-  PanResponder,
-  Alert,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { COLORS, RADIUS, SPACING, FONTS } from '../constants/theme';
-import { useTheme } from '../constants/ThemeContext';
+import { StatusBar } from 'expo-status-bar';
+import { COLORS, SPACING, RADIUS, FONTS } from '../constants/theme';
 import { useUser } from '../contexts/UserContext';
 import useLiveKit from '../hooks/useLiveKit';
 import GiftVaultSheet from '../components/GiftVaultSheet';
 import LottieGiftOverlay from '../components/LottieGiftOverlay';
-import EmojiReactions from '../components/EmojiReactions';
 
-const { width, height } = Dimensions.get('window');
+const { width: W, height: H } = Dimensions.get('window');
 
-// Seat interface
-interface Seat {
-  id: string;
-  name: string;
-  isSpeaking: boolean;
-  isOwner?: boolean;
-  role?: 'owner' | 'admin' | 'mod' | 'vip' | 'member' | 'guest';
-  handRaised?: boolean;
-  muted?: boolean;
-  camOn?: boolean;
-  avatar?: string;
-}
+/* ────────────────────────────────────────────────
+   SİMÜLASYON VERİSİ (LiveKit yokken önizleme)
+   ──────────────────────────────────────────────── */
+const MOCK_USERS = [
+  { id: 'host', nick: 'DJ_Soprano', role: 'host', speaking: true, mic: true },
+  { id: 'sp1', nick: 'AylaVIP', role: 'speaker', speaking: true, mic: true },
+  { id: 'sp2', nick: 'Melek', role: 'speaker', speaking: false, mic: true },
+  { id: 'sp3', nick: 'Emir', role: 'speaker', speaking: false, mic: true },
+  { id: 'sp4', nick: 'Rana', role: 'speaker', speaking: false, mic: false },
+];
 
-// Rol renkleri
-const ROLE_COLORS: Record<string, string> = {
-  owner: '#D4AF37', admin: '#3B82F6', mod: '#22C55E',
-  vip: '#A855F7', member: '#94A3B8', guest: '#64748B',
-};
+const MOCK_AUDIENCE = Array.from({ length: 25 }, (_, i) => ({
+  id: `au${i}`, nick: ['Lina', 'Kaan', 'Naz', 'Bora', 'Dilara', 'Yiğit', 'İpek', 'Ozan',
+    'Ceren', 'Alper', 'Deniz', 'Merve', 'Tolga', 'Sude', 'Onur', 'Zeynep', 'Arda',
+    'Pelin', 'Serkan', 'Gizem', 'Ege', 'Burcu', 'Mert', 'Aslı', 'Volkan'][i],
+  role: 'listener', speaking: false, mic: false,
+}));
 
-// ─────────────────────────────────────────────────────
-// Speaking Glow Animation
-// ─────────────────────────────────────────────────────
-function SpeakingGlow({ size }: { size: number }) {
-  const glow = useRef(new Animated.Value(0.3)).current;
+const MOCK_CHAT = [
+  { sender: 'Lina', text: 'Selam herkese! 🙌' },
+  { sender: 'Kaan', text: 'Bu oda çok iyi ya' },
+  { sender: 'AylaVIP', text: 'Teşekkürler 💎' },
+  { sender: 'Deniz', text: 'Müzik harika 🎵' },
+  { sender: 'Merve', text: 'DJ açsana şarkıyı!' },
+  { sender: 'Bora', text: 'Selam millet 👋' },
+  { sender: 'Dilara', text: 'Bu gece eğlenceli olacak' },
+  { sender: 'Yiğit', text: 'Kameralar ne zaman açılıyor?' },
+  { sender: 'İpek', text: 'Harika oda ❤️' },
+  { sender: 'Ozan', text: 'Ses kalitesi çok iyi' },
+  { sender: 'Ceren', text: 'Hediye gelsin 💫' },
+  { sender: 'Alper', text: 'O şarkıyı tekrar çal!' },
+  { sender: 'Naz', text: 'Ben de sahnedeyim mi?' },
+];
+
+/* ────────────────────────────────────────────────
+   KONUŞMA ANİMASYONU — SpeakingRipple
+   Ses dalgasını yansıtan saydam halka
+   ──────────────────────────────────────────────── */
+function SpeakingRipple({ diameter }: { diameter: number }) {
+  const ring1 = useRef(new Animated.Value(0)).current;
+  const ring2 = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(glow, {
-          toValue: 1,
-          duration: 1200,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-        Animated.timing(glow, {
-          toValue: 0.3,
-          duration: 1200,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
+    const anim = (v: Animated.Value, del: number) =>
+      Animated.loop(Animated.sequence([
+        Animated.delay(del),
+        Animated.timing(v, { toValue: 1, duration: 1800, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(v, { toValue: 0, duration: 0, useNativeDriver: true }),
+      ]));
+    anim(ring1, 0).start();
+    anim(ring2, 600).start();
   }, []);
 
+  const makeStyle = (v: Animated.Value) => ({
+    position: 'absolute' as const,
+    width: diameter, height: diameter, borderRadius: diameter / 2,
+    borderWidth: 1.5,
+    borderColor: 'rgba(92,225,230,0.55)',
+    opacity: v.interpolate({ inputRange: [0, 1], outputRange: [0.5, 0] }),
+    transform: [{ scale: v.interpolate({ inputRange: [0, 1], outputRange: [1, 1.45] }) }],
+  });
+
   return (
-    <Animated.View
-      style={[
-        styles.speakingGlow,
-        {
-          width: size + 14,
-          height: size + 14,
-          borderRadius: (size + 14) / 2,
-          opacity: glow,
-        },
-      ]}
-    />
+    <>
+      <Animated.View style={makeStyle(ring1)} />
+      <Animated.View style={makeStyle(ring2)} />
+    </>
   );
 }
 
-// ─────────────────────────────────────────────────────
-// VIP Seat (Koltuk Yuvası)
-// ─────────────────────────────────────────────────────
-function VIPSeat({ seat, size = 60, onPress }: { seat: Seat; size?: number; onPress?: () => void }) {
-  const initials = seat.name
-    .split(' ')
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
-  const roleColor = ROLE_COLORS[seat.role || 'guest'] || '#64748B';
+/* ────────────────────────────────────────────────
+   KOLTUK KARTI — glassmorphism + iç gölge
+   ──────────────────────────────────────────────── */
+function SeatCard({ nick, role, speaking, mic, size, onPress }: {
+  nick: string; role: string; speaking: boolean; mic: boolean;
+  size: number; onPress?: () => void;
+}) {
+  const initials = nick.slice(0, 2).toUpperCase();
+  const isHost = role === 'host';
 
   return (
-    <TouchableOpacity style={styles.seatWrapper} activeOpacity={0.7} onPress={onPress}>
-      {/* Speaking glow */}
-      {seat.isSpeaking && <SpeakingGlow size={size} />}
+    <TouchableOpacity
+      activeOpacity={0.75}
+      onPress={onPress}
+      style={{ alignItems: 'center', marginHorizontal: 6, marginBottom: 8 }}
+    >
+      {/* Avatar container */}
+      <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+        {speaking && <SpeakingRipple diameter={size} />}
 
-      {/* Seat shell — glassmorphism inner shadow */}
-      <View
-        style={[
-          styles.seatShell,
-          {
-            width: size,
-            height: size,
-            borderRadius: size / 2,
-            borderColor: seat.isOwner
-              ? COLORS.vipGold
-              : seat.isSpeaking
-              ? COLORS.primary
-              : COLORS.cardGlassBorder,
-          },
-        ]}
-      >
-        {/* Inner shadow gradient */}
-        <LinearGradient
-          colors={['rgba(0,0,0,0.3)', 'transparent', 'rgba(0,0,0,0.15)']}
-          style={[StyleSheet.absoluteFill, { borderRadius: size / 2 }]}
-          start={{ x: 0.3, y: 0 }}
-          end={{ x: 0.7, y: 1 }}
-        />
-        <Text style={[styles.seatInitials, { fontSize: size * 0.32 }]}>
-          {initials}
-        </Text>
+        {/* Glassmorphism zemin */}
+        <View style={[
+          sty.seatGlass,
+          { width: size, height: size, borderRadius: size / 2 },
+          isHost && { borderColor: COLORS.vipGold, borderWidth: 2 },
+        ]}>
+          <LinearGradient
+            colors={['rgba(12,18,36,0.80)', 'rgba(8,14,28,0.92)']}
+            style={[StyleSheet.absoluteFill, { borderRadius: size / 2 }]}
+          />
+          {/* İç gölge efekti */}
+          <View style={[sty.innerShadow, { borderRadius: size / 2 }]} />
+          <Text style={[sty.seatInitials, { fontSize: size * 0.3 }]}>{initials}</Text>
+        </View>
       </View>
 
-      {/* Owner crown */}
-      {seat.isOwner && (
-        <View style={styles.ownerBadge}>
-          <Ionicons name="shield-checkmark" size={14} color={COLORS.vipGold} />
+      {/* İsim */}
+      <Text style={sty.seatNick} numberOfLines={1}>{nick}</Text>
+
+      {/* Rol rozeti */}
+      {isHost && (
+        <View style={sty.hostBadge}>
+          <Ionicons name="star" size={8} color={COLORS.vipGold} />
         </View>
       )}
 
-      {/* Name */}
-      <Text style={styles.seatName} numberOfLines={1}>
-        {seat.name.split(' ')[0]}
-      </Text>
-
-      {/* Hand raised badge */}
-      {seat.handRaised && (
-        <View style={{ position: 'absolute', top: -2, right: -2, width: 20, height: 20, borderRadius: 10, backgroundColor: '#FFB800', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#0B1222' }}>
-          <Text style={{ fontSize: 10 }}>🖐️</Text>
-        </View>
-      )}
-
-      {/* Muted badge */}
-      {seat.muted && (
-        <View style={{ position: 'absolute', bottom: 18, left: -2, width: 16, height: 16, borderRadius: 8, backgroundColor: '#EF4444', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#0B1222' }}>
-          <Ionicons name="mic-off" size={8} color="#fff" />
-        </View>
-      )}
+      {/* Mikrofon durumu */}
+      <View style={[sty.micIndicator, mic ? sty.micOn : sty.micOff]}>
+        <Ionicons name={mic ? 'mic' : 'mic-off'} size={7} color={mic ? '#fff' : 'rgba(255,255,255,0.35)'} />
+      </View>
     </TouchableOpacity>
   );
 }
 
-// ─────────────────────────────────────────────────────
-// Chat Message Bubble
-// ─────────────────────────────────────────────────────
-function ChatBubble({
-  user,
-  text,
-  opacity,
-}: {
-  user: string;
-  text: string;
-  opacity: number;
-}) {
+/* ────────────────────────────────────────────────
+   SOHBET MESAJI BALONCUĞU — saydam koyu zemin
+   ──────────────────────────────────────────────── */
+function ChatBubble({ sender, text, isEntry }: { sender: string; text: string; isEntry?: boolean }) {
   return (
-    <View style={[styles.chatBubble, { opacity }]}>
-      <Text style={styles.chatUser}>{user}</Text>
-      <Text style={styles.chatText}>{text}</Text>
+    <View style={sty.chatBubble}>
+      {isEntry ? (
+        <Text style={sty.entryText}>
+          <Text style={{ color: COLORS.primary, fontWeight: '600' }}>{sender}</Text>
+          {' katıldı'}
+        </Text>
+      ) : (
+        <>
+          <Text style={sty.chatSender}>{sender}</Text>
+          <Text style={sty.chatBody}> {text}</Text>
+        </>
+      )}
     </View>
   );
 }
 
-// ─────────────────────────────────────────────────────
-// Gift Button (Hediye Kasası — 3D glow)
-// ─────────────────────────────────────────────────────
-function GiftButton({ onPress }: { onPress?: () => void }) {
-  const glow = useRef(new Animated.Value(0.4)).current;
+/* ────────────────────────────────────────────────
+   VIP GİRİŞ BANT EFEKTİ
+   ──────────────────────────────────────────────── */
+function VIPEntryBanner({ name, onDone }: { name: string; onDone: () => void }) {
+  const slideY = useRef(new Animated.Value(-60)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(glow, {
-          toValue: 1,
-          duration: 1800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(glow, {
-          toValue: 0.4,
-          duration: 1800,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
+    Animated.sequence([
+      Animated.parallel([
+        Animated.spring(slideY, { toValue: 0, friction: 12, tension: 70, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 1, duration: 300, useNativeDriver: true }),
+      ]),
+      Animated.delay(2200),
+      Animated.parallel([
+        Animated.timing(slideY, { toValue: -60, duration: 250, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 0, duration: 250, useNativeDriver: true }),
+      ]),
+    ]).start(onDone);
   }, []);
 
   return (
-    <View style={styles.giftBtnWrapper}>
-      <Animated.View style={[styles.giftGlow, { opacity: glow }]} />
-      <TouchableOpacity activeOpacity={0.7} onPress={onPress}>
-        <LinearGradient
-          colors={[COLORS.primary, COLORS.primaryDark, '#1a8a8e']}
-          style={styles.giftBtn}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
-          <Ionicons name="diamond-outline" size={22} color={COLORS.white} />
-        </LinearGradient>
-      </TouchableOpacity>
+    <Animated.View style={[sty.vipBanner, { transform: [{ translateY: slideY }], opacity }]}>
+      <LinearGradient colors={[COLORS.vipGoldGlow, 'transparent']} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
+      <Ionicons name="diamond" size={14} color={COLORS.vipGold} />
+      <Text style={sty.vipBannerText}>⭐ {name} odaya giriş yaptı!</Text>
+    </Animated.View>
+  );
+}
+
+/* ────────────────────────────────────────────────
+   PROFİL KARTI — Host moderasyon paneli
+   ──────────────────────────────────────────────── */
+function ProfileCard({ nick, role, onClose, onMute, onKick, onRemoveFromStage }: {
+  nick: string; role: string;
+  onClose: () => void; onMute?: () => void; onKick?: () => void; onRemoveFromStage?: () => void;
+}) {
+  return (
+    <View style={sty.profileOverlay}>
+      <TouchableOpacity style={StyleSheet.absoluteFill} onPress={onClose} activeOpacity={1} />
+      <View style={sty.profileCard}>
+        <View style={sty.profileHeader}>
+          <View style={[sty.profileAvatar, role === 'host' && { borderColor: COLORS.vipGold }]}>
+            <Text style={sty.profileInitials}>{nick.slice(0, 2).toUpperCase()}</Text>
+          </View>
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            <Text style={sty.profileNick}>{nick}</Text>
+            <Text style={sty.profileRole}>{role === 'host' ? '👑 Oda Sahibi' : role === 'speaker' ? '🎤 Konuşmacı' : '👂 Dinleyici'}</Text>
+          </View>
+          <TouchableOpacity onPress={onClose}>
+            <Ionicons name="close-circle" size={24} color="rgba(255,255,255,0.3)" />
+          </TouchableOpacity>
+        </View>
+        <View style={sty.profileActions}>
+          {onMute && (
+            <TouchableOpacity style={sty.profileBtn} onPress={onMute}>
+              <Ionicons name="volume-mute" size={16} color={COLORS.error} />
+              <Text style={sty.profileBtnText}>Sustur</Text>
+            </TouchableOpacity>
+          )}
+          {onRemoveFromStage && (
+            <TouchableOpacity style={sty.profileBtn} onPress={onRemoveFromStage}>
+              <Ionicons name="arrow-down-circle" size={16} color="#FBBF24" />
+              <Text style={sty.profileBtnText}>İndir</Text>
+            </TouchableOpacity>
+          )}
+          {onKick && (
+            <TouchableOpacity style={[sty.profileBtn, { borderColor: 'rgba(239,68,68,0.2)' }]} onPress={onKick}>
+              <Ionicons name="exit" size={16} color={COLORS.error} />
+              <Text style={[sty.profileBtnText, { color: COLORS.error }]}>Çıkar</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
     </View>
   );
 }
 
-// ═════════════════════════════════════════════════════
-// ROOM SCREEN
-// ═════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════
+   ANA EKRAN
+   ════════════════════════════════════════════════ */
 export default function RoomScreen() {
   const router = useRouter();
-  const { colors: C, isDark } = useTheme();
-  const { user, token } = useUser();
   const insets = useSafeAreaInsets();
+  const { user } = useUser();
   const { id, title } = useLocalSearchParams<{ id: string; title?: string }>();
   const roomName = title || 'Loca';
-  const [vaultVisible, setVaultVisible] = useState(false);
-  const [activeGiftAnimation, setActiveGiftAnimation] = useState<string | null>(null);
 
-  // Room kontrolleri
-  const [handRaised, setHandRaised] = useState(false);
-  const [micQueue, setMicQueue] = useState<string[]>([]);
-  const [isMuted, setIsMuted] = useState(true);
-  const [camOn, setCamOn] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<Seat | null>(null);
-  const [showMicQueue, setShowMicQueue] = useState(false);
-  const [showEmojiBar, setShowEmojiBar] = useState(false);
-  const [chatInput, setChatInput] = useState('');
-  const isOwner = true; // TODO: backend'den oda sahibi bilgisi gelecek
-
-  // LiveKit ses + data bağlantısı
-  const liveKit = useLiveKit({
+  // LiveKit
+  const lk = useLiveKit({
     roomSlug: id || 'default-room',
     enabled: true,
     userId: user?.id || user?.username,
     displayName: user?.displayName,
-    role: isOwner ? 'owner' : 'listener',
+    role: 'owner',
   });
 
-  // LiveKit participants → Seat mapping
-  const seats: Seat[] = liveKit.participants.length > 0
-    ? liveKit.participants.map((p, i) => ({
-        id: p.identity,
-        name: p.name,
-        isSpeaking: p.isSpeaking,
-        isOwner: i === 0 && p.isLocal,
-        role: (p.audioEnabled ? 'member' : 'guest') as Seat['role'],
-        muted: !p.audioEnabled,
-      }))
-    : [{
-        id: user?.id || 'me',
-        name: user?.displayName || 'Sen',
-        isSpeaking: false,
-        isOwner: true,
-        role: 'owner' as const,
-        muted: true,
-      }];
+  // Durum
+  const [chatInput, setChatInput] = useState('');
+  const [chatFocused, setChatFocused] = useState(false);
+  const [vaultOpen, setVaultOpen] = useState(false);
+  const [giftAnim, setGiftAnim] = useState<string | null>(null);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [vipEntry, setVipEntry] = useState<string | null>(null);
 
+  // Simülasyon mu gerçek mi?
+  const isLive = lk.participants.length > 1;
+  const stageUsers = isLive
+    ? lk.participants.filter(p => p.audioEnabled || p.isSpeaking).map(p => ({
+      id: p.identity, nick: p.name, role: p.isLocal ? 'host' : 'speaker',
+      speaking: p.isSpeaking, mic: p.audioEnabled,
+    }))
+    : MOCK_USERS;
 
-  // El kaldır/indir toggle
-  const toggleHandRaise = () => {
-    setHandRaised(!handRaised);
-    if (!handRaised) {
-      // Sıraya ekle
-      setMicQueue(prev => [...prev, user?.id || 'me']);
-    } else {
-      setMicQueue(prev => prev.filter(id => id !== (user?.id || 'me')));
-    }
+  const audienceUsers = isLive
+    ? lk.participants.filter(p => !p.audioEnabled && !p.isSpeaking).map(p => ({
+      id: p.identity, nick: p.name, role: 'listener', speaking: false, mic: false,
+    }))
+    : MOCK_AUDIENCE;
+
+  const chatList = isLive
+    ? lk.chatMessages.map(m => ({ sender: m.senderName, text: m.text }))
+    : MOCK_CHAT;
+
+  const viewerCount = stageUsers.length + audienceUsers.length;
+
+  // Dinamik mesaj limiti — oda büyüklüğüne göre
+  const getMessageLimit = (count: number) => {
+    if (count < 10) return 20;
+    if (count < 30) return 40;
+    if (count < 100) return 80;
+    return 150;
   };
+  const msgLimit = getMessageLimit(viewerCount);
+  const visibleChat = chatList.slice(-msgLimit);
 
-  // Kamera toggle
-  const toggleCamera = () => setCamOn(!camOn);
-
-  // Mute toggle
-  const toggleMute = async () => {
-    setIsMuted(!isMuted);
-    if (liveKit.isPublishing) {
-      await liveKit.setMicEnabled(isMuted);
-    } else if (isMuted) {
-      // İlk kez mikrofon açılıyorsa publish et
-      const ok = await liveKit.publishAudio();
-      if (ok) setIsMuted(false);
-    }
-  };
-
-  const handleSendMessage = async () => {
-    if (!chatInput.trim()) return;
-    const text = chatInput.trim();
-    setChatInput('');
-    
-    // Kendi mesajımızı hemen göster (optimistic)
-    // LiveKit DataChannel ile gönder
-    const sent = await liveKit.sendMessage(text);
-    if (!sent) {
-      console.warn('[Room] Mesaj gönderilemedi');
-    }
-  };
-
-  // Panel slide-up animation
-  const panelY = useRef(new Animated.Value(height)).current;
-  const overlayOpacity = useRef(new Animated.Value(0)).current;
-
+  // Giriş animasyonu
+  const fadeIn = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    Animated.parallel([
-      Animated.spring(panelY, {
-        toValue: 0,
-        friction: 16,
-        tension: 40,
-        useNativeDriver: true,
-      }),
-      Animated.timing(overlayOpacity, {
-        toValue: 1,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    Animated.timing(fadeIn, { toValue: 1, duration: 400, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
   }, []);
 
-  const handleClose = () => {
-    // Oda bağlantısı kesildi
-    Animated.parallel([
-      Animated.timing(panelY, {
-        toValue: height,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.timing(overlayOpacity, {
-        toValue: 0,
-        duration: 250,
-        useNativeDriver: true,
-      }),
-    ]).start(() => router.back());
-  };
+  const handleClose = useCallback(() => {
+    Animated.timing(fadeIn, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => router.back());
+  }, []);
 
-  // ── Swipe-to-dismiss PanResponder ──
-  const roomPanResponder = useMemo(() => PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onMoveShouldSetPanResponder: (_, g) => g.dy > 8,
-    onPanResponderMove: (_, g) => {
-      if (g.dy > 0) panelY.setValue(g.dy);
-    },
-    onPanResponderRelease: (_, g) => {
-      if (g.dy > 100 || g.vy > 0.5) {
-        handleClose();
-      } else {
-        Animated.spring(panelY, { toValue: 0, friction: 14, tension: 45, useNativeDriver: true }).start();
-      }
-    },
-  }), []);
-
-  // Owner seat is first, VIP seats follow
-  const ownerSeat = seats.find((s) => s.isOwner) || seats[0];
-  const vipSeats = seats.filter((s) => !s.isOwner);
+  const handleSend = useCallback(async () => {
+    if (!chatInput.trim()) return;
+    await lk.sendMessage(chatInput.trim());
+    setChatInput('');
+  }, [chatInput, lk]);
 
   return (
-    <View style={styles.container}>
-      {/* ─── Blur Overlay ─── */}
-      <Animated.View
-        style={[StyleSheet.absoluteFill, { opacity: overlayOpacity }]}
-      >
-        <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-        <View style={styles.darkOverlay} />
-      </Animated.View>
+    <Animated.View style={[sty.root, { opacity: fadeIn }]}>
+      <StatusBar hidden />
+      <LinearGradient colors={[COLORS.deepNavy, '#040810', COLORS.deepNavy]} style={StyleSheet.absoluteFill} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} />
 
-      {/* ─── Floating Panel (95% height) ─── */}
-      <Animated.View
-        style={[
-          styles.panel,
-          { transform: [{ translateY: panelY }] },
-        ]}
-      >
-        {/* Panel background */}
-        <LinearGradient
-          colors={isDark ? ['#0B1222', '#070D1A', '#050912'] : ['#F2F2F7', '#EEEDF5', '#F2F2F7']}
-          style={[StyleSheet.absoluteFill, { borderTopLeftRadius: 28, borderTopRightRadius: 28 }]}
-        />
-
-        {/* Subtle top glow line */}
-        <LinearGradient
-          colors={['transparent', COLORS.primaryGlow, 'transparent']}
-          style={styles.panelTopGlow}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-        />
-
-        {/* Drag handle — swipe-to-dismiss (geniş dokunma alanı) */}
-        <View
-          {...roomPanResponder.panHandlers}
-          style={{ paddingVertical: 12, alignItems: 'center' as const }}
-        >
-          <View style={styles.dragHandle} />
+      {/* ═══ ÜST BİLGİ ÇUBUĞU (Header) ═══ */}
+      <View style={[sty.header, { paddingTop: Math.max(insets.top, 12) + 2 }]}>
+        {/* Sol: Host avatarı + oda adı */}
+        <View style={sty.headerL}>
+          <View style={sty.headerHostAvatar}>
+            <Text style={sty.headerHostInitials}>
+              {(user?.displayName || roomName).slice(0, 2).toUpperCase()}
+            </Text>
+          </View>
+          <View>
+            <Text style={sty.headerRoom} numberOfLines={1}>{roomName}</Text>
+            <Text style={sty.headerStatus}>
+              {lk.connectionState === 'connected' ? '🟢 Canlı' : lk.connectionState === 'connecting' ? '🟡 Bağlanıyor' : '🔴 Çevrimdışı'}
+            </Text>
+          </View>
         </View>
 
-        {/* ═══ AUTHORITY HEADER ═══ */}
-        <View style={styles.header}>
-          {/* Left: Owner + Loca info */}
-          <View style={styles.headerLeft}>
-            <View style={styles.headerAvatarRow}>
-              <View style={styles.headerAvatar}>
-                <Text style={styles.headerAvatarText}>
-                  {(user?.displayName || roomName).split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()}
-                </Text>
-              </View>
-              <View style={styles.headerInfo}>
-                <Text style={styles.headerTitle} numberOfLines={1}>
-                  {roomName}
-                </Text>
-                <View style={styles.tokenRow}>
-                  <Ionicons name="diamond" size={12} color={COLORS.primary} />
-                  <Text style={styles.tokenText}>2,847</Text>
-                </View>
-              </View>
-            </View>
+        {/* Sağ: İzleyici sayısı + paylaş + kapat */}
+        <View style={sty.headerR}>
+          <View style={sty.viewerPill}>
+            <Ionicons name="people" size={12} color={COLORS.primary} />
+            <Text style={sty.viewerCount}>{viewerCount}</Text>
           </View>
+          <TouchableOpacity style={sty.headerIcon}>
+            <Ionicons name="share-outline" size={18} color="rgba(255,255,255,0.5)" />
+          </TouchableOpacity>
+          <TouchableOpacity style={sty.headerIcon} onPress={handleClose}>
+            <Ionicons name="chevron-down" size={18} color="rgba(255,255,255,0.5)" />
+          </TouchableOpacity>
+        </View>
+      </View>
 
-          {/* Right: Actions */}
-          <View style={styles.headerRight}>
-            {/* Connection status + People count */}
-            <View style={styles.headerBadge}>
-              <View style={{
-                width: 6, height: 6, borderRadius: 3,
-                backgroundColor: liveKit.connectionState === 'connected' ? '#4ADE80' : '#F87171',
-                marginRight: 4,
-              }} />
-              <Ionicons name="people" size={14} color={COLORS.silverLight} />
-              <Text style={styles.headerBadgeText}>
-                {seats.length}
-              </Text>
-            </View>
+      {/* ═══ SAHNE (Speakers) — glassmorphism koltuklar ═══ */}
+      <View style={sty.stage}>
+        <View style={sty.stageGrid}>
+          {stageUsers.map(u => (
+            <SeatCard
+              key={u.id}
+              nick={u.nick}
+              role={u.role}
+              speaking={u.speaking}
+              mic={u.mic}
+              size={62}
+              onPress={() => setSelectedUser(u)}
+            />
+          ))}
+        </View>
+      </View>
 
-            {/* LiveKit Durum */}
-            <View style={[styles.headerBadge, {
-              backgroundColor: liveKit.connectionState === 'connected'
-                ? 'rgba(74,222,128,0.15)'
-                : liveKit.connectionState === 'connecting'
-                ? 'rgba(251,191,36,0.15)'
-                : 'rgba(248,113,113,0.15)',
-            }]}>
-              <View style={{
-                width: 6, height: 6, borderRadius: 3,
-                backgroundColor:
-                  liveKit.connectionState === 'connected' ? '#4ADE80'
-                  : liveKit.connectionState === 'connecting' ? '#FBBF24'
-                  : '#F87171',
-              }} />
-              <Ionicons
-                name={liveKit.connectionState === 'connected' ? 'volume-high' : 'volume-mute'}
-                size={13}
-                color={liveKit.connectionState === 'connected' ? '#4ADE80' : COLORS.silverLight}
-                style={{ marginLeft: 3 }}
+      {/* ═══ DİNLEYİCİLER ═══ */}
+      {audienceUsers.length > 0 && (
+        <View style={sty.audience}>
+          <Text style={sty.audienceLabel}>Dinleyiciler · {audienceUsers.length}</Text>
+          <ScrollView contentContainerStyle={sty.audienceGrid} showsVerticalScrollIndicator={false}>
+            {audienceUsers.map(u => (
+              <SeatCard
+                key={u.id}
+                nick={u.nick}
+                role={u.role}
+                speaking={u.speaking}
+                mic={u.mic}
+                size={36}
+                onPress={() => setSelectedUser(u)}
               />
-              <Text style={[styles.headerBadgeText, {
-                color: liveKit.connectionState === 'connected' ? '#4ADE80'
-                  : liveKit.connectionState === 'connecting' ? '#FBBF24'
-                  : '#F87171',
-              }]}>
-                {liveKit.connectionState === 'connected' ? 'Ses' 
-                 : liveKit.connectionState === 'connecting' ? '...' 
-                 : 'Ses Yok'}
-              </Text>
-            </View>
-
-            {/* Authority shop */}
-            <TouchableOpacity style={styles.headerIconBtn} activeOpacity={0.6}>
-              <Ionicons name="shield-half-outline" size={18} color={COLORS.silver} />
-            </TouchableOpacity>
-
-            {/* Minimize / Close */}
-            <TouchableOpacity
-              style={styles.headerIconBtn}
-              activeOpacity={0.6}
-              onPress={handleClose}
-            >
-              <Ionicons name="chevron-down" size={20} color={COLORS.silver} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* ═══ STAGE & SEATS ═══ */}
-        <View style={styles.stageArea}>
-          {/* Ambient glow behind stage */}
-          <View style={styles.stageGlow} />
-
-          {/* Owner — center, larger */}
-          <View style={styles.ownerRow}>
-            <VIPSeat seat={ownerSeat} size={72} onPress={() => setSelectedUser(ownerSeat)} />
-          </View>
-
-          {/* VIP Seats — symmetric row */}
-          <View style={styles.seatsRow}>
-            {vipSeats.map((seat) => (
-              <VIPSeat key={seat.id} seat={seat} size={56} onPress={() => setSelectedUser(seat)} />
             ))}
-          </View>
-        </View>
-
-        {/* ═══ CHAT FEED ═══ */}
-        <View style={styles.chatArea}>
-          {/* Fade mask at top */}
+          </ScrollView>
+          {/* Dinleyici altında yumuşak fade-out */}
           <LinearGradient
-            colors={['#0B1222', 'transparent']}
-            style={styles.chatFadeMask}
+            colors={['transparent', COLORS.deepNavy]}
+            style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 20 }}
             pointerEvents="none"
           />
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={styles.chatScroll}
-            onTouchStart={() => showEmojiBar && setShowEmojiBar(false)}
-          >
-            {liveKit.chatMessages.length === 0 ? (
-              <View style={{ alignItems: 'center', paddingVertical: 30 }}>
-                <Ionicons name="chatbubble-ellipses-outline" size={28} color="rgba(255,255,255,0.15)" />
-                <Text style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12, marginTop: 8 }}>Henüz mesaj yok — ilk mesajı sen at!</Text>
-              </View>
-            ) : (
-              liveKit.chatMessages.map((msg, index) => {
-                const opacityVal = Math.min(1, 0.4 + (index / Math.max(liveKit.chatMessages.length, 1)) * 0.6);
-                return (
-                  <ChatBubble
-                    key={msg.id}
-                    user={msg.senderName}
-                    text={msg.text}
-                    opacity={opacityVal}
-                  />
-                );
-              })
-            )}
-          </ScrollView>
         </View>
+      )}
 
-        {/* ═══ MİCROFON SIRASI PANELİ ═══ */}
-        {showMicQueue && (
-          <View style={styles.micQueuePanel}>
-            <View style={styles.micQueueHeader}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#EF4444' }} />
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>Mikrofon Sırası</Text>
-                <View style={{ backgroundColor: 'rgba(99,102,241,0.15)', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6 }}>
-                  <Text style={{ fontSize: 10, fontWeight: '700', color: '#818CF8' }}>{micQueue.length}</Text>
-                </View>
-              </View>
-              <TouchableOpacity onPress={() => setShowMicQueue(false)}>
-                <Ionicons name="close" size={20} color={COLORS.silver} />
-              </TouchableOpacity>
-            </View>
-            {micQueue.length === 0 ? (
-              <Text style={{ color: 'rgba(255,255,255,0.3)', textAlign: 'center', paddingVertical: 16, fontSize: 12 }}>Sırada kimse yok</Text>
-            ) : (
-              micQueue.map((uid, i) => (
-                <View key={uid} style={styles.micQueueRow}>
-                  <View style={styles.micQueueNum}><Text style={{ fontSize: 10, fontWeight: '800', color: i === 0 ? '#FBBF24' : '#999' }}>{i + 1}</Text></View>
-                  <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600', flex: 1 }}>{uid === (user?.id || 'me') ? 'Sen' : `Kullanıcı ${i + 1}`}</Text>
-                  {i === 0 && <View style={{ backgroundColor: 'rgba(251,191,36,0.15)', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6 }}><Text style={{ fontSize: 9, fontWeight: '700', color: '#FBBF24' }}>Sıradaki</Text></View>}
-                  {isOwner && (
-                    <TouchableOpacity onPress={() => { /* TODO: grantMic via LiveKit */ }} style={styles.grantMicBtn}>
-                      <Ionicons name="mic" size={12} color="#22C55E" />
-                    </TouchableOpacity>
-                  )}
-                </View>
-              ))
-            )}
-          </View>
-        )}
+      {/* ═══ SOHBET AKIŞI — Instagram tarzı fade ═══ */}
+      <View style={sty.chatArea}>
+        {/* Üst fade — mesajlar yukarı doğru kaybolur */}
+        <LinearGradient
+          colors={[COLORS.deepNavy, 'transparent']}
+          style={sty.chatFadeTop}
+          pointerEvents="none"
+        />
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 16, paddingBottom: 12 }}>
+          {visibleChat.map((m, i) => (
+            <ChatBubble key={i} sender={m.sender} text={m.text} />
+          ))}
+        </ScrollView>
+        {/* Alt fade — mesajlar aşağı doğru kaybolur */}
+        <LinearGradient
+          colors={['transparent', COLORS.deepNavy]}
+          style={sty.chatFadeBottom}
+          pointerEvents="none"
+        />
+      </View>
 
-        {/* ═══ KULLANICI PROFİL POPUP ═══ */}
-        {selectedUser && (
-          <View style={styles.profilePopup}>
-            <View style={styles.profilePopupInner}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                <View style={[styles.popupAvatar, { borderColor: ROLE_COLORS[selectedUser.role || 'guest'] }]}>
-                  <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>
-                    {selectedUser.name.split(' ').map(w => w[0]).join('').slice(0, 2)}
-                  </Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>{selectedUser.name}</Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
-                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: ROLE_COLORS[selectedUser.role || 'guest'] }} />
-                    <Text style={{ color: ROLE_COLORS[selectedUser.role || 'guest'], fontSize: 11, fontWeight: '600', textTransform: 'uppercase' as const }}>
-                      {selectedUser.role || 'guest'}
-                    </Text>
-                  </View>
-                </View>
-                <TouchableOpacity onPress={() => setSelectedUser(null)}>
-                  <Ionicons name="close-circle" size={24} color="rgba(255,255,255,0.3)" />
-                </TouchableOpacity>
-              </View>
-              {/* Mod aksiyonları (sadece owner görür) */}
-              {isOwner && !selectedUser.isOwner && (
-                <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
-                  <TouchableOpacity style={[styles.modBtn, { backgroundColor: 'rgba(34,197,94,0.12)' }]} onPress={() => { /* TODO: grantMic */ }}>
-                    <Ionicons name="mic" size={14} color="#22C55E" />
-                    <Text style={{ color: '#22C55E', fontSize: 11, fontWeight: '600' }}>Mik Ver</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={[styles.modBtn, { backgroundColor: 'rgba(245,158,11,0.12)' }]} onPress={() => { setSelectedUser(null); }}>
-                    <Ionicons name="mic-off" size={14} color="#F59E0B" />
-                    <Text style={{ color: '#F59E0B', fontSize: 11, fontWeight: '600' }}>Sustur</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={[styles.modBtn, { backgroundColor: 'rgba(239,68,68,0.12)' }]} onPress={() => { setSelectedUser(null); }}>
-                    <Ionicons name="exit-outline" size={14} color="#EF4444" />
-                    <Text style={{ color: '#EF4444', fontSize: 11, fontWeight: '600' }}>At</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-              {/* Takip et & Hediye gönder (herkes görür) */}
-              {!selectedUser.isOwner && (
-                <View style={{ flexDirection: 'row', gap: 8 }}>
-                  <TouchableOpacity
-                    style={[styles.modBtn, { backgroundColor: 'rgba(59,130,246,0.12)', flex: 1 }]}
-                    onPress={() => {
-                      Alert.alert('Takip', `${selectedUser.name} takip edildi!`);
-                    }}
-                  >
-                    <Ionicons name="person-add" size={14} color="#3B82F6" />
-                    <Text style={{ color: '#3B82F6', fontSize: 11, fontWeight: '600' }}>Takip Et</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.modBtn, { backgroundColor: 'rgba(168,85,247,0.12)', flex: 1 }]}
-                    onPress={() => {
-                      setSelectedUser(null);
-                      setVaultVisible(true);
-                    }}
-                  >
-                    <Ionicons name="gift" size={14} color="#A855F7" />
-                    <Text style={{ color: '#A855F7', fontSize: 11, fontWeight: '600' }}>Hediye</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-          </View>
-        )}
+      {/* ═══ VIP GİRİŞ BANTI ═══ */}
+      {vipEntry && (
+        <VIPEntryBanner name={vipEntry} onDone={() => setVipEntry(null)} />
+      )}
 
-        {/* ═══ BOTTOM ACTION BAR — panel içinde, en altta ═══ */}
-        <View style={[styles.actionBar, { paddingBottom: Math.max(insets.bottom, 8) + 4 }]}>
-          {/* Kontrol butonları satırı */}
-          <View style={styles.controlRow}>
-            <TouchableOpacity style={[styles.ctrlBtn, handRaised && { backgroundColor: 'rgba(255,184,0,0.2)', borderColor: 'rgba(255,184,0,0.35)' }]} onPress={toggleHandRaise}>
-              <Ionicons name="hand-left" size={18} color={handRaised ? '#FFB800' : COLORS.silver} />
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.ctrlBtn, camOn && { backgroundColor: 'rgba(139,92,246,0.2)', borderColor: 'rgba(139,92,246,0.35)' }]} onPress={toggleCamera}>
-              <Ionicons name={camOn ? 'videocam' : 'videocam-off-outline'} size={18} color={camOn ? '#A855F7' : COLORS.silver} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.mainMicBtn, liveKit.isPublishing ? styles.mainMicOn : styles.mainMicOff]}
-              activeOpacity={0.7}
-              onPress={async () => {
-                if (liveKit.isPublishing) { await liveKit.unpublishAudio(); }
-                else { await liveKit.publishAudio(); }
-              }}
-            >
-              <Ionicons name={liveKit.isPublishing ? 'mic' : 'mic-off'} size={24} color={liveKit.isPublishing ? '#fff' : 'rgba(255,255,255,0.7)'} />
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.ctrlBtn, showMicQueue && { backgroundColor: 'rgba(99,102,241,0.2)', borderColor: 'rgba(99,102,241,0.35)' }]} onPress={() => setShowMicQueue(!showMicQueue)}>
-              <Ionicons name="list" size={18} color={showMicQueue ? '#6366F1' : COLORS.silver} />
-              {micQueue.length > 0 && (
-                <View style={styles.queueBadge}><Text style={{ fontSize: 8, color: '#fff', fontWeight: '800' }}>{micQueue.length}</Text></View>
-              )}
-            </TouchableOpacity>
-            <GiftButton onPress={() => setVaultVisible(true)} />
-          </View>
+      {/* ═══ FADE — chat → bottom bar geçişi ═══ */}
+      <LinearGradient
+        colors={['transparent', 'rgba(4,8,16,0.6)', 'rgba(4,8,16,0.94)']}
+        locations={[0, 0.5, 1]}
+        style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 110 }}
+        pointerEvents="none"
+      />
 
-          {/* Emoji bar — kontrol ile input arasında */}
-          <EmojiReactions
-            showBar={showEmojiBar}
-            onEmojiSent={(emoji) => { console.log('[Reaction]', emoji); setShowEmojiBar(false); }}
+      {/* ═══ PREMIUM DOCK ═══ */}
+      <View style={[sty.dock, { paddingBottom: Math.max(insets.bottom, 6) }]}>
+        {/* Glassmorphism bg */}
+        <LinearGradient
+          colors={['rgba(8,14,28,0.88)', 'rgba(4,8,18,0.96)']}
+          style={StyleSheet.absoluteFill}
+        />
+
+        {/* ─── Input strip ─── */}
+        <View style={sty.inputStrip}>
+          <TouchableOpacity activeOpacity={0.7} style={sty.dockEmoji}>
+            <Text style={{ fontSize: 13 }}>😊</Text>
+          </TouchableOpacity>
+          <TextInput
+            style={sty.dockInput}
+            placeholder="Mesaj yaz..."
+            placeholderTextColor="rgba(255,255,255,0.15)"
+            selectionColor={COLORS.primary}
+            value={chatInput}
+            onChangeText={setChatInput}
+            onSubmitEditing={handleSend}
+            onFocus={() => setChatFocused(true)}
+            onBlur={() => setChatFocused(false)}
+            returnKeyType="send"
           />
-
-          {/* Mesaj input satırı */}
-          <View style={styles.actionBarInner}>
-            <TouchableOpacity style={styles.emojiInlineBtn} activeOpacity={0.7} onPress={() => setShowEmojiBar(!showEmojiBar)}>
-              <Text style={{ fontSize: 18 }}>😊</Text>
-            </TouchableOpacity>
-            <View style={styles.inputWrapper}>
-              <TextInput
-                style={styles.input}
-                placeholder="Locaya fısılda..."
-                placeholderTextColor={COLORS.silverDark}
-                selectionColor={COLORS.primary}
-                value={chatInput}
-                onChangeText={setChatInput}
-                onSubmitEditing={handleSendMessage}
-                returnKeyType="send"
-              />
-            </View>
-            <TouchableOpacity style={styles.micBtn} activeOpacity={0.7} onPress={chatInput.trim() ? handleSendMessage : undefined}>
-              <Ionicons name="send" size={18} color={chatInput.trim() ? COLORS.primary : COLORS.silverDark} />
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={chatInput.trim() ? handleSend : undefined}
+            style={[sty.dockSend, chatInput.trim() && sty.dockSendActive]}
+          >
+            <Ionicons
+              name="paper-plane"
+              size={12}
+              color={chatInput.trim() ? '#fff' : 'rgba(255,255,255,0.12)'}
+            />
+          </TouchableOpacity>
         </View>
-      </Animated.View>
 
-      {/* ─── Gift Vault Sheet ─── */}
-      <GiftVaultSheet
-        visible={vaultVisible}
-        onClose={() => setVaultVisible(false)}
-        onPlayAnimation={(giftId) => setActiveGiftAnimation(giftId)}
-      />
+        {/* ─── Control strip ─── */}
+        <View style={sty.controlStrip}>
+          {/* Left utility */}
+          <TouchableOpacity activeOpacity={0.7} style={sty.ghostBtn}>
+            <Ionicons name="volume-medium" size={20} color="rgba(255,255,255,0.3)" />
+          </TouchableOpacity>
+          <TouchableOpacity activeOpacity={0.7} style={sty.ghostBtn}>
+            <Ionicons name="hand-left" size={18} color="rgba(255,255,255,0.3)" />
+          </TouchableOpacity>
 
-      {/* ─── Lottie Sinematik Overlay (Z-index TOP) ─── */}
-      <LottieGiftOverlay
-        giftId={activeGiftAnimation}
-        onFinish={() => setActiveGiftAnimation(null)}
-      />
-    </View>
+          {/* Primary: Mic pill */}
+          <TouchableOpacity
+            activeOpacity={0.85}
+            style={sty.micPill}
+            onPress={async () => {
+              if (lk.isPublishing) await lk.unpublishAudio();
+              else await lk.publishAudio();
+            }}
+          >
+            <LinearGradient
+              colors={lk.isPublishing
+                ? ['rgba(92,225,230,0.25)', 'rgba(56,189,248,0.15)']
+                : ['rgba(255,255,255,0.04)', 'rgba(255,255,255,0.02)']}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+              style={sty.micPillGrad}
+            >
+              <Ionicons
+                name={lk.isPublishing ? 'mic' : 'mic-off'}
+                size={17}
+                color={lk.isPublishing ? COLORS.primary : 'rgba(255,255,255,0.3)'}
+              />
+              <Text style={[
+                sty.micPillLabel,
+                lk.isPublishing && { color: COLORS.primary }
+              ]}>
+                {lk.isPublishing ? 'Canlı' : 'Sessiz'}
+              </Text>
+            </LinearGradient>
+            {lk.isPublishing && <View style={sty.micPillGlow} />}
+          </TouchableOpacity>
+
+          {/* Right actions */}
+          <TouchableOpacity activeOpacity={0.7} style={sty.ghostBtn}>
+            <Ionicons name="videocam" size={20} color="rgba(255,255,255,0.3)" />
+          </TouchableOpacity>
+          <TouchableOpacity activeOpacity={0.7} style={sty.ghostBtn} onPress={() => setVaultOpen(true)}>
+            <Ionicons name="diamond" size={17} color={COLORS.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity activeOpacity={0.7} style={sty.ghostBtn}>
+            <Ionicons name="ellipsis-horizontal" size={20} color="rgba(255,255,255,0.25)" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* ═══ HOST PROFİL KARTI (overlay) ═══ */}
+      {selectedUser && (
+        <ProfileCard
+          nick={selectedUser.nick}
+          role={selectedUser.role}
+          onClose={() => setSelectedUser(null)}
+          onMute={() => { setSelectedUser(null); }}
+          onRemoveFromStage={selectedUser.role === 'speaker' ? () => { setSelectedUser(null); } : undefined}
+          onKick={selectedUser.role !== 'host' ? () => { setSelectedUser(null); } : undefined}
+        />
+      )}
+
+      {/* ═══ HEDİYE ÖRTÜLERİ ═══ */}
+      <GiftVaultSheet visible={vaultOpen} onClose={() => setVaultOpen(false)} onPlayAnimation={id => setGiftAnim(id)} />
+      <LottieGiftOverlay giftId={giftAnim} onFinish={() => setGiftAnim(null)} />
+    </Animated.View>
   );
 }
 
-// ═════════════════════════════════════════════════════
-// STYLES
-// ═════════════════════════════════════════════════════
-const PANEL_TOP = height * 0.05;
+/* ════════════════════════════════════════════════
+   STİLLER
+   ════════════════════════════════════════════════ */
+const sty = StyleSheet.create({
+  root: { flex: 1, backgroundColor: COLORS.deepNavy },
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
-
-  darkOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-  },
-
-  /* ── Panel ── */
-  panel: {
-    position: 'absolute',
-    top: PANEL_TOP,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-  },
-  panelTopGlow: {
-    position: 'absolute',
-    top: 0,
-    left: 40,
-    right: 40,
-    height: 1.5,
-    zIndex: 2,
-  },
-  dragHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    alignSelf: 'center',
-    marginTop: 10,
-    marginBottom: 6,
-  },
-
-  /* ── Header ── */
+  /* Header */
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.04)',
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: 12, paddingBottom: 4, zIndex: 20,
   },
-  headerLeft: {
-    flex: 1,
+  headerL: { flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 },
+  headerHostAvatar: {
+    width: 34, height: 34, borderRadius: 17,
+    backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1.5, borderColor: COLORS.primary,
+    alignItems: 'center', justifyContent: 'center',
+    shadowColor: COLORS.primary, shadowOpacity: 0.3, shadowRadius: 6,
+    shadowOffset: { width: 0, height: 0 }, elevation: 4,
   },
-  headerAvatarRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+  headerHostInitials: { color: COLORS.primary, fontSize: 12, fontWeight: '700' },
+  headerRoom: { color: COLORS.white, fontSize: 14, fontWeight: '700', letterSpacing: 0.2 },
+  headerStatus: { color: COLORS.silverDark, fontSize: 9, marginTop: 1 },
+  headerR: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  viewerPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    backgroundColor: 'rgba(92,225,230,0.06)', borderRadius: 10,
+    paddingHorizontal: 7, paddingVertical: 2,
+    borderWidth: 0.5, borderColor: 'rgba(92,225,230,0.15)',
   },
-  headerAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: COLORS.vipGold,
-    backgroundColor: 'rgba(212,175,55,0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerAvatarText: {
-    color: COLORS.vipGold,
-    fontSize: 14,
-    fontWeight: FONTS.bold as any,
-  },
-  headerInfo: {
-    flex: 1,
-  },
-  headerTitle: {
-    color: COLORS.white,
-    fontSize: 16,
-    fontWeight: FONTS.semibold as any,
-    letterSpacing: 0.3,
-  },
-  tokenRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 2,
-  },
-  tokenText: {
-    color: COLORS.primary,
-    fontSize: 13,
-    fontWeight: FONTS.medium as any,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  headerBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: RADIUS.full,
+  viewerCount: { color: COLORS.primary, fontSize: 10, fontWeight: '600' },
+  headerIcon: {
+    width: 30, height: 30, borderRadius: 15,
     backgroundColor: 'rgba(255,255,255,0.04)',
-    borderWidth: 1,
-    borderColor: COLORS.cardGlassBorder,
-  },
-  headerBadgeText: {
-    color: COLORS.silverLight,
-    fontSize: 12,
-    fontWeight: FONTS.medium as any,
-  },
-  headerIconBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderWidth: 1,
-    borderColor: COLORS.cardGlassBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
+    alignItems: 'center', justifyContent: 'center',
   },
 
-  /* ── Stage ── */
-  stageArea: {
+  /* Stage */
+  stage: {
     alignItems: 'center',
-    paddingVertical: SPACING.lg,
-    position: 'relative',
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 8,
   },
-  stageGlow: {
-    position: 'absolute',
-    top: 20,
-    width: width * 0.6,
-    height: width * 0.6,
-    borderRadius: width * 0.3,
-    backgroundColor: COLORS.primaryGlow,
-    opacity: 0.08,
-  },
-  ownerRow: {
-    marginBottom: SPACING.lg,
-    alignItems: 'center',
-  },
-  seatsRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: SPACING.lg,
-    flexWrap: 'wrap',
+  stageGrid: {
+    flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center',
+    gap: 2,
   },
 
-  /* ── Seat ── */
-  seatWrapper: {
-    alignItems: 'center',
-    position: 'relative',
-  },
-  speakingGlow: {
-    position: 'absolute',
-    top: -7,
-    left: -7,
-    backgroundColor: COLORS.primaryGlow,
-    zIndex: -1,
-  },
-  seatShell: {
-    borderWidth: 1.5,
-    backgroundColor: COLORS.cardGlassBg,
-    alignItems: 'center',
-    justifyContent: 'center',
+  /* Seat */
+  seatGlass: {
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
     overflow: 'hidden',
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  seatInitials: {
-    color: COLORS.white,
-    fontWeight: FONTS.semibold as any,
+  innerShadow: {
+    ...StyleSheet.absoluteFillObject,
+    borderWidth: 2.5,
+    borderColor: 'rgba(0,0,0,0.2)',
+    opacity: 0.4,
   },
-  ownerBadge: {
-    position: 'absolute',
-    top: -2,
-    right: -2,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: COLORS.deepNavy,
-    borderWidth: 1,
-    borderColor: COLORS.vipGold,
-    alignItems: 'center',
-    justifyContent: 'center',
+  seatInitials: { color: COLORS.silver, fontWeight: '700', letterSpacing: 0.5 },
+  seatNick: { color: COLORS.silverDark, fontSize: 10, fontWeight: '500', marginTop: 3, maxWidth: 60, textAlign: 'center' },
+  hostBadge: {
+    position: 'absolute', top: -1, right: -1,
+    width: 14, height: 14, borderRadius: 7,
+    backgroundColor: 'rgba(212,175,55,0.12)', borderWidth: 0.5, borderColor: COLORS.vipGold,
+    alignItems: 'center', justifyContent: 'center',
   },
-  seatName: {
-    color: COLORS.silverLight,
-    fontSize: 10,
-    fontWeight: FONTS.medium as any,
-    marginTop: 6,
-    maxWidth: 76,
-    textAlign: 'center',
+  micIndicator: {
+    position: 'absolute', bottom: 12, right: 0,
+    width: 14, height: 14, borderRadius: 7,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 0.5,
   },
+  micOn: { backgroundColor: 'rgba(92,225,230,0.18)', borderColor: 'rgba(92,225,230,0.5)' },
+  micOff: { backgroundColor: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)' },
 
-  /* ── Chat ── */
+  /* Audience */
+  audience: { maxHeight: H * 0.18, paddingHorizontal: 12, marginBottom: 0 },
+  audienceLabel: {
+    color: COLORS.silverDark, fontSize: 10, fontWeight: '600',
+    textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 6, marginLeft: 4,
+  },
+  audienceGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start' },
+
+  /* Chat */
   chatArea: {
     flex: 1,
-    position: 'relative',
-    marginHorizontal: SPACING.md,
+    marginHorizontal: 14,
+    marginBottom: 90,
   },
-  chatFadeMask: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 40,
-    zIndex: 2,
+  chatFadeTop: {
+    position: 'absolute', top: 0, left: 0, right: 0, height: 36, zIndex: 2,
   },
-  chatScroll: {
-    paddingTop: 40,
-    paddingBottom: SPACING.sm,
+  chatFadeBottom: {
+    position: 'absolute', bottom: 0, left: 0, right: 0, height: 32, zIndex: 2,
   },
   chatBubble: {
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    borderRadius: 18,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    marginBottom: 6,
-    maxWidth: '85%',
-    alignSelf: 'flex-start',
-  },
-  chatUser: {
-    color: COLORS.primary,
-    fontSize: 11,
-    fontWeight: FONTS.semibold as any,
-    marginBottom: 2,
-  },
-  chatText: {
-    color: 'rgba(255,255,255,0.85)',
-    fontSize: 13,
-    fontWeight: FONTS.regular as any,
-    lineHeight: 18,
-  },
-
-  /* ── Action Bar ── */
-  actionBar: {
-    paddingHorizontal: SPACING.md,
-    paddingTop: SPACING.sm,
-  },
-  actionBarInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  emojiInlineBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-  },
-  inputWrapper: {
-    flex: 1,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    // Inner shadow simulation
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  input: {
-    color: COLORS.white,
-    fontSize: 14,
-    fontWeight: FONTS.regular as any,
-  },
-  micBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    flexDirection: 'row', flexWrap: 'wrap',
     backgroundColor: 'rgba(255,255,255,0.04)',
-    borderWidth: 1,
-    borderColor: COLORS.cardGlassBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: 14, paddingHorizontal: 10, paddingVertical: 5,
+    marginBottom: 4, alignSelf: 'flex-start',
   },
+  chatSender: { color: COLORS.primary, fontSize: 11, fontWeight: '600' },
+  chatBody: { color: COLORS.silver, fontSize: 11, flexShrink: 1 },
+  entryText: { color: COLORS.silverDark, fontSize: 10, fontStyle: 'italic' },
 
-  /* ── Gift Button ── */
-  giftBtnWrapper: {
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
+  /* VIP Banner */
+  vipBanner: {
+    position: 'absolute', top: 70, alignSelf: 'center',
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: 'rgba(212,175,55,0.08)', borderWidth: 0.5, borderColor: 'rgba(212,175,55,0.25)',
+    borderRadius: 16, paddingHorizontal: 14, paddingVertical: 6,
+    zIndex: 100,
   },
-  giftGlow: {
+  vipBannerText: { color: COLORS.vipGold, fontSize: 11, fontWeight: '600' },
+
+  /* Premium Dock */
+  dock: {
     position: 'absolute',
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: COLORS.primaryGlow,
+    bottom: 0, left: 0, right: 0,
+    paddingHorizontal: 12, paddingTop: 8,
+    overflow: 'hidden',
+    borderTopWidth: 0.5,
+    borderTopColor: 'rgba(92,225,230,0.06)',
   },
-  giftBtn: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 10,
-  },
-
-  /* ── Control Row ── */
-  controlRow: {
+  inputStrip: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    marginBottom: 8,
-  },
-  ctrlBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  mainMicBtn: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-  },
-  mainMicOn: {
-    backgroundColor: '#FF2D78',
-    borderColor: '#FF2D78',
-    shadowColor: '#FF2D78',
-    shadowOpacity: 0.45,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 0 },
-  },
-  mainMicOff: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderColor: 'rgba(255,255,255,0.15)',
-  },
-  queueBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: '#EF4444',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#0B1222',
-  },
-
-  /* ── Mic Queue Panel ── */
-  micQueuePanel: {
-    marginHorizontal: 14,
-    marginBottom: 8,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    borderRadius: 16,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(99,102,241,0.15)',
-  },
-  micQueueHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  micQueueRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 6,
-    borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(255,255,255,0.04)',
-  },
-  micQueueNum: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  grantMicBtn: {
-    width: 28,
     height: 28,
+    backgroundColor: 'rgba(255,255,255,0.04)',
     borderRadius: 14,
-    backgroundColor: 'rgba(34,197,94,0.12)',
-    borderWidth: 0.5,
-    borderColor: 'rgba(34,197,94,0.25)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingLeft: 6, paddingRight: 2,
+    marginBottom: 6,
   },
-
-  /* ── Profile Popup ── */
-  profilePopup: {
-    marginHorizontal: 14,
-    marginBottom: 8,
+  dockEmoji: {
+    marginRight: 4,
   },
-  profilePopupInner: {
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+  dockInput: {
+    flex: 1, color: '#fff', fontSize: 12,
+    paddingVertical: 0, paddingHorizontal: 2,
   },
-  popupAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
+  dockSend: {
+    width: 22, height: 22, borderRadius: 11,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.04)',
   },
-  modBtn: {
-    flex: 1,
+  dockSendActive: {
+    backgroundColor: COLORS.primary,
+    shadowColor: COLORS.primary, shadowOpacity: 0.4, shadowRadius: 6,
+    shadowOffset: { width: 0, height: 0 }, elevation: 3,
+  },
+  controlStrip: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
-    paddingVertical: 8,
-    borderRadius: 10,
-    borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.06)',
+    marginBottom: 2,
   },
+  ghostBtn: {
+    width: 40, height: 36,
+    alignItems: 'center', justifyContent: 'center',
+    borderRadius: 12,
+  },
+  giftBtn: {
+    shadowColor: COLORS.primary, shadowOpacity: 0.3, shadowRadius: 8,
+    shadowOffset: { width: 0, height: 0 }, elevation: 4,
+    borderRadius: 12, overflow: 'hidden',
+  },
+  giftBtnGrad: {
+    width: 42, height: 36,
+    alignItems: 'center', justifyContent: 'center',
+    borderRadius: 12,
+  },
+  micPill: {
+    position: 'relative',
+    marginHorizontal: 6,
+  },
+  micPillGrad: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 38, borderRadius: 19,
+    paddingHorizontal: 14, gap: 5,
+    borderWidth: 0.5,
+    borderColor: 'rgba(92,225,230,0.08)',
+  },
+  micPillLabel: {
+    color: 'rgba(255,255,255,0.3)',
+    fontSize: 11, fontWeight: '600',
+    letterSpacing: 0.3,
+  },
+  micPillGlow: {
+    position: 'absolute',
+    top: -2, left: -2, right: -2, bottom: -2,
+    borderRadius: 19,
+    borderWidth: 1,
+    borderColor: 'rgba(92,225,230,0.12)',
+    shadowColor: COLORS.primary,
+    shadowOpacity: 0.35, shadowRadius: 12,
+    shadowOffset: { width: 0, height: 0 },
+  },
+
+  /* Profile Card */
+  profileOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    justifyContent: 'center', alignItems: 'center', zIndex: 200,
+  },
+  profileCard: {
+    width: W * 0.82, backgroundColor: 'rgba(16,24,42,0.95)',
+    borderRadius: 20, padding: 18,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
+  },
+  profileHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
+  profileAvatar: {
+    width: 46, height: 46, borderRadius: 23,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 2, borderColor: COLORS.primary,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  profileInitials: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  profileNick: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  profileRole: { color: 'rgba(255,255,255,0.4)', fontSize: 11, marginTop: 2 },
+  profileActions: { flexDirection: 'row', gap: 8 },
+  profileBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4,
+    paddingVertical: 10, borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
+  },
+  profileBtnText: { color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: '600' },
 });

@@ -378,3 +378,43 @@ export async function getNotifications(
     return [];
   }
 }
+
+// ─────────────────────────────────────────────────────
+// API: Direkt Mesajlar (DM Conversations)
+// GET /api/messages/conversations
+// ─────────────────────────────────────────────────────
+
+export interface ConversationData {
+  id: string;
+  name: string;
+  avatar: string;
+  lastMessage: string;
+  time: string;
+  unread: number;
+  isOnline: boolean;
+  isAlliance: boolean;
+}
+
+// Dummy DM verisi — backend hazır olana kadar fallback
+const DUMMY_CONVERSATIONS: ConversationData[] = [
+  { id: 'dm1', name: 'Ahmet Kaan', avatar: 'AK', lastMessage: 'Akşam locada buluşalım mı?', time: '14:32', unread: 2, isOnline: true, isAlliance: false },
+  { id: 'dm2', name: 'Elif Deniz', avatar: 'ED', lastMessage: 'Harika bir akşamdı, teşekkürler 🎤', time: '12:05', unread: 0, isOnline: true, isAlliance: true },
+  { id: 'dm3', name: 'Burak Yılmaz', avatar: 'BY', lastMessage: 'Yeni odayı gördün mü?', time: 'Dün', unread: 1, isOnline: false, isAlliance: false },
+  { id: 'dm4', name: 'Zeynep Aras', avatar: 'ZA', lastMessage: 'VIP etkinlik için hazır mısın?', time: 'Dün', unread: 0, isOnline: false, isAlliance: true },
+  { id: 'dm5', name: 'Can Demir', avatar: 'CD', lastMessage: '👍', time: 'Pzt', unread: 0, isOnline: true, isAlliance: false },
+];
+
+export async function getDirectMessageConversations(): Promise<ConversationData[]> {
+  try {
+    const response = await fetchWithTimeout(
+      `${BASE_URL}/api/messages/conversations`,
+      { method: 'GET' },
+    );
+    if (!response.ok) return DUMMY_CONVERSATIONS;
+    const data = await response.json();
+    return Array.isArray(data) && data.length > 0 ? data : DUMMY_CONVERSATIONS;
+  } catch {
+    return DUMMY_CONVERSATIONS;
+  }
+}
+

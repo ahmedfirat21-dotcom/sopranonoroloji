@@ -1,12 +1,12 @@
 /* ═══════════════════════════════════════════════════════════
    SopranoChat Mobil2 — EmojiReactions
-   Ekranda uçuşan emoji reaksiyon animasyonları
+   Yanal açılan ince emoji çubuğu + uçuşan reaksiyonlar
    ═══════════════════════════════════════════════════════════ */
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Animated,
-  Dimensions, Easing, ScrollView,
+  Dimensions, Easing,
 } from 'react-native';
 import { COLORS } from '../constants/theme';
 
@@ -29,11 +29,7 @@ function FloatingEmojiView({ emoji, x, translateY, opacity, scale }: Omit<Floati
     <Animated.View
       style={[
         styles.floatingEmoji,
-        {
-          left: x,
-          transform: [{ translateY }, { scale }],
-          opacity,
-        },
+        { left: x, transform: [{ translateY }, { scale }], opacity },
       ]}
       pointerEvents="none"
     >
@@ -42,7 +38,7 @@ function FloatingEmojiView({ emoji, x, translateY, opacity, scale }: Omit<Floati
   );
 }
 
-// ─── Emoji Reaction Bar ───────────────────────────────
+// ─── Emoji Reaction Bar — yanal slide ─────────────────
 interface EmojiReactionsProps {
   onEmojiSent?: (emoji: string) => void;
   showBar: boolean;
@@ -52,23 +48,20 @@ export default function EmojiReactions({ onEmojiSent, showBar }: EmojiReactionsP
   const [floatingEmojis, setFloatingEmojis] = useState<FloatingEmoji[]>([]);
   const idRef = useRef(0);
 
-  // ── Açılış/kapanış animasyonu ──
-  const barHeight = useRef(new Animated.Value(0)).current;
+  // ── Yanal açılış/kapanış animasyonu ──
+  const slideWidth = useRef(new Animated.Value(0)).current;
   const barOpacity = useRef(new Animated.Value(0)).current;
-  const barScale = useRef(new Animated.Value(0.85)).current;
 
   useEffect(() => {
     if (showBar) {
       Animated.parallel([
-        Animated.spring(barHeight, { toValue: 54, friction: 10, tension: 80, useNativeDriver: false }),
-        Animated.timing(barOpacity, { toValue: 1, duration: 200, useNativeDriver: false }),
-        Animated.spring(barScale, { toValue: 1, friction: 8, tension: 100, useNativeDriver: false }),
+        Animated.spring(slideWidth, { toValue: 1, friction: 14, tension: 80, useNativeDriver: false }),
+        Animated.timing(barOpacity, { toValue: 1, duration: 180, useNativeDriver: false }),
       ]).start();
     } else {
       Animated.parallel([
-        Animated.timing(barHeight, { toValue: 0, duration: 180, easing: Easing.in(Easing.ease), useNativeDriver: false }),
+        Animated.timing(slideWidth, { toValue: 0, duration: 200, easing: Easing.in(Easing.ease), useNativeDriver: false }),
         Animated.timing(barOpacity, { toValue: 0, duration: 120, useNativeDriver: false }),
-        Animated.timing(barScale, { toValue: 0.85, duration: 150, useNativeDriver: false }),
       ]).start();
     }
   }, [showBar]);
@@ -84,7 +77,6 @@ export default function EmojiReactions({ onEmojiSent, showBar }: EmojiReactionsP
     setFloatingEmojis(prev => [...prev, newEmoji]);
     onEmojiSent?.(emoji);
 
-    // Animasyon: yukarı uç + büyü + kaybol
     Animated.parallel([
       Animated.timing(translateY, {
         toValue: -(200 + Math.random() * 150),
@@ -93,30 +85,24 @@ export default function EmojiReactions({ onEmojiSent, showBar }: EmojiReactionsP
         useNativeDriver: true,
       }),
       Animated.sequence([
-        Animated.spring(scale, {
-          toValue: 1 + Math.random() * 0.3,
-          friction: 4,
-          tension: 100,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scale, {
-          toValue: 0.5,
-          duration: 800,
-          useNativeDriver: true,
-        }),
+        Animated.spring(scale, { toValue: 1 + Math.random() * 0.3, friction: 4, tension: 100, useNativeDriver: true }),
+        Animated.timing(scale, { toValue: 0.5, duration: 800, useNativeDriver: true }),
       ]),
       Animated.sequence([
         Animated.delay(1200),
-        Animated.timing(opacity, {
-          toValue: 0,
-          duration: 800,
-          useNativeDriver: true,
-        }),
+        Animated.timing(opacity, { toValue: 0, duration: 800, useNativeDriver: true }),
       ]),
     ]).start(() => {
       setFloatingEmojis(prev => prev.filter(e => e.id !== id));
     });
   }, [onEmojiSent]);
+
+  // Emoji bar max genişliği
+  const MAX_BAR_W = QUICK_EMOJIS.length * 34 + 12;
+  const animatedWidth = slideWidth.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, MAX_BAR_W],
+  });
 
   return (
     <>
@@ -125,34 +111,23 @@ export default function EmojiReactions({ onEmojiSent, showBar }: EmojiReactionsP
         <FloatingEmojiView key={e.id} emoji={e.emoji} x={e.x} translateY={e.translateY} opacity={e.opacity} scale={e.scale} />
       ))}
 
-      {/* Quick reaction bar — animasyonlu açılış/kapanış */}
+      {/* Yanal açılan ince emoji çubuğu — arka plan yok */}
       <Animated.View
         style={[
           styles.emojiBarWrap,
-          {
-            height: barHeight,
-            opacity: barOpacity,
-            transform: [{ scale: barScale }],
-          },
+          { width: animatedWidth, opacity: barOpacity },
         ]}
       >
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.emojiBarContent}
-          bounces={false}
-        >
-          {QUICK_EMOJIS.map(emoji => (
-            <TouchableOpacity
-              key={emoji}
-              style={styles.emojiBtn}
-              activeOpacity={0.6}
-              onPress={() => sendEmoji(emoji)}
-            >
-              <Text style={styles.emojiBtnText}>{emoji}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        {QUICK_EMOJIS.map(emoji => (
+          <TouchableOpacity
+            key={emoji}
+            style={styles.emojiBtn}
+            activeOpacity={0.6}
+            onPress={() => sendEmoji(emoji)}
+          >
+            <Text style={styles.emojiBtnText}>{emoji}</Text>
+          </TouchableOpacity>
+        ))}
       </Animated.View>
     </>
   );
@@ -168,30 +143,22 @@ const styles = StyleSheet.create({
     fontSize: 28,
   },
   emojiBarWrap: {
-    overflow: 'hidden',
-    marginHorizontal: 14,
-    marginBottom: 6,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.75)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-  },
-  emojiBarContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    gap: 4,
-    height: '100%',
+    overflow: 'hidden',
+    marginBottom: 4,
+    paddingHorizontal: 4,
+    gap: 2,
+    // Arka plan yok — şeffaf
   },
   emojiBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.06)',
   },
   emojiBtnText: {
-    fontSize: 20,
+    fontSize: 18,
   },
 });

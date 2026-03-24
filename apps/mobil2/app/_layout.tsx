@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -8,6 +8,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { COLORS } from '../constants/theme';
 import { ThemeProvider, useTheme } from '../constants/ThemeContext';
 import { UserProvider, useUser } from '../contexts/UserContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   registerForPushNotifications,
   savePushTokenToBackend,
@@ -27,26 +28,40 @@ function InnerLayout() {
   const { colors, isDark } = useTheme();
   const { token: authToken, isLoggedIn, isProfileComplete, isLoading } = useUser();
   const router = useRouter();
+  const [splashChecked, setSplashChecked] = useState(false);
+  const [needsSplash, setNeedsSplash] = useState(false);
 
   useEffect(() => {
     SplashScreen.hideAsync().catch(() => {});
+    // Splash gösterildi mi kontrol et
+    AsyncStorage.getItem('@soprano_splash_seen').then((val) => {
+      setNeedsSplash(!val);
+      setSplashChecked(true);
+    }).catch(() => {
+      setNeedsSplash(true);
+      setSplashChecked(true);
+    });
   }, []);
 
   // ── Onboarding Router Guard ──
   useEffect(() => {
-    if (isLoading) return; // Henüz yükleniyor, bekle
+    if (isLoading || !splashChecked) return;
 
     if (!isLoggedIn) {
-      // Giriş yapmamış → Login ekranına
-      router.replace('/login');
+      if (needsSplash) {
+        // İlk açılış → splash animasyonu göster
+        AsyncStorage.setItem('@soprano_splash_seen', 'true').catch(() => {});
+        setNeedsSplash(false);
+        router.replace('/splash');
+      } else {
+        router.replace('/login');
+      }
     } else if (!isProfileComplete) {
-      // Giriş yapmış ama profil eksik → Setup ekranına
       router.replace('/setup');
     } else {
-      // Giriş yapmış ve profil tamam → Home
       router.replace('/(tabs)');
     }
-  }, [isLoading, isLoggedIn, isProfileComplete]);
+  }, [isLoading, isLoggedIn, isProfileComplete, splashChecked]);
 
   // Push notification kurulumu
   useEffect(() => {
