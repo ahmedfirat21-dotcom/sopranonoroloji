@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
-import { LogBox, View } from 'react-native';
+import { LogBox, View, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { COLORS } from '../constants/theme';
 import { ThemeProvider, useTheme } from '../constants/ThemeContext';
 import { UserProvider, useUser } from '../contexts/UserContext';
@@ -24,11 +25,28 @@ const DARK_BG = '#0A0F1C';
 
 function InnerLayout() {
   const { colors, isDark } = useTheme();
-  const { token: authToken } = useUser();
+  const { token: authToken, isLoggedIn, isProfileComplete, isLoading } = useUser();
+  const router = useRouter();
 
   useEffect(() => {
     SplashScreen.hideAsync().catch(() => {});
   }, []);
+
+  // ── Onboarding Router Guard ──
+  useEffect(() => {
+    if (isLoading) return; // Henüz yükleniyor, bekle
+
+    if (!isLoggedIn) {
+      // Giriş yapmamış → Login ekranına
+      router.replace('/login');
+    } else if (!isProfileComplete) {
+      // Giriş yapmış ama profil eksik → Setup ekranına
+      router.replace('/setup');
+    } else {
+      // Giriş yapmış ve profil tamam → Home
+      router.replace('/(tabs)');
+    }
+  }, [isLoading, isLoggedIn, isProfileComplete]);
 
   // Push notification kurulumu
   useEffect(() => {
@@ -81,12 +99,14 @@ function InnerLayout() {
 
 export default function RootLayout() {
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: DARK_BG }}>
-      <UserProvider>
-        <ThemeProvider>
-          <InnerLayout />
-        </ThemeProvider>
-      </UserProvider>
-    </GestureHandlerRootView>
+    <SafeAreaProvider style={{ flex: 1, backgroundColor: DARK_BG }}>
+      <GestureHandlerRootView style={{ flex: 1, backgroundColor: DARK_BG }}>
+        <UserProvider>
+          <ThemeProvider>
+            <InnerLayout />
+          </ThemeProvider>
+        </UserProvider>
+      </GestureHandlerRootView>
+    </SafeAreaProvider>
   );
 }

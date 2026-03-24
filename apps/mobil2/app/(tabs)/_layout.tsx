@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../constants/ThemeContext';
 import { COLORS, RADIUS, SPACING, FONTS } from '../../constants/theme';
 import * as Haptics from 'expo-haptics';
+import { createRoomEvents } from '../../utils/createRoomEvents';
 
 // ─────────────────────────────────────────────────────
 // Center Create Button (Premium)
@@ -29,18 +30,19 @@ function CenterButton({ onPress }: { onPress?: () => void }) {
       <Animated.View style={[styles.centerGlowOuter, { opacity: Animated.multiply(glow, 0.4) }]} />
       <TouchableOpacity activeOpacity={0.8} onPress={onPress}>
         <LinearGradient
-          colors={['#5CE1E6', COLORS.primary, '#0B8D8E']}
+          colors={['#2DD4BF', '#14A499', '#0E8A80']}
           style={styles.centerBtn}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
+          {/* Üst cam shine */}
           <LinearGradient
-            colors={['rgba(255,255,255,0.30)', 'rgba(255,255,255,0.0)']}
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 26, borderTopLeftRadius: 26, borderTopRightRadius: 26 }}
+            colors={['rgba(255,255,255,0.45)', 'rgba(255,255,255,0.0)']}
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 28, borderTopLeftRadius: 27, borderTopRightRadius: 27 }}
             start={{ x: 0.5, y: 0 }}
             end={{ x: 0.5, y: 1 }}
           />
-          <Ionicons name="add" size={28} color={COLORS.deepNavy} />
+          <Ionicons name="add" size={30} color={'#FFFFFF'} />
         </LinearGradient>
       </TouchableOpacity>
     </View>
@@ -70,7 +72,7 @@ function CustomTabBar() {
   };
 
   return (
-    <View style={[styles.bottomNavWrapper, { bottom: insets.bottom > 0 ? insets.bottom - 4 : 10 }]}>
+    <View style={[styles.bottomNavWrapper, { bottom: insets.bottom > 0 ? insets.bottom : 20 }]}>
       <View style={styles.bottomNav}>
         {/* Subtle glow top edge */}
         <LinearGradient
@@ -87,8 +89,7 @@ function CustomTabBar() {
                 key="center"
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  // Navigate to Home and trigger create room
-                  router.push('/');
+                  createRoomEvents.emit();
                 }}
               />
             );
@@ -211,14 +212,14 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 35,
-    backgroundColor: COLORS.primaryGlow,
+    backgroundColor: 'rgba(45,212,191,0.35)',
   },
   centerGlowOuter: {
     position: 'absolute',
     width: 90,
     height: 90,
     borderRadius: 45,
-    backgroundColor: COLORS.primaryGlow,
+    backgroundColor: 'rgba(45,212,191,0.14)',
   },
   centerBtn: {
     width: 54,
@@ -227,12 +228,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 14,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.20)',
+    shadowColor: '#2DD4BF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.7,
+    shadowRadius: 18,
+    elevation: 16,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.30)',
   },
 });

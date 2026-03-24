@@ -45,6 +45,7 @@ export interface LocalUser {
   points: number;
   isVip: boolean;
   authProvider?: 'guest' | 'google' | 'apple' | 'phone';
+  isProfileComplete?: boolean;
 }
 
 interface UserContextType {
@@ -53,6 +54,7 @@ interface UserContextType {
   profileExtra: ProfileExtra;
   isLoading: boolean;
   isLoggedIn: boolean;
+  isProfileComplete: boolean;
 
   // Auth
   login: (username: string, avatar?: string, gender?: string) => Promise<void>;
@@ -68,6 +70,7 @@ const UserContext = createContext<UserContextType>({
   profileExtra: {},
   isLoading: true,
   isLoggedIn: false,
+  isProfileComplete: false,
   login: async () => {},
   loginWithFirebase: async () => ({ isNewUser: false }),
   update: async () => {},
@@ -134,6 +137,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const fbUser = authResult.user;
 
     // Firebase user → LocalUser mapping
+    // Profil tamamlama kontrolü: displayName VE gender doluysa tamamlanmış sayılır
+    const hasProfile = !!(fbUser.displayName && fbUser.displayName.trim().length > 0);
     const localUser: LocalUser = {
       id: fbUser.uid,
       username: fbUser.email?.split('@')[0] || fbUser.phoneNumber || fbUser.uid.slice(0, 8),
@@ -147,6 +152,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       points: 0,
       isVip: false,
       authProvider: provider,
+      isProfileComplete: false, // Firebase'den gelince her zaman false — setup gerekli
     };
 
     // Lokal kaydet
@@ -201,6 +207,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       points: 0,
       isVip: false,
       authProvider: 'guest',
+      isProfileComplete: !!(username && gender), // Guest: setup'tan geliyorsa true
     };
 
     setUser(localUser);
@@ -232,6 +239,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         displayName: payload.displayName || user.displayName,
         avatarUrl: payload.avatar || user.avatarUrl,
         gender: payload.gender || user.gender,
+        isProfileComplete: true, // Profil güncellendi → tamamlandı
       };
       setUser(updated);
       await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updated));
@@ -287,6 +295,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         profileExtra,
         isLoading,
         isLoggedIn: !!user,
+        isProfileComplete: !!user?.isProfileComplete,
         login,
         loginWithFirebase,
         update,

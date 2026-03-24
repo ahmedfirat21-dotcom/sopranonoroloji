@@ -19,6 +19,7 @@ import { BillingModule } from './billing/billing.module';
 import { LivekitModule } from './livekit/livekit.module';
 import { FriendModule } from './friend/friend.module';
 import { PaymentModule } from './payment/payment.module';
+import { MessageModule } from './message/message.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { PaymentModule } from './payment/payment.module';
     LivekitModule,
     FriendModule,
     PaymentModule,
+    MessageModule,
   ],
   providers: [
     {

@@ -21,26 +21,9 @@ import { hapticLight } from '../utils/haptics';
 
 const { width } = Dimensions.get('window');
 
-// ─────────────────────────────────────────────────────
-// Dummy Messages
-// ─────────────────────────────────────────────────────
-interface ChatMessage {
-  id: string;
-  text: string;
-  isMine: boolean;
-  time: string;
-}
-
-const DUMMY_CHAT: ChatMessage[] = [
-  { id: 'm1', text: 'Selam! Bu akşam locada buluşalım mı?', isMine: false, time: '21:30' },
-  { id: 'm2', text: 'Tabii, harika olur! Hangi loca?', isMine: true, time: '21:31' },
-  { id: 'm3', text: 'Midnight Lounge açık, Kaan\'ın locası. VIP koltuk hakkım var 🎤', isMine: false, time: '21:32' },
-  { id: 'm4', text: 'Mükemmel! Ben de jeton yükledim, hediye yağmuru yapacağım 💎', isMine: true, time: '21:33' },
-  { id: 'm5', text: 'Haha efsane! İttifak bonusu da aktif, birlikte kazanalım', isMine: false, time: '21:34' },
-  { id: 'm6', text: 'Kesinlikle. Liderlik tablosunda yükselme zamanı 🏆', isMine: true, time: '21:35' },
-  { id: 'm7', text: 'Seni lobbide bekliyorum, 10 dakikaya oradayım', isMine: false, time: '21:36' },
-  { id: 'm8', text: 'Tamam, geliyorum! ✨', isMine: true, time: '21:37' },
-];
+import { getDirectMessages, sendDirectMessageAPI, DirectMessageData } from '../services/api';
+import { useUser } from '../contexts/UserContext';
+// Dummy data ve tip silindi, yerine DirectMessageData (API) kullanılıyor.
 
 // ─────────────────────────────────────────────────────
 // Alliance Invite Bar
@@ -88,8 +71,10 @@ function AllianceInviteBar({ onPress }: { onPress: () => void }) {
 // ─────────────────────────────────────────────────────
 // Chat Bubble
 // ─────────────────────────────────────────────────────
-function ChatBubble({ message }: { message: ChatMessage }) {
-  if (message.isMine) {
+function ChatBubble({ message, isMine }: { message: DirectMessageData; isMine: boolean }) {
+  const timeStr = new Date(message.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+
+  if (isMine) {
     return (
       <View style={styles.bubbleRowMine}>
         <View style={styles.bubbleWrapMine}>
@@ -99,8 +84,8 @@ function ChatBubble({ message }: { message: ChatMessage }) {
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           />
-          <Text style={styles.bubbleTextMine}>{message.text}</Text>
-          <Text style={styles.bubbleTimeMine}>{message.time}</Text>
+          <Text style={styles.bubbleTextMine}>{message.content}</Text>
+          <Text style={styles.bubbleTimeMine}>{timeStr}</Text>
         </View>
       </View>
     );
@@ -115,8 +100,8 @@ function ChatBubble({ message }: { message: ChatMessage }) {
         />
         {/* Frosted edge */}
         <View style={styles.bubbleFrost} />
-        <Text style={styles.bubbleTextOther}>{message.text}</Text>
-        <Text style={styles.bubbleTimeOther}>{message.time}</Text>
+        <Text style={styles.bubbleTextOther}>{message.content}</Text>
+        <Text style={styles.bubbleTimeOther}>{timeStr}</Text>
       </View>
     </View>
   );
@@ -127,9 +112,14 @@ function ChatBubble({ message }: { message: ChatMessage }) {
 // ═════════════════════════════════════════════════════
 export default function ChatScreen() {
   const router = useRouter();
-  const { name, avatar, isAlliance } = useLocalSearchParams<{ id: string; name: string; avatar: string; isAlliance: string }>();
+  const { user } = useUser();
+  const params = useLocalSearchParams<any>();
+  const finalTargetId = params.targetId || params.id;
+  const name = params.name;
+  const avatar = params.avatar;
+  const isAlliance = params.isAlliance;
   const [messageText, setMessageText] = useState('');
-  const [messages, setMessages] = useState<ChatMessage[]>(DUMMY_CHAT);
+  const [messages, setMessages] = useState<DirectMessageData[]>([]);
   const isAlly = isAlliance === '1';
   const scrollRef = useRef<ScrollView>(null);
   const insets = useSafeAreaInsets();
@@ -137,6 +127,16 @@ export default function ChatScreen() {
   // Entrance animation
   const slideIn = useRef(new Animated.Value(width * 0.3)).current;
   const fadeIn = useRef(new Animated.Value(0)).current;
+
+  // Load Messages
+  useEffect(() => {
+    if (finalTargetId) {
+      getDirectMessages(finalTargetId, 50).then((data) => {
+         setMessages(data);
+         setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+      });
+    }
+  }, [finalTargetId]);
 
   useEffect(() => {
     Animated.parallel([
@@ -201,7 +201,7 @@ export default function ChatScreen() {
           onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
         >
           {messages.map((msg) => (
-            <ChatBubble key={msg.id} message={msg} />
+            <ChatBubble key={msg.id} message={msg} isMine={msg.senderId === user?.id} />
           ))}
         </ScrollView>
 
@@ -226,18 +226,27 @@ export default function ChatScreen() {
             <TouchableOpacity
               style={styles.sendBtn}
               activeOpacity={0.7}
-              onPress={() => {
-                if (!messageText.trim()) return;
+              onPress={async () => {
+                if (!messageText.trim() || !finalTargetId) return;
                 hapticLight();
-                const newMsg: ChatMessage = {
-                  id: `m${Date.now()}`,
-                  text: messageText.trim(),
-                  isMine: true,
-                  time: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
-                };
-                setMessages(prev => [...prev, newMsg]);
+                const content = messageText.trim();
                 setMessageText('');
+                
+                // Optimistic UI Update (Kendinde hemen göster)
+                const tempMsg: DirectMessageData = {
+                  id: `temp-${Date.now()}`,
+                  content,
+                  senderId: user?.id || '',
+                  receiverId: finalTargetId,
+                  createdAt: new Date().toISOString(),
+                  isRead: false,
+                  sender: { id: user?.id || '', displayName: 'Ben' },
+                };
+                setMessages(prev => [...prev, tempMsg]);
                 setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+
+                // API Çağrısı
+                await sendDirectMessageAPI(finalTargetId, content);
               }}
             >
               <LinearGradient

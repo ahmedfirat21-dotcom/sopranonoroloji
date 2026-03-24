@@ -10,14 +10,23 @@ import { useRouter } from 'expo-router';
 import { COLORS, RADIUS, SPACING, FONTS } from '../constants/theme';
 import { useTheme } from '../constants/ThemeContext';
 import { useUser } from '../contexts/UserContext';
+import { loginWithGoogle, loginWithApple, sendPhoneOTP, verifyPhoneOTP } from '../services/firebaseAuth';
+import { TextInput, Alert } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 
 export default function LoginScreen() {
   const router = useRouter();
   const { colors: C, isDark } = useTheme();
-  const { isLoggedIn, login } = useUser();
+  const { isLoggedIn, login, loginWithFirebase } = useUser();
   const [guestLoading, setGuestLoading] = useState(false);
+  
+  // Auth Form State
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authStep, setAuthStep] = useState<'methods' | 'phone' | 'otp'>('methods');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [confirmResult, setConfirmResult] = useState<any>(null);
 
   const panelY = useRef(new Animated.Value(height * 0.4)).current;
   const panelOpacity = useRef(new Animated.Value(0)).current;
@@ -64,9 +73,78 @@ export default function LoginScreen() {
     ).start();
   }, []);
 
-  // Google/Apple/Telefon — setup'a yönlendir (profil oluşturma)
-  const handleLogin = () => {
-    router.replace('/setup');
+  // ─── Google Giriş ───
+  const handleGoogleLogin = async () => {
+    setAuthLoading(true);
+    try {
+      const authResult = await loginWithGoogle();
+      if (!authResult.success) {
+        if (authResult.error !== 'İptal edildi') Alert.alert('Hata', authResult.error || 'Google girişi başarısız');
+        return;
+      }
+      const { isNewUser } = await loginWithFirebase(authResult, 'google');
+      router.replace(isNewUser ? '/setup' : '/(tabs)');
+    } catch (e: any) {
+      Alert.alert('Giriş Hatası', e.message);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  // ─── Apple Giriş ───
+  const handleAppleLogin = async () => {
+    setAuthLoading(true);
+    try {
+      const authResult = await loginWithApple();
+      if (!authResult.success) {
+        if (authResult.error !== 'İptal edildi') Alert.alert('Hata', authResult.error || 'Apple girişi başarısız');
+        return;
+      }
+      const { isNewUser } = await loginWithFirebase(authResult, 'apple');
+      router.replace(isNewUser ? '/setup' : '/(tabs)');
+    } catch (e: any) {
+      Alert.alert('Hata', e.message);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  // ─── Telefon SMS Gönder ───
+  const handleSendOTP = async () => {
+    if (!phoneNumber) return Alert.alert('Hata', 'Telefon Numaranızı (örn: +90...) formatında girin.');
+    setAuthLoading(true);
+    try {
+      const res = await sendPhoneOTP(phoneNumber);
+      if (!res.success) {
+        Alert.alert('Hata', res.error || 'SMS Gönderilemedi');
+        return;
+      }
+      setConfirmResult(res.confirmation);
+      setAuthStep('otp'); // Kod girme sayfasına geç
+    } catch (e: any) {
+      Alert.alert('Hata', e.message);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  // ─── SMS Kodu Doğrula ───
+  const handleVerifyOTP = async () => {
+    if (!otpCode || !confirmResult) return Alert.alert('Hata', 'Kodu girmelisiniz.');
+    setAuthLoading(true);
+    try {
+      const res = await verifyPhoneOTP(confirmResult, otpCode);
+      if (!res.success) {
+        Alert.alert('Hata', res.error || 'Kod geçersiz veya süre doldu.');
+        return;
+      }
+      const { isNewUser } = await loginWithFirebase(res, 'phone');
+      router.replace(isNewUser ? '/setup' : '/(tabs)');
+    } catch (e: any) {
+      Alert.alert('Hata', e.message);
+    } finally {
+      setAuthLoading(false);
+    }
   };
 
   // Misafir girişi — rastgele isimle direkt giriş
@@ -79,7 +157,6 @@ export default function LoginScreen() {
       router.replace('/(tabs)');
     } catch (e: any) {
       console.warn('[Login] Misafir giriş hatası:', e.message);
-      // Hata olsa bile home'a git (offline mod)
       router.replace('/(tabs)');
     } finally {
       setGuestLoading(false);
@@ -128,32 +205,94 @@ export default function LoginScreen() {
           <View style={s.panelInner}>
             <Text style={[s.panelTitle, { color: C.white }]}>Giriş Yap</Text>
             <Text style={[s.panelSubtitle, { color: C.silverLight }]}>
-              Soprano ailesine katılmak için bir yöntem seçin
+              {authStep === 'methods' && 'Soprano ailesine katılmak için bir yöntem seçin'}
+              {authStep === 'phone' && 'Telefon numaranızı başında + ülke kodu ile birlikte girin'}
+              {authStep === 'otp' && 'Cihazınıza gönderilen 6 haneli kodu girin'}
             </Text>
 
-            {/* Google Butonu */}
-            <TouchableOpacity style={[s.authBtn, { borderColor: C.primaryStroke, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' }]} activeOpacity={0.7} onPress={handleLogin}>
-              <View style={s.authBtnInner}>
-                <Ionicons name="logo-google" size={20} color={C.white} />
-                <Text style={[s.authBtnText, { color: C.white }]}>Google ile devam et</Text>
-              </View>
-            </TouchableOpacity>
+            {/* SEÇİM MENÜSÜ */}
+            {authStep === 'methods' && (
+              <>
+                {/* Google Butonu */}
+                <TouchableOpacity style={[s.authBtn, { borderColor: C.primaryStroke, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' }]} activeOpacity={0.7} onPress={handleGoogleLogin} disabled={authLoading}>
+                  <View style={s.authBtnInner}>
+                    <Ionicons name="logo-google" size={20} color={C.white} />
+                    <Text style={[s.authBtnText, { color: C.white }]}>{authLoading ? 'Bağlanıyor...' : 'Google ile devam et'}</Text>
+                  </View>
+                </TouchableOpacity>
 
-            {/* Apple Butonu */}
-            <TouchableOpacity style={[s.authBtn, { borderColor: C.primaryStroke, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' }]} activeOpacity={0.7} onPress={handleLogin}>
-              <View style={s.authBtnInner}>
-                <Ionicons name="logo-apple" size={22} color={C.white} />
-                <Text style={[s.authBtnText, { color: C.white }]}>Apple ile devam et</Text>
-              </View>
-            </TouchableOpacity>
+                {/* Apple Butonu */}
+                {Platform.OS === 'ios' && (
+                  <TouchableOpacity style={[s.authBtn, { borderColor: C.primaryStroke, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' }]} activeOpacity={0.7} onPress={handleAppleLogin} disabled={authLoading}>
+                    <View style={s.authBtnInner}>
+                      <Ionicons name="logo-apple" size={22} color={C.white} />
+                      <Text style={[s.authBtnText, { color: C.white }]}>{authLoading ? 'Bağlanıyor...' : 'Apple ile devam et'}</Text>
+                    </View>
+                  </TouchableOpacity>
+                )}
 
-            {/* Telefon Butonu */}
-            <TouchableOpacity style={[s.authBtn, { borderColor: C.primaryStroke, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' }]} activeOpacity={0.7} onPress={handleLogin}>
-              <View style={s.authBtnInner}>
-                <Ionicons name="call-outline" size={20} color={C.white} />
-                <Text style={[s.authBtnText, { color: C.white }]}>Telefon numarası ile giriş</Text>
-              </View>
-            </TouchableOpacity>
+                {/* Telefon Butonu */}
+                <TouchableOpacity style={[s.authBtn, { borderColor: C.primaryStroke, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' }]} activeOpacity={0.7} onPress={() => setAuthStep('phone')} disabled={authLoading}>
+                  <View style={s.authBtnInner}>
+                    <Ionicons name="call-outline" size={20} color={C.white} />
+                    <Text style={[s.authBtnText, { color: C.white }]}>Telefon numarası ile giriş</Text>
+                  </View>
+                </TouchableOpacity>
+              </>
+            )}
+
+            {/* TELEFON VERİ GİRİŞ EKRANI */}
+            {authStep === 'phone' && (
+              <>
+                <TextInput
+                  style={[s.phoneInput, { color: C.white, borderColor: C.glassBorder, backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }]}
+                  placeholder="+90 555 123 45 67"
+                  placeholderTextColor={C.silverDark}
+                  keyboardType="phone-pad"
+                  value={phoneNumber}
+                  onChangeText={setPhoneNumber}
+                  editable={!authLoading}
+                  autoFocus
+                />
+                
+                <TouchableOpacity style={[s.authBtn, { backgroundColor: C.primary, borderColor: C.primaryStroke, marginTop: 12 }]} activeOpacity={0.8} onPress={handleSendOTP} disabled={authLoading}>
+                  <View style={s.authBtnInner}>
+                    <Text style={[s.authBtnText, { color: '#000', fontWeight: 'bold' }]}>{authLoading ? 'SMS Gönderiliyor...' : 'Doğrulama Kodu Gönder'}</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={{ marginTop: 16, alignItems: 'center' }} onPress={() => setAuthStep('methods')} disabled={authLoading}>
+                  <Text style={{ color: C.silverDark, fontSize: 13 }}>Vazgeç ve Seçeneklere Dön</Text>
+                </TouchableOpacity>
+              </>
+            )}
+
+            {/* OTP DOĞRULAMA KODU EKRANI */}
+            {authStep === 'otp' && (
+              <>
+                <TextInput
+                  style={[s.phoneInput, { textAlign: 'center', letterSpacing: 8, fontSize: 24, paddingHorizontal: 0, color: C.white, borderColor: C.glassBorder, backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }]}
+                  placeholder="123456"
+                  placeholderTextColor={C.silverDark}
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  value={otpCode}
+                  onChangeText={setOtpCode}
+                  editable={!authLoading}
+                  autoFocus
+                />
+                
+                <TouchableOpacity style={[s.authBtn, { backgroundColor: C.primary, borderColor: C.primaryStroke, marginTop: 12 }]} activeOpacity={0.8} onPress={handleVerifyOTP} disabled={authLoading}>
+                  <View style={s.authBtnInner}>
+                    <Text style={[s.authBtnText, { color: '#000', fontWeight: 'bold' }]}>{authLoading ? 'Bilgiler Doğrulanıyor...' : 'Uygulamaya Giriş Yap'}</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={{ marginTop: 16, alignItems: 'center' }} onPress={() => setAuthStep('phone')} disabled={authLoading}>
+                  <Text style={{ color: C.silverDark, fontSize: 13 }}>Numaramı Değiştirmek İstiyorum</Text>
+                </TouchableOpacity>
+              </>
+            )}
 
             {/* Ayırıcı */}
             <View style={s.divider}>
@@ -306,5 +445,13 @@ const s = StyleSheet.create({
   footerLink: {
     color: COLORS.primary,
     fontSize: 11,
+  },
+  phoneInput: {
+    height: 52,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    marginBottom: 8,
   },
 });

@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "scheme": "sopranochat-m2",
     "userInterfaceStyle": "dark",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "splash": {
       "backgroundColor": "#060B18"
     },
@@ -16,6 +16,7 @@
       },
       "package": "com.sopranochat.mobil2",
       "googleServicesFile": "./google-services.json",
+      "softwareKeyboardLayoutMode": "pan",
       "permissions": [
         "android.permission.RECORD_AUDIO"
       ]
@@ -24,12 +25,7 @@
       "bundleIdentifier": "com.sopranochat.mobil2"
     },
     "plugins": [
-      [
-        "expo-router",
-        {
-          "root": "./app"
-        }
-      ],
+      "expo-router",
       "expo-font",
       "expo-image-picker",
       "@react-native-firebase/app",
@@ -38,9 +34,6 @@
       "expo-apple-authentication"
     ],
     "extra": {
-      "router": {
-        "root": "./app"
-      },
       "eas": {
         "projectId": "c31167ef-cf8e-4d62-b45f-d0b47ad644b3"
       }

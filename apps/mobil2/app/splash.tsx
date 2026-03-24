@@ -13,6 +13,7 @@ export default function SplashScreen() {
   const logoOpacity = useRef(new Animated.Value(0)).current;
   const logoScale = useRef(new Animated.Value(0.8)).current;
   const sloganOpacity = useRef(new Animated.Value(0)).current;
+  const sloganY = useRef(new Animated.Value(10)).current;
 
   // Glow hareketi (orijinal konsept korundu)
   const glowX = useRef(new Animated.Value(-width * 0.6)).current;
@@ -119,18 +120,34 @@ export default function SplashScreen() {
       ]).start();
     }, 500);
 
-    // 7. Slogan fade-in (1200ms delay)
+    // 7. Slogan fade-in + yukarı kayma (1200ms delay)
     setTimeout(() => {
-      Animated.timing(sloganOpacity, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }).start();
-    }, 1200);
+      Animated.parallel([
+        Animated.timing(sloganOpacity, {
+          toValue: 1,
+          duration: 900,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(sloganY, {
+          toValue: 0,
+          duration: 700,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, 1250);
 
-    // 8. 3sn sonra login'e geç
+    // 8. 3sn sonra login'e geç (slogan ile senkronize exit)
     const timer = setTimeout(() => {
-      router.replace('/login');
+      Animated.parallel([
+        Animated.timing(logoOpacity, { toValue: 0, duration: 500, useNativeDriver: true }),
+        Animated.timing(logoScale, { toValue: 0.88, duration: 500, useNativeDriver: true }),
+        Animated.timing(sloganOpacity, { toValue: 0, duration: 350, useNativeDriver: true }),
+        Animated.timing(sloganY, { toValue: 4, duration: 350, useNativeDriver: true }),
+      ]).start(() => {
+        router.replace('/login');
+      });
     }, 3000);
 
     return () => clearTimeout(timer);
@@ -221,32 +238,42 @@ export default function SplashScreen() {
       <Animated.View style={[s.star, { top: height * 0.62, left: width * 0.68 }, { opacity: star1 }]} />
       <Animated.View style={[s.star, { bottom: height * 0.22, left: width * 0.32 }, { opacity: star2 }]} />
 
-      {/* Sadece ikon.png — karanlıktan ortaya çıkar */}
-      <Animated.View
-        style={[
-          s.logoWrap,
-          {
-            opacity: logoOpacity,
-            transform: [{ scale: logoScale }],
-          },
-        ]}
-      >
-        <Image
-          source={require('../assets/images/ikon.png')}
-          style={s.appIcon}
-          resizeMode="contain"
-        />
-      </Animated.View>
+      {/* İkon + Slogan — birlikte merkeze hizalı */}
+      <View style={{ alignItems: 'center' }}>
+        {/* Ana ikon */}
+        <Animated.View
+          style={[
+            s.logoWrap,
+            {
+              opacity: logoOpacity,
+              transform: [{ scale: logoScale }],
+            },
+          ]}
+        >
+          <Image
+            source={require('../assets/images/ikon.png')}
+            style={s.appIcon}
+            resizeMode="contain"
+          />
+        </Animated.View>
 
-      {/* Alt dekoratif çizgi */}
-      <Animated.View style={[s.bottomLine, { opacity: sloganOpacity }]}>
-        <LinearGradient
-          colors={['transparent', COLORS.primaryStroke, 'transparent']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={s.lineGradient}
-        />
-      </Animated.View>
+        {/* ikon2.png — ikon'un hemen altında, gecikmeli beliriyor */}
+        <Animated.View
+          style={[
+            s.sloganWrap,
+            {
+              opacity: sloganOpacity,
+              transform: [{ translateY: sloganY }],
+            },
+          ]}
+        >
+          <Image
+            source={require('../assets/images/ikon2.png')}
+            style={s.ikon2}
+            resizeMode="contain"
+          />
+        </Animated.View>
+      </View>
     </View>
   );
 }
@@ -304,19 +331,21 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   appIcon: {
-    width: 300,
-    height: 300,
-    borderRadius: 64,
+    width: 380,
+    height: 380,
+    borderRadius: 80,
   },
-  /* Alt çizgi */
-  bottomLine: {
+  /* ikon2.png slogan */
+  sloganWrap: {
     position: 'absolute',
-    bottom: height * 0.12,
-    width: width * 0.3,
-    height: 1,
+    right: 54,   // Bir tık daha sola
+    bottom: 110, // Çok az aşağı (bottom değeri küçüldükçe aşağı iner)
   },
-  lineGradient: {
-    width: '100%',
-    height: '100%',
+  ikon2: {
+    width: 170, // Özel talep ölçüsü (büyütüldü)
+    height: 52,
   },
+  /* Eski bottomLine kaldırıldı (sloganın içine taşındı) */
+  bottomLine: { display: 'none' as any },
+  lineGradient: { width: '100%', height: '100%' },
 });

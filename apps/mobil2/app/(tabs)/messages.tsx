@@ -13,38 +13,13 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, RADIUS, SPACING, FONTS } from '../../constants/theme';
 import { EmptyState, SkeletonList } from '../../components/UXHelpers';
+import { getDirectMessageConversations, ConversationData } from '../../services/api';
 
 const { width } = Dimensions.get('window');
-
-// ─────────────────────────────────────────────────────
-// Dummy Conversations
-// ─────────────────────────────────────────────────────
-interface Conversation {
-  id: string;
-  name: string;
-  avatar: string;
-  lastMessage: string;
-  time: string;
-  unread: number;
-  isOnline: boolean;
-  isAlliance: boolean;
-  allianceTier?: 'gold' | 'silver';
-}
-
-const DUMMY_CONVERSATIONS: Conversation[] = [
-  { id: 'c1', name: 'Kaan Yıldız', avatar: 'KY', lastMessage: 'Bu akşam locada buluşalım mı?', time: '21:42', unread: 3, isOnline: true, isAlliance: true, allianceTier: 'gold' },
-  { id: 'c2', name: 'Selin Arslan', avatar: 'SA', lastMessage: 'Hediye için çok teşekkürler! ✨', time: '20:15', unread: 1, isOnline: true, isAlliance: true, allianceTier: 'silver' },
-  { id: 'c3', name: 'Emre Demir', avatar: 'ED', lastMessage: 'VIP koltuğu aldım, sahneye çıkıyorum', time: '19:38', unread: 0, isOnline: false, isAlliance: false },
-  { id: 'c4', name: 'Zeynep Çelik', avatar: 'ZÇ', lastMessage: 'Yarın turnuva var, hazır ol 🎮', time: '18:20', unread: 0, isOnline: true, isAlliance: false },
-  { id: 'c5', name: 'Arda Kaya', avatar: 'AK', lastMessage: 'Locayı yeni dekore ettim, gel bak', time: '17:55', unread: 5, isOnline: false, isAlliance: true, allianceTier: 'gold' },
-  { id: 'c6', name: 'Mert Öztürk', avatar: 'MÖ', lastMessage: 'Liderlik tablosunda yükseldim!', time: '16:30', unread: 0, isOnline: false, isAlliance: false },
-  { id: 'c7', name: 'Elif Yılmaz', avatar: 'EY', lastMessage: 'Soprano VIP çok iyi 💎', time: '15:10', unread: 0, isOnline: true, isAlliance: true, allianceTier: 'silver' },
-  { id: 'c8', name: 'Burak Şahin', avatar: 'BŞ', lastMessage: 'İttifak kuralım mı?', time: 'Dün', unread: 2, isOnline: false, isAlliance: false },
-];
 
 // ─────────────────────────────────────────────────────
 // Swipeable Chat Row
@@ -53,7 +28,7 @@ function ChatRow({
   convo,
   onPress,
 }: {
-  convo: Conversation;
+  convo: ConversationData;
   onPress: () => void;
 }) {
   const translateX = useRef(new Animated.Value(0)).current;
@@ -95,10 +70,13 @@ function ChatRow({
           <View style={styles.avatarWrap}>
             <View style={[
               styles.avatar,
-              convo.isAlliance && convo.allianceTier === 'gold' && styles.avatarGold,
-              convo.isAlliance && convo.allianceTier === 'silver' && styles.avatarSilver,
+              convo.isAlliance && styles.avatarGold, // Alliance is boolean in ConversationData, we simplified it.
             ]}>
-              <Text style={styles.avatarText}>{convo.avatar}</Text>
+              {convo.avatar?.length > 4 ? (
+                <Text style={{color:'transparent'}}>A</Text> 
+              ) : (
+                 <Text style={styles.avatarText}>{convo.avatar || convo.name.charAt(0)}</Text>
+              )}
             </View>
             {/* Online dot */}
             {convo.isOnline && (
@@ -117,7 +95,7 @@ function ChatRow({
                   <Ionicons
                     name="shield-checkmark"
                     size={13}
-                    color={convo.allianceTier === 'gold' ? COLORS.goldMetallic : COLORS.silverMetallic}
+                    color={COLORS.goldMetallic}
                   />
                 </View>
               )}
@@ -148,7 +126,28 @@ export default function MessagesScreen() {
   const insets = useSafeAreaInsets();
   const scrollY = useRef(new Animated.Value(0)).current;
   const [refreshing, setRefreshing] = useState(false);
-  const unreadTotal = DUMMY_CONVERSATIONS.reduce((sum, c) => sum + c.unread, 0);
+  const [conversations, setConversations] = useState<ConversationData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadConversations = async () => {
+    try {
+      const data = await getDirectMessageConversations();
+      setConversations(data);
+    } catch (e) {
+      console.warn(e);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      loadConversations();
+    }, [])
+  );
+
+  const unreadTotal = conversations.reduce((sum, c) => sum + c.unread, 0);
 
   const topBarOpacity = scrollY.interpolate({
     inputRange: [0, 60],
@@ -177,15 +176,13 @@ export default function MessagesScreen() {
         )}
         scrollEventThrottle={16}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); setTimeout(() => setRefreshing(false), 1000); }} tintColor={COLORS.primary} />
+          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadConversations(); }} tintColor={COLORS.primary} />
         }
       >
         {/* Header */}
         <View style={[styles.headerArea, { paddingTop: insets.top + 4 }]}>
           <View style={styles.headerRow}>
-            <TouchableOpacity style={styles.backBtn} activeOpacity={0.7} onPress={() => router.back()}>
-              <Ionicons name="chevron-back" size={22} color={COLORS.silver} />
-            </TouchableOpacity>
+            {/* Geri oku sekme sayfasında gereksiz olduğu için silindi. */}
             <Text style={styles.headerTitle}>Mesajlar</Text>
             <TouchableOpacity style={styles.backBtn} activeOpacity={0.7}>
               <Ionicons name="create-outline" size={20} color={COLORS.silver} />
@@ -206,26 +203,26 @@ export default function MessagesScreen() {
 
         {/* Conversations */}
         <View style={styles.listArea}>
-          {DUMMY_CONVERSATIONS.length === 0 ? (
+          {loading ? (
+            <SkeletonList count={6} />
+          ) : conversations.length === 0 ? (
             <EmptyState
               icon="chatbubbles-outline"
               title="Henüz mesaj yok"
               subtitle="Keşfet'ten birini takip et ve ilk mesajını gönder!"
             />
           ) : (
-            DUMMY_CONVERSATIONS.map((convo, index) => (
+            conversations.map((convo, index) => (
               <React.Fragment key={convo.id}>
                 <ChatRow
                   convo={convo}
-                  onPress={() => router.push({ pathname: '/chat', params: { id: convo.id, name: convo.name, avatar: convo.avatar, isAlliance: convo.isAlliance ? '1' : '0' } })}
+                  onPress={() => router.push({ pathname: '/chat', params: { targetId: convo.id, name: convo.name, avatar: convo.avatar } })}
                 />
-                {!!(index < DUMMY_CONVERSATIONS.length - 1) && <View style={styles.divider} />}
+                {!!(index < conversations.length - 1) && <View style={styles.divider} />}
               </React.Fragment>
             ))
           )}
         </View>
-
-        <View style={{ height: 100 }} />
       </Animated.ScrollView>
 
       {/* Blur top bar */}
@@ -242,7 +239,7 @@ export default function MessagesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.deepNavy },
 
-  scrollContent: { paddingBottom: 120 },
+  scrollContent: { paddingBottom: 180 },
 
   /* ── Header ── */
   headerArea: {
@@ -421,7 +418,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   lastMsg: {
-    color: COLORS.silverDark,
+    color: COLORS.silverLight,
     fontSize: 13,
     fontWeight: FONTS.regular as any,
   },

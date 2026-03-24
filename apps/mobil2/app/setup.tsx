@@ -174,7 +174,7 @@ export default function SetupScreen() {
   const [birthYear, setBirthYear] = useState(0);
   const [selectedVibes, setSelectedVibes] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
-  const { login, saveProfileExtra } = useUser();
+  const { login, update, saveProfileExtra } = useUser();
 
   // Animasyonlar
   const panelY = useRef(new Animated.Value(height * 0.3)).current;
@@ -271,6 +271,8 @@ export default function SetupScreen() {
     try {
       // Önce kullanıcı oluştur (login)
       await login(name.trim(), avatar || undefined, gender || undefined);
+      // Profili güncelle → isProfileComplete = true yapılır
+      await update({ displayName: name.trim(), avatar: avatar || undefined, gender: gender || undefined });
       // Sonra profil ekstra bilgileri kaydet
       await saveProfileExtra({ birthDate, vibes: selectedVibes });
     } catch (e: any) {
@@ -278,6 +280,8 @@ export default function SetupScreen() {
     } finally {
       setIsSaving(false);
     }
+    // _layout.tsx'teki router guard isProfileComplete=true olunca
+    // otomatik olarak /(tabs)'a yönlendirecek
     router.replace('/(tabs)');
   };
 
