@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Soprano Mobil2",
+    "slug": "sopranochat-mobil2",
+    "version": "2.0.0",
+    "orientation": "portrait",
+    "scheme": "sopranochat-m2",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#060B18"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#060B18"
+      },
+      "package": "com.sopranochat.mobil2",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "root": "./app"
+        }
+      ],
+      "expo-font",
+      "expo-image-picker"
+    ],
+    "extra": {
+      "router": {
+        "root": "./app"
+      },
+      "eas": {
+        "projectId": "c31167ef-cf8e-4d62-b45f-d0b47ad644b3"
+      }
+    }
+  }
+}
