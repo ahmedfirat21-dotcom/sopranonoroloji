@@ -17,6 +17,18 @@ export const metadata = {
 export default async function YonetPanelLayout({ children }: { children: ReactNode }) {
   await requireAdmin();
   return (
+    <>
+      {/* ★ 7 May 2026: globals.css'te html'e açık mor gradient + zoom:0.90 var
+          (landing/diğer sayfalar için). Yonet'te bu html bg sağ kenarda gözüküyordu;
+          fixed dark katmanla tüm viewport'u örtüyoruz. */}
+      <style>{`
+        html, body { background: #0A0F1A !important; }
+      `}</style>
+      <div
+        aria-hidden="true"
+        className="fixed inset-0 -z-10"
+        style={{ background: '#0A0F1A' }}
+      />
     <div
       className="yonet-scrollbar relative flex h-screen w-screen text-slate-100 overflow-hidden"
       style={{ background: '#0A0F1A', fontFamily: 'Plus Jakarta Sans, sans-serif' }}
@@ -40,5 +52,6 @@ export default async function YonetPanelLayout({ children }: { children: ReactNo
         <div className="yonet-scrollbar flex-1 overflow-y-auto p-4 sm:p-6">{children}</div>
       </main>
     </div>
+    </>
   );
 }
