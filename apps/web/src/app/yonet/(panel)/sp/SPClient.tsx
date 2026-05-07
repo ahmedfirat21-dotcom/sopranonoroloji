@@ -38,6 +38,15 @@ function typeLabel(t: string): string {
   return TYPE_LABEL_TR[t] || t.replace(/_/g, ' ').toUpperCase();
 }
 
+function descLabel(desc: string | null, type: string): string {
+  if (!desc) return typeLabel(type);
+  // "SP: snake_case_kod" formatındaki açıklamaları Türkçeleştir
+  const m = desc.match(/^SP:\s*([a-z_]+)\s*$/i);
+  if (m) return typeLabel(m[1].toLowerCase());
+  // Mobil tarafta kalan İngilizce parçaları temizle
+  return desc;
+}
+
 type Tx = {
   id: string;
   user_id: string;
@@ -109,7 +118,7 @@ export default function SPClient({ transactions }: { transactions: Tx[] }) {
               <span className="text-slate-500">{new Date(t.created_at).toLocaleString('tr-TR')}</span>
             </div>
             {t.description && (
-              <div className="text-[11px] text-slate-300 truncate">{t.description}</div>
+              <div className="text-[11px] text-slate-300 truncate">{descLabel(t.description, t.type)}</div>
             )}
             {t.counterparty && (
               <div className="text-[10px] text-slate-500 mt-1">→ {t.counterparty.display_name}</div>
@@ -152,7 +161,7 @@ export default function SPClient({ transactions }: { transactions: Tx[] }) {
                     </span>
                   </td>
                   <td className="px-3 py-3 text-xs text-slate-400 max-w-xs truncate" title={t.description || ''}>
-                    {t.description || '—'}
+                    {t.description ? descLabel(t.description, t.type) : '—'}
                   </td>
                   <td className="px-3 py-3 text-xs text-slate-300">
                     {t.counterparty?.display_name || (t.counterparty_id ? t.counterparty_id.slice(0, 10) + '…' : '—')}
