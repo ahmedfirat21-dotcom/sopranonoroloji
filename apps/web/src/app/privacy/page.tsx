@@ -82,9 +82,9 @@ export default function PrivacyPage() {
           </span>
         </div>
         <h1 className="text-3xl sm:text-5xl font-bold leading-[1.05] mb-3 text-slate-50">
-          Senin verin,{' '}
+          Verilerin senin,{' '}
           <span className="bg-gradient-to-r from-amber-300 via-amber-400 to-fuchsia-300 bg-clip-text text-transparent">
-            senin sesin
+            sesin senin
           </span>
           .
         </h1>
