@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, Flag, Users, Store, Home, MessageSquare,
   Coins, Bell, Crown, Settings as SettingsIcon, TrendingUp, Banknote, ScrollText,
+  ShieldAlert, UserPlus,
 } from 'lucide-react';
 import SopranoLogoMini, { SopranoLogoStyleTag } from './SopranoLogoMini';
 
@@ -20,6 +21,8 @@ const NAV = [
   { href: '/yonet/sp', label: 'SP İşlemleri', icon: Coins },
   { href: '/yonet/cashout', label: 'Para Çekme', icon: Banknote },
   { href: '/yonet/push', label: 'Push Bildirim', icon: Bell },
+  { href: '/yonet/davetler', label: 'Davetler', icon: UserPlus },
+  { href: '/yonet/guvenlik', label: 'Güvenlik', icon: ShieldAlert },
   { href: '/yonet/audit', label: 'İşlem Kayıtları', icon: ScrollText },
   { href: '/yonet/ayarlar', label: 'Ayarlar', icon: SettingsIcon },
 ];

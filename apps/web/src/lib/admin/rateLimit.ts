@@ -48,6 +48,31 @@ export function recordSuccess(ip: string) {
   store.delete(ip);
 }
 
+/**
+ * Tüm IP kilitlerini ve fail sayaçlarını listele (admin paneli için).
+ */
+export function listLocks(): { ip: string; fails: number; locked: boolean; remainingMs: number }[] {
+  const now = Date.now();
+  const out: { ip: string; fails: number; locked: boolean; remainingMs: number }[] = [];
+  for (const [ip, e] of store.entries()) {
+    const locked = e.lockedUntil > now;
+    out.push({
+      ip,
+      fails: e.fails,
+      locked,
+      remainingMs: locked ? e.lockedUntil - now : 0,
+    });
+  }
+  return out.sort((a, b) => Number(b.locked) - Number(a.locked) || b.fails - a.fails);
+}
+
+/**
+ * Belirli IP'nin kilidini kaldır + sayacı sıfırla (admin paneli için).
+ */
+export function clearLock(ip: string): boolean {
+  return store.delete(ip);
+}
+
 export function getClientIp(req: Request): string {
   const fwd = req.headers.get('x-forwarded-for');
   if (fwd) return fwd.split(',')[0].trim();

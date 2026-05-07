@@ -56,6 +56,8 @@ function fmtDuration(startIso: string): string {
   return remMo > 0 ? `${y}y ${remMo}ay` : `${y} yıl`;
 }
 
+type StatusFilter = 'all' | 'active' | 'banned' | 'admin' | 'verified';
+
 export default function UserSearchClient({ initialUsers, initialQuery }: {
   initialUsers: User[]; initialQuery: string;
 }) {
@@ -64,9 +66,18 @@ export default function UserSearchClient({ initialUsers, initialQuery }: {
   const dialog = useAdminDialog();
   const [users, setUsers] = useState(initialUsers);
   const [q, setQ] = useState(initialQuery);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [inventoryFor, setInventoryFor] = useState<{ id: string; name: string } | null>(null);
   const [, startTransition] = useTransition();
+
+  const filteredUsers = users.filter(u => {
+    if (statusFilter === 'banned') return !!u.is_banned;
+    if (statusFilter === 'admin') return !!u.is_admin;
+    if (statusFilter === 'verified') return !!u.is_verified;
+    if (statusFilter === 'active') return !u.is_banned;
+    return true;
+  });
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -188,7 +199,7 @@ export default function UserSearchClient({ initialUsers, initialQuery }: {
 
   return (
     <div>
-      <form onSubmit={handleSearch} className="mb-5 relative">
+      <form onSubmit={handleSearch} className="mb-3 relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
         <input
           type="text"
@@ -199,9 +210,33 @@ export default function UserSearchClient({ initialUsers, initialQuery }: {
         />
       </form>
 
+      {/* Durum filtresi */}
+      <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-1">
+        {([
+          { key: 'all', label: 'Tümü', count: users.length },
+          { key: 'active', label: 'Aktif', count: users.filter(u => !u.is_banned).length },
+          { key: 'banned', label: 'Banlı', count: users.filter(u => !!u.is_banned).length },
+          { key: 'verified', label: 'Doğrulanmış', count: users.filter(u => !!u.is_verified).length },
+          { key: 'admin', label: 'Admin', count: users.filter(u => !!u.is_admin).length },
+        ] as { key: StatusFilter; label: string; count: number }[]).map(f => (
+          <button
+            key={f.key}
+            type="button"
+            onClick={() => setStatusFilter(f.key)}
+            className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+              statusFilter === f.key
+                ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-200'
+                : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
+            }`}
+          >
+            {f.label} ({f.count})
+          </button>
+        ))}
+      </div>
+
       {/* Mobile: kart layout */}
       <div className="lg:hidden space-y-3">
-        {users.map(u => {
+        {filteredUsers.map(u => {
           const isBusy = busyId === u.id;
           return (
             <div key={u.id} className="bg-white/5 border border-white/10 rounded-2xl p-4">
@@ -334,7 +369,7 @@ export default function UserSearchClient({ initialUsers, initialQuery }: {
             </div>
           );
         })}
-        {users.length === 0 && (
+        {filteredUsers.length === 0 && (
           <div className="bg-white/5 border border-white/10 rounded-2xl p-8 text-center text-slate-500 text-sm">
             Sonuç bulunamadı.
           </div>
@@ -357,7 +392,7 @@ export default function UserSearchClient({ initialUsers, initialQuery }: {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {users.map(u => {
+              {filteredUsers.map(u => {
                 const isBusy = busyId === u.id;
                 return (
                   <tr key={u.id} className="hover:bg-white/[0.02]">
@@ -509,7 +544,7 @@ export default function UserSearchClient({ initialUsers, initialQuery }: {
                   </tr>
                 );
               })}
-              {users.length === 0 && (
+              {filteredUsers.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-5 py-12 text-center text-slate-500 text-sm">
                     Sonuç bulunamadı.

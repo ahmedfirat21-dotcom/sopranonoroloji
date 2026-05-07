@@ -37,6 +37,7 @@ const ACTION_LABEL: Record<string, { label: string; color: string }> = {
   login_failed: { label: 'Yanlış giriş', color: '#FBBF24' },
   login_locked: { label: 'IP kilitlendi', color: '#F87171' },
   logout: { label: 'Çıkış', color: '#94A3B8' },
+  ip_lock_clear: { label: 'IP kilidi açıldı', color: '#5EEAD4' },
 };
 
 function fmtDate(iso: string): string {
