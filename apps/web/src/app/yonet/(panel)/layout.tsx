@@ -18,7 +18,7 @@ export default async function YonetPanelLayout({ children }: { children: ReactNo
   await requireAdmin();
   return (
     <div
-      className="relative flex h-screen w-screen text-slate-100 overflow-hidden"
+      className="yonet-scrollbar relative flex h-screen w-screen text-slate-100 overflow-hidden"
       style={{ background: '#0A0F1A', fontFamily: 'Plus Jakarta Sans, sans-serif' }}
     >
       {/* Ambient glow — landing-new ile birebir aynı palet */}
@@ -37,7 +37,7 @@ export default async function YonetPanelLayout({ children }: { children: ReactNo
       </div>
       <main className="flex-1 flex flex-col min-w-0 relative z-10">
         <AdminTopbar />
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</div>
+        <div className="yonet-scrollbar flex-1 overflow-y-auto p-4 sm:p-6">{children}</div>
       </main>
     </div>
   );

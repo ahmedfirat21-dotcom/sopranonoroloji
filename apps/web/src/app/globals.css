@@ -65,6 +65,41 @@ body {
     background: rgba(123, 159, 239, 0.55);
 }
 
+/* ============================================ */
+/*  YÖNET PANEL — Dark scrollbar + uniform bg   */
+/*  ★ 7 May 2026: Ana sayfa temasıyla uyumlu.   */
+/* ============================================ */
+
+.yonet-scrollbar::-webkit-scrollbar,
+.yonet-scrollbar *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+.yonet-scrollbar::-webkit-scrollbar-track,
+.yonet-scrollbar *::-webkit-scrollbar-track {
+    background: transparent;
+}
+.yonet-scrollbar::-webkit-scrollbar-thumb,
+.yonet-scrollbar *::-webkit-scrollbar-thumb {
+    background: rgba(94, 234, 212, 0.25);
+    border-radius: 5px;
+    border: 1px solid rgba(94, 234, 212, 0.10);
+}
+.yonet-scrollbar::-webkit-scrollbar-thumb:hover,
+.yonet-scrollbar *::-webkit-scrollbar-thumb:hover {
+    background: rgba(94, 234, 212, 0.45);
+}
+.yonet-scrollbar::-webkit-scrollbar-corner,
+.yonet-scrollbar *::-webkit-scrollbar-corner {
+    background: transparent;
+}
+/* Firefox */
+.yonet-scrollbar,
+.yonet-scrollbar * {
+    scrollbar-color: rgba(94,234,212,0.35) transparent;
+    scrollbar-width: thin;
+}
+
 /* Premium themed scrollbar for modals */
 .modal-scrollbar::-webkit-scrollbar {
     width: 5px !important;

@@ -17,7 +17,43 @@ type User = {
   system_points: number | null;
   created_at: string;
   last_seen: string | null;
+  last_active_at: string | null;
+  is_online: boolean | null;
+  lifetime_sp_donated: number | null;
 };
+
+// ★ 7 May 2026: Tarih/süre format yardımcıları
+function fmtDate(iso: string | null): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: '2-digit' });
+}
+function fmtRelative(iso: string | null): string {
+  if (!iso) return '—';
+  const ms = Date.now() - new Date(iso).getTime();
+  const s = Math.floor(ms / 1000);
+  if (s < 60) return 'şimdi';
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m} dk önce`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h} saat önce`;
+  const d = Math.floor(h / 24);
+  if (d < 30) return `${d} gün önce`;
+  const mo = Math.floor(d / 30);
+  if (mo < 12) return `${mo} ay önce`;
+  return `${Math.floor(mo / 12)} yıl önce`;
+}
+function fmtDuration(startIso: string): string {
+  const ms = Date.now() - new Date(startIso).getTime();
+  const d = Math.floor(ms / (1000 * 60 * 60 * 24));
+  if (d < 1) return '< 1 gün';
+  if (d < 30) return `${d} gün`;
+  const mo = Math.floor(d / 30);
+  if (mo < 12) return `${mo} ay`;
+  const y = Math.floor(mo / 12);
+  const remMo = mo % 12;
+  return remMo > 0 ? `${y}y ${remMo}ay` : `${y} yıl`;
+}
 
 export default function UserSearchClient({ initialUsers, initialQuery }: {
   initialUsers: User[]; initialQuery: string;
@@ -123,12 +159,22 @@ export default function UserSearchClient({ initialUsers, initialQuery }: {
                   <span className="px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/30 text-green-400 text-[10px] font-bold shrink-0">AKTİF</span>
                 )}
               </div>
-              <div className="flex items-center justify-between text-xs mb-3">
+              <div className="flex items-center justify-between text-xs mb-2">
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider ${tierStyle(u.subscription_tier)}`}>
                   {(u.subscription_tier || 'Free').toUpperCase()}
                 </span>
                 <span className="text-amber-300 font-mono">
                   {(u.system_points ?? 0).toLocaleString('tr-TR')} SP
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-[10px] text-slate-500 mb-3 px-1">
+                <span>📅 {fmtDate(u.created_at)} · {fmtDuration(u.created_at)}</span>
+                <span>
+                  {u.is_online ? (
+                    <span className="text-green-400">● çevrimiçi</span>
+                  ) : (
+                    fmtRelative(u.last_active_at || u.last_seen)
+                  )}
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-1.5">
@@ -252,6 +298,8 @@ export default function UserSearchClient({ initialUsers, initialQuery }: {
                 <th className="text-left px-5 py-3">KULLANICI</th>
                 <th className="text-left px-3 py-3">TIER</th>
                 <th className="text-right px-3 py-3">SP</th>
+                <th className="text-left px-3 py-3" title="Kayıt tarihi → kullanım süresi">KAYIT</th>
+                <th className="text-left px-3 py-3" title="Son aktiflik">SON AKTİF</th>
                 <th className="text-center px-3 py-3">DURUM</th>
                 <th className="text-right px-5 py-3">AKSİYONLAR</th>
               </tr>
@@ -298,6 +346,25 @@ export default function UserSearchClient({ initialUsers, initialQuery }: {
                     </td>
                     <td className="px-3 py-3 text-right text-amber-300 font-mono text-xs">
                       {(u.system_points ?? 0).toLocaleString('tr-TR')}
+                      {(u.lifetime_sp_donated ?? 0) > 0 && (
+                        <div className="text-[9px] text-pink-300/70 font-normal">
+                          ↑{(u.lifetime_sp_donated ?? 0).toLocaleString('tr-TR')} bağış
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-3 py-3 text-xs text-slate-300">
+                      <div className="font-mono">{fmtDate(u.created_at)}</div>
+                      <div className="text-[10px] text-slate-500">{fmtDuration(u.created_at)}</div>
+                    </td>
+                    <td className="px-3 py-3 text-xs">
+                      {u.is_online ? (
+                        <span className="inline-flex items-center gap-1 text-green-400">
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                          çevrimiçi
+                        </span>
+                      ) : (
+                        <span className="text-slate-500">{fmtRelative(u.last_active_at || u.last_seen)}</span>
+                      )}
                     </td>
                     <td className="px-3 py-3 text-center">
                       {u.is_banned ? (
@@ -411,7 +478,7 @@ export default function UserSearchClient({ initialUsers, initialQuery }: {
               })}
               {users.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-5 py-12 text-center text-slate-500 text-sm">
+                  <td colSpan={7} className="px-5 py-12 text-center text-slate-500 text-sm">
                     Sonuç bulunamadı.
                   </td>
                 </tr>

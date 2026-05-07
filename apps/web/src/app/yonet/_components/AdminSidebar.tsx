@@ -26,7 +26,7 @@ export default function AdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 shrink-0 bg-[#0A0F1A]/80 backdrop-blur-md border-r border-white/[0.06] flex flex-col">
+    <aside className="w-64 shrink-0 border-r border-white/[0.08] flex flex-col">
       <SopranoLogoStyleTag />
 
       {/* Header — SopranoLogo + amber YÖNETİM tagline */}

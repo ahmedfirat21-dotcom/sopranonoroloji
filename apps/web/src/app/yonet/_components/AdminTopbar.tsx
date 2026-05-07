@@ -11,7 +11,7 @@ export default function AdminTopbar() {
   };
 
   return (
-    <header className="h-14 shrink-0 bg-[#0F1929]/70 backdrop-blur-md border-b border-white/[0.06] flex items-center justify-between px-3 sm:px-6 gap-2">
+    <header className="h-14 shrink-0 border-b border-white/[0.08] flex items-center justify-between px-3 sm:px-6 gap-2">
       <SopranoLogoStyleTag />
       <div className="flex items-center gap-3 min-w-0">
         <MobileSidebarToggle />

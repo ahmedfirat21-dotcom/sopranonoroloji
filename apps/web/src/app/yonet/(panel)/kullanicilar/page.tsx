@@ -9,7 +9,7 @@ import UserSearchClient from './UserSearchClient';
 async function loadInitial(query?: string) {
   let q = supabaseAdmin
     .from('profiles')
-    .select('id, display_name, username, avatar_url, subscription_tier, is_admin, is_banned, is_verified, system_points, created_at, last_seen')
+    .select('id, display_name, username, avatar_url, subscription_tier, is_admin, is_banned, is_verified, system_points, created_at, last_seen, last_active_at, is_online, lifetime_sp_donated')
     .order('created_at', { ascending: false })
     .limit(50);
 
