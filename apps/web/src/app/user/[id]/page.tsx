@@ -1,64 +1,64 @@
 /**
- * SopranoChat — Oda paylaşım linki handler.
- * /room/[slug] sayfası: mobile uygulamaya intent:// ile yönlendirir.
- * Eski karmaşık web room client'ı kaldırıldı — paylaşılan link tek amacı
- * uygulamaya götürmek.
+ * SopranoChat — Kullanıcı profili paylaşım linki handler.
+ * /user/[id] sayfası: mobile uygulamaya intent:// ile yönlendirir.
  */
 'use client';
 
 import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Radio, Smartphone } from 'lucide-react';
+import Image from 'next/image';
+import { User, Smartphone } from 'lucide-react';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
 const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.sopranochat';
 
-export default function RoomLandingPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = use(params);
-  const [roomName, setRoomName] = useState<string | null>(null);
-  const [hostName, setHostName] = useState<string | null>(null);
-  const [listenerCount, setListenerCount] = useState<number | null>(null);
-  const [isLive, setIsLive] = useState(false);
+export default function UserProfileLandingPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  const [name, setName] = useState<string | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
+  const [avatar, setAvatar] = useState<string | null>(null);
+  const [tier, setTier] = useState<string | null>(null);
+  const [verified, setVerified] = useState(false);
   const [autoRedirected, setAutoRedirected] = useState(false);
 
-  // Oda metadata'sını DB'den çek (önizleme için)
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         const { data } = await supabaseAdmin
-          .from('rooms')
-          .select('name, listener_count, is_live, profiles!rooms_host_id_fkey(display_name)')
-          .eq('id', slug)
+          .from('profiles')
+          .select('display_name, username, avatar_url, subscription_tier, is_verified')
+          .eq('id', id)
           .single();
         if (cancelled || !data) return;
-        setRoomName(data.name || null);
-        setListenerCount(data.listener_count ?? 0);
-        setIsLive(!!data.is_live);
-        const host: any = (data as any).profiles;
-        setHostName(host?.display_name || null);
+        setName(data.display_name || null);
+        setUsername(data.username || null);
+        setAvatar(data.avatar_url || null);
+        setTier(data.subscription_tier || null);
+        setVerified(!!data.is_verified);
       } catch {
         /* yok say */
       }
     })();
     return () => { cancelled = true; };
-  }, [slug]);
+  }, [id]);
 
-  // Otomatik intent:// redirect — Android'de uygulamaya götürür
   useEffect(() => {
     if (autoRedirected) return;
-    const intentUrl = `intent://room/${slug}#Intent;scheme=sopranochat;package=com.sopranochat;S.browser_fallback_url=${encodeURIComponent(PLAY_STORE_URL)};end`;
+    const intentUrl = `intent://user/${id}#Intent;scheme=sopranochat;package=com.sopranochat;S.browser_fallback_url=${encodeURIComponent(PLAY_STORE_URL)};end`;
     const timer = setTimeout(() => {
       setAutoRedirected(true);
       const ua = navigator.userAgent.toLowerCase();
       if (ua.includes('android')) {
         window.location.href = intentUrl;
       } else if (ua.includes('iphone') || ua.includes('ipad')) {
-        window.location.href = `sopranochat://room/${slug}`;
+        window.location.href = `sopranochat://user/${id}`;
       }
     }, 2200);
     return () => clearTimeout(timer);
-  }, [slug, autoRedirected]);
+  }, [id, autoRedirected]);
+
+  const tierColor = tier === 'Pro' ? '#FBBF24' : tier === 'Plus' ? '#5EEAD4' : null;
 
   return (
     <div
@@ -69,7 +69,7 @@ export default function RoomLandingPage({ params }: { params: Promise<{ slug: st
         html { zoom: 1 !important; background: #0A0F1A !important; min-height: 100vh !important; }
         body { background: #0A0F1A !important; min-height: 100vh !important; }
         @import url('https://fonts.cdnfonts.com/css/cooper-black');
-        @keyframes scRoomLogoGlow {
+        @keyframes scUserLogoGlow {
           0%, 100% { filter: drop-shadow(0 0 2px rgba(120,200,200,0)) drop-shadow(0 2px 4px rgba(0,0,0,0.6)); }
           50% { filter: drop-shadow(0 0 8px rgba(120,200,200,0.3)) drop-shadow(0 0 20px rgba(120,200,200,0.1)) drop-shadow(0 2px 4px rgba(0,0,0,0.6)); }
         }
@@ -99,7 +99,7 @@ export default function RoomLandingPage({ params }: { params: Promise<{ slug: st
           -webkit-text-fill-color: transparent;
           background-clip: text;
           filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
-          animation: scRoomLogoGlow 3s ease-in-out infinite;
+          animation: scUserLogoGlow 3s ease-in-out infinite;
         }
         .sc-logo-tagline {
           font-family: 'Cooper Black', sans-serif;
@@ -113,14 +113,8 @@ export default function RoomLandingPage({ params }: { params: Promise<{ slug: st
           -webkit-text-fill-color: transparent;
           background-clip: text;
         }
-        @keyframes pulseDot {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.4; }
-        }
-        .live-dot { animation: pulseDot 1.4s ease-in-out infinite; }
       `}</style>
 
-      {/* Ambient glow */}
       <div
         className="pointer-events-none fixed inset-0"
         style={{
@@ -131,7 +125,6 @@ export default function RoomLandingPage({ params }: { params: Promise<{ slug: st
       />
 
       <div className="relative z-10 w-full max-w-md">
-        {/* Logo */}
         <div className="flex justify-center mb-6">
           <Link href="/" aria-label="Anasayfa" className="sc-logo">
             <span className="sc-logo-soprano">Soprano</span>
@@ -140,51 +133,47 @@ export default function RoomLandingPage({ params }: { params: Promise<{ slug: st
           </Link>
         </div>
 
-        {/* Oda kartı */}
         <div className="bg-white/5 border border-white/10 rounded-2xl p-7 sm:p-8 backdrop-blur-md text-center">
-          {/* Canlılık durumu */}
-          {isLive && (
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/15 border border-red-500/30 mb-4">
-              <span className="live-dot w-1.5 h-1.5 bg-red-400 rounded-full" />
-              <span className="text-[11px] font-semibold tracking-[0.2em] text-red-300">CANLI</span>
+          {/* Avatar */}
+          <div className="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-2 border-white/10 bg-slate-800 flex items-center justify-center">
+            {avatar ? (
+              <Image src={avatar} alt={name || 'Kullanıcı'} width={96} height={96} className="w-full h-full object-cover" unoptimized />
+            ) : (
+              <User className="w-10 h-10 text-slate-500" />
+            )}
+          </div>
+
+          {/* Tier rozeti */}
+          {tier && tier !== 'Free' && (
+            <div
+              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full mb-3"
+              style={{
+                background: `${tierColor}1a`,
+                border: `1px solid ${tierColor}40`,
+                color: tierColor || '#fff',
+              }}
+            >
+              <span className="text-[10px] font-bold tracking-[0.2em]">{tier.toUpperCase()}</span>
             </div>
           )}
 
-          <div
-            className="w-16 h-16 mx-auto mb-5 rounded-2xl flex items-center justify-center"
-            style={{
-              background: 'rgba(20, 184, 166, 0.1)',
-              border: '1px solid rgba(20, 184, 166, 0.4)',
-            }}
-          >
-            <Radio className="w-8 h-8" style={{ color: '#5EEAD4' }} />
-          </div>
-
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-100 mb-2 leading-tight">
-            {roomName || 'Sesli sohbet odası'}
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-100 mb-1 leading-tight flex items-center justify-center gap-1.5">
+            {name || 'SopranoChat Kullanıcısı'}
+            {verified && <span className="text-cyan-300 text-base" title="Doğrulanmış">✓</span>}
           </h1>
 
-          {hostName && (
-            <p className="text-sm text-slate-400 mb-1">
-              <span className="text-slate-500">Sahip:</span>{' '}
-              <span className="text-slate-200 font-semibold">{hostName}</span>
-            </p>
+          {username && (
+            <p className="text-sm text-slate-500 mb-6">@{username}</p>
           )}
 
-          {typeof listenerCount === 'number' && (
-            <p className="text-xs text-slate-500 mb-7">
-              {listenerCount} kişi dinliyor
-            </p>
-          )}
-
-          {!hostName && !listenerCount && <div className="mb-7" />}
+          {!username && <div className="mb-6" />}
 
           <p className="text-sm text-slate-400 leading-relaxed mb-6 max-w-sm mx-auto">
-            Bu odaya katılmak için SopranoChat uygulamasını aç. Sesini ekle, sahneye çık, sohbete katıl.
+            Bu kullanıcının profilini görmek, takip etmek veya mesaj atmak için SopranoChat uygulamasını aç.
           </p>
 
           <a
-            href={`intent://room/${slug}#Intent;scheme=sopranochat;package=com.sopranochat;S.browser_fallback_url=${encodeURIComponent(PLAY_STORE_URL)};end`}
+            href={`intent://user/${id}#Intent;scheme=sopranochat;package=com.sopranochat;S.browser_fallback_url=${encodeURIComponent(PLAY_STORE_URL)};end`}
             className="inline-flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-[#0A0F1A] font-bold text-sm tracking-wider transition-transform hover:scale-[1.01]"
             style={{
               background: 'linear-gradient(180deg, #fde68a 0%, #f59e0b 100%)',
