@@ -26,6 +26,12 @@ export default async function LandingPage() {
 
   return (
     <div className="min-h-screen text-slate-100" style={{ background: '#0A0F1A', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+      {/* ★ 7 May 2026: globals.css'teki html bg gradient + zoom:0.90 alttan/sağdan
+          taşıyordu (kullanıcı raporu). Landing'de zoom:1 + dark bg ile örtüyoruz. */}
+      <style>{`
+        html { zoom: 1 !important; background: #0A0F1A !important; min-height: 100vh !important; }
+        body { background: #0A0F1A !important; min-height: 100vh !important; }
+      `}</style>
       {/* Logo CSS — projedeki HomePage'den birebir alındı */}
       <style>{`
         @import url('https://fonts.cdnfonts.com/css/cooper-black');
