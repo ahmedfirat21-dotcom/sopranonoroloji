@@ -78,7 +78,7 @@ export function AdminDialogProvider({ children }: { children: React.ReactNode })
 
   const close = React.useCallback((result: any) => {
     if (!state) return;
-    state.resolve(result);
+    (state.resolve as (v: any) => void)(result);
     setState(null);
     setPromptValue('');
   }, [state]);
