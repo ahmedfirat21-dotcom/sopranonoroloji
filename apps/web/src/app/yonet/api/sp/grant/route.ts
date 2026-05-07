@@ -31,7 +31,11 @@ export async function POST(req: Request) {
   const action = `web_admin_grant${reason ? ': ' + reason : ''}`;
   const externalRef = `web_admin:${userId}:${amount}:${Date.now()}`;
 
-  const { data, error } = await supabaseAdmin.rpc('grant_system_points', {
+  // ★ 8 May 2026: grant_system_points yerine admin_grant_sp kullanılıyor.
+  //   Eski RPC günlük 300 SP üretim limiti uyguluyor — admin manuel grantları
+  //   sessizce kestiriyor, donatable_sp güncellenmiyordu. Yeni RPC limit yok,
+  //   sp_transactions trigger'ı donatable_sp'yi senkronize ediyor.
+  const { data, error } = await supabaseAdmin.rpc('admin_grant_sp', {
     p_user_id: userId,
     p_amount: amount,
     p_action: action,
