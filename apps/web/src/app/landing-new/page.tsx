@@ -172,29 +172,9 @@ export default async function LandingPage() {
       </section>
 
       {/* Final CTA */}
-      <section className="relative z-10 px-4 sm:px-8 py-16 max-w-3xl mx-auto text-center">
-        <h2 className="text-2xl sm:text-4xl font-bold mb-4 text-slate-100">
-          Şu an{' '}
-          <span className="bg-gradient-to-r from-emerald-300 to-cyan-300 bg-clip-text text-transparent">
-            {stats.liveRooms} oda
-          </span>{' '}
-          canlı.
-        </h2>
-        <p className="text-slate-400 mb-8">Uygulamayı indir, sesini ekle.</p>
-        <a
-          href={GOOGLE_PLAY_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl text-[#0A0F1A] font-bold text-sm tracking-wider transition-transform hover:scale-[1.02]"
-          style={{
-            background: 'linear-gradient(180deg, #fde68a 0%, #f59e0b 100%)',
-            boxShadow: '0 12px 30px -8px rgba(245, 158, 11, 0.5)',
-          }}
-        >
-          <Smartphone className="w-5 h-5" />
-          Google Play&apos;de İndir
-        </a>
-      </section>
+      {/* ★ 7 May 2026: Alt CTA section + 2. Google Play butonu kaldırıldı (kullanıcı talebi).
+          Hero'daki tek buton zeten yeterli; çift CTA tekrar hissi yaratıyordu.
+          Canlı oda sayısı zeten hero stats bloğunda gösteriliyor. */}
 
       {/* Footer */}
       <footer className="relative z-10 px-4 sm:px-8 py-8 border-t border-white/5 mt-12">

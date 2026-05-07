@@ -19,10 +19,13 @@ export default async function YonetPanelLayout({ children }: { children: ReactNo
   return (
     <>
       {/* ★ 7 May 2026: globals.css'te html'e açık mor gradient + zoom:0.90 var
-          (landing/diğer sayfalar için). Yonet'te bu html bg sağ kenarda gözüküyordu;
-          fixed dark katmanla tüm viewport'u örtüyoruz. */}
+          (landing/diğer sayfalar için). Yonet'te:
+          - zoom:0.90 yüzünden içerik viewport'u %90 doluruyor → sağda %10 boş alan
+          - html'in mor gradient'i o boşlukta görünüyordu
+          Çözüm: zoom:1 + dark bg, yonet sayfaları %100 viewport doldursun. */}
       <style>{`
-        html, body { background: #0A0F1A !important; }
+        html { zoom: 1 !important; background: #0A0F1A !important; min-height: 100vh !important; }
+        body { background: #0A0F1A !important; min-height: 100vh !important; }
       `}</style>
       <div
         aria-hidden="true"
