@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyAdminToken, ADMIN_COOKIE_NAME } from '@/lib/admin/auth';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { logAudit } from '@/lib/admin/audit';
 
 async function ensureAdmin(): Promise<boolean> {
   const cookieStore = await cookies();
@@ -28,6 +29,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (body?.action === 'delete') {
     const { error } = await supabaseAdmin.rpc('admin_delete_user_cascade', { p_user_id: id });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    logAudit({ action: 'user_delete', target_type: 'user', target_id: id });
     return NextResponse.json({ ok: true });
   }
 
@@ -39,6 +41,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       p_make_admin: makeAdmin,
     });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    logAudit({ action: 'user_toggle_admin', target_type: 'user', target_id: id, payload: { make_admin: makeAdmin } });
     return NextResponse.json({ ok: true });
   }
 
@@ -52,6 +55,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       body: message,
     });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    logAudit({ action: 'user_warn', target_type: 'user', target_id: id, payload: { message: message.slice(0, 200) } });
     return NextResponse.json({ ok: true });
   }
 
@@ -77,6 +81,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+  logAudit({ action: 'user_update', target_type: 'user', target_id: id, payload: safe });
   return NextResponse.json({ ok: true });
 }
 
