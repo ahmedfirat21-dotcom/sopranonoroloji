@@ -65,8 +65,11 @@ export default function ResetPasswordPage() {
     setOobCode(code);
   }, []);
 
-  // ★ Mobile app'e intent:// redirect — Android'de uygulama yüklüyse otomatik açar.
-  //   3 saniye gecikmeli, kullanıcının ekranı görmesini sağla.
+  // ★ v110.10 (7 May 2026): AGRESİF redirect — kullanıcı talebi
+  //   "geri dönüşler web e değil uygulamaya olsun".
+  //   500ms gecikme: kullanıcı sayfa flash'ını görür ama uygulama hemen açılır.
+  //   App Links autoVerify:true + assetlinks.json ile Android Chrome zaten bu URL'i
+  //   uygulamaya yönlendirir; bu redirect fallback (autoVerify çalışmadıysa).
   useEffect(() => {
     if (mode === 'unknown' || autoRedirected) return;
     const params = new URLSearchParams(window.location.search);
@@ -75,14 +78,13 @@ export default function ResetPasswordPage() {
 
     const timer = setTimeout(() => {
       setAutoRedirected(true);
-      // Android Chrome intent:// destekler, iOS'ta sopranochat:// scheme.
       const ua = navigator.userAgent.toLowerCase();
       if (ua.includes('android')) {
         window.location.href = intentUrl;
       } else if (ua.includes('iphone') || ua.includes('ipad')) {
         window.location.href = `sopranochat://auth/reset-password?${queryString}`;
       }
-    }, 2500);
+    }, 500);
     return () => clearTimeout(timer);
   }, [mode, autoRedirected]);
 

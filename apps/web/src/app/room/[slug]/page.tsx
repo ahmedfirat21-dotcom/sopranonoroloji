@@ -56,7 +56,7 @@ export default function RoomLandingPage({ params }: { params: Promise<{ slug: st
       } else if (ua.includes('iphone') || ua.includes('ipad')) {
         window.location.href = `sopranochat://room/${slug}`;
       }
-    }, 2200);
+    }, 500);
     return () => clearTimeout(timer);
   }, [slug, autoRedirected]);
 

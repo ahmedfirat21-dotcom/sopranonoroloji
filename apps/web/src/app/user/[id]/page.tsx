@@ -54,7 +54,7 @@ export default function UserProfileLandingPage({ params }: { params: Promise<{ i
       } else if (ua.includes('iphone') || ua.includes('ipad')) {
         window.location.href = `sopranochat://user/${id}`;
       }
-    }, 2200);
+    }, 500);
     return () => clearTimeout(timer);
   }, [id, autoRedirected]);
 
