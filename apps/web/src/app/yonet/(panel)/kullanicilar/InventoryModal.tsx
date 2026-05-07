@@ -5,6 +5,7 @@
  * Mevcut ürünler + ekle/kaldır + "Test hesabı yap" kısayolu.
  */
 import { useEffect, useState } from 'react';
+import { useAdminDialog } from '../../_components/AdminDialog';
 import { Loader2, Trash2, Plus, Sparkles, Check, X, Search } from 'lucide-react';
 
 type Item = {
@@ -49,6 +50,7 @@ export default function InventoryModal({
   onClose: () => void;
   onChanged: () => void;
 }) {
+  const dialog = useAdminDialog();
   const [inventory, setInventory] = useState<InvEntry[]>([]);
   const [allItems, setAllItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,7 +70,7 @@ export default function InventoryModal({
       setInventory(invJson.inventory || []);
       setAllItems(itemsJson.items || []);
     } catch (e: any) {
-      alert('Yükleme hatası: ' + e.message);
+      await dialog.alert({ title: 'Yükleme hatası', message: e.message, variant: 'error' });
     } finally {
       setLoading(false);
     }
@@ -94,20 +96,23 @@ export default function InventoryModal({
       await loadAll();
       onChanged();
     } catch (e: any) {
-      alert(e.message);
+      await dialog.alert({ title: 'Hata', message: e.message, variant: 'error' });
     } finally {
       setBusy(null);
     }
   };
 
   const handleTestAccount = async () => {
-    if (!confirm(
-      `${displayName} hesabı TEST HESABI haline getirilecek:\n\n` +
-      `• Üyelik planı: PRO\n` +
-      `• SP bakiyesi: 999.999\n` +
-      `• Tüm aktif ürünler envantere eklenecek\n\n` +
-      `Geri almak için: tier'ı Free yap, SP'yi düşür, "Envanteri Temizle" tıkla.`,
-    )) return;
+    const ok = await dialog.confirm({
+      title: `${displayName} — Test hesabı yap`,
+      message:
+        '• Üyelik planı: PRO\n' +
+        '• SP bakiyesi: 999.999\n' +
+        '• Tüm aktif ürünler envantere eklenecek\n\n' +
+        'Geri almak için: tier\'ı Free yap, SP\'yi düşür, "Envanteri Temizle" tıkla.',
+      confirmLabel: 'Test hesabı yap',
+    });
+    if (!ok) return;
     await callAction({ test_account: true }, 'test');
   };
 
@@ -170,8 +175,13 @@ export default function InventoryModal({
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    if (!confirm('Tüm aktif ürünler envantere eklensin mi?')) return;
+                  onClick={async () => {
+                    const ok = await dialog.confirm({
+                      title: 'Tüm ürünleri envantere ekle',
+                      message: 'Mağazadaki tüm aktif ürünler bu kullanıcının envanterine eklensin mi?',
+                      confirmLabel: 'Hepsini ekle',
+                    });
+                    if (!ok) return;
                     callAction({ add_all: true }, 'addAll');
                   }}
                   disabled={busy === 'addAll'}
@@ -182,8 +192,14 @@ export default function InventoryModal({
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    if (!confirm(`${displayName} envanteri TAMAMEN TEMİZLENECEK! Devam?`)) return;
+                  onClick={async () => {
+                    const ok = await dialog.confirm({
+                      title: `${displayName} envanteri temizlenecek`,
+                      message: 'Tüm sahip olduğu ürünler kaldırılacak. Devam edilsin mi?',
+                      confirmLabel: 'Temizle',
+                      danger: true,
+                    });
+                    if (!ok) return;
                     callAction({ clear: true }, 'clear');
                   }}
                   disabled={busy === 'clear' || inventory.length === 0}

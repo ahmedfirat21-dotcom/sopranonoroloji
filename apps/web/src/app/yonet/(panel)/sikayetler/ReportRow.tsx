@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, X, Ban } from 'lucide-react';
+import { useAdminDialog } from '../../_components/AdminDialog';
 
 type Report = {
   id: string;
@@ -22,6 +23,7 @@ type Report = {
 
 export default function ReportRow({ report }: { report: Report }) {
   const router = useRouter();
+  const dialog = useAdminDialog();
   const [busy, setBusy] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
@@ -36,10 +38,21 @@ export default function ReportRow({ report }: { report: Report }) {
       if (!res.ok) throw new Error('İşlem başarısız');
       startTransition(() => router.refresh());
     } catch (e: any) {
-      alert(e.message || 'Hata');
+      await dialog.alert({ title: 'Hata', message: e.message || 'Hata', variant: 'error' });
     } finally {
       setBusy(null);
     }
+  };
+
+  const handleBanTarget = async () => {
+    const ok = await dialog.confirm({
+      title: 'Kullanıcıyı banla',
+      message: 'Hedef kullanıcıyı banlamak istediğine emin misin? Bu işlem kullanıcının hesabını askıya alır.',
+      confirmLabel: 'Banla',
+      danger: true,
+    });
+    if (!ok) return;
+    handleAction('ban');
   };
 
   const targetType = report.reported_user_id ? 'Kullanıcı'
@@ -98,10 +111,7 @@ export default function ReportRow({ report }: { report: Report }) {
             </button>
             {report.reported_user_id && (
               <button
-                onClick={() => {
-                  if (!confirm('Hedef kullanıcıyı banlamak istediğine emin misin?')) return;
-                  handleAction('ban');
-                }}
+                onClick={handleBanTarget}
                 disabled={!!busy}
                 className="px-3 py-2 rounded-lg bg-red-500/15 hover:bg-red-500/25 border border-red-500/40 text-xs text-red-300 disabled:opacity-50 flex items-center gap-1.5 transition-colors"
                 title="Kullanıcıyı banla"

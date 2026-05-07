@@ -9,6 +9,7 @@ import { useMemo, useRef, useState } from 'react';
 import { Loader2, Check, ChevronDown, Sparkles, Upload, FileJson, Image as ImageIcon, X } from 'lucide-react';
 import { CATEGORIES, getCategoryDef } from './categories';
 import MobilePreview from './MobilePreview';
+import { useAdminDialog } from '../../_components/AdminDialog';
 
 type Item = {
   id: string;
@@ -68,6 +69,7 @@ export default function QuickAddModal({
   onCreated: (item: Item) => void;
 }) {
   const catDef = getCategoryDef(category);
+  const dialog = useAdminDialog();
 
   const [name, setName] = useState('');
   const [tagline, setTagline] = useState('');
@@ -117,7 +119,7 @@ export default function QuickAddModal({
       setUploadedUrl(j.url);
       setUploadedType(j.asset_type);
     } catch (e: any) {
-      alert(e.message);
+      await dialog.alert({ title: 'Yükleme hatası', message: e.message, variant: 'error' });
     } finally {
       setUploading(false);
     }
@@ -130,8 +132,14 @@ export default function QuickAddModal({
   };
 
   const handleSave = async () => {
-    if (!name.trim()) return alert('İsim gerekli');
-    if (priceSp < 0) return alert('Fiyat 0 veya üzeri olmalı');
+    if (!name.trim()) {
+      await dialog.alert({ title: 'İsim gerekli', message: 'Ürün için bir isim gir.', variant: 'error' });
+      return;
+    }
+    if (priceSp < 0) {
+      await dialog.alert({ title: 'Geçersiz fiyat', message: 'Fiyat 0 veya pozitif olmalı.', variant: 'error' });
+      return;
+    }
 
     setBusy(true);
     try {
@@ -173,7 +181,7 @@ export default function QuickAddModal({
       const j = await res.json();
       onCreated(j.item || (payload.create as any));
     } catch (e: any) {
-      alert(e.message);
+      await dialog.alert({ title: 'Hata', message: e.message, variant: 'error' });
     } finally {
       setBusy(false);
     }

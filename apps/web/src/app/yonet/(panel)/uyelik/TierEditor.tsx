@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Pencil, Save, X, Copy, Check, AlertTriangle, Info } from 'lucide-react';
+import { useAdminDialog } from '../../_components/AdminDialog';
 
 type Tier = {
   name: string;
@@ -16,6 +17,7 @@ type Tier = {
 };
 
 export default function TierEditor({ tiers: initialTiers }: { tiers: Tier[] }) {
+  const dialog = useAdminDialog();
   const [tiers, setTiers] = useState(initialTiers);
   const [editing, setEditing] = useState<string | null>(null);
   const [showExport, setShowExport] = useState(false);
@@ -32,7 +34,7 @@ export default function TierEditor({ tiers: initialTiers }: { tiers: Tier[] }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      alert('Kopyalama başarısız');
+      await dialog.alert({ title: 'Kopyalama başarısız', message: 'Manuel olarak seçip Ctrl+C ile kopyala.', variant: 'error' });
     }
   };
 

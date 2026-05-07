@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Send, Loader2, Users, User as UserIcon, Crown } from 'lucide-react';
+import { useAdminDialog } from '../../_components/AdminDialog';
 
 type Audience = 'all' | 'tier' | 'user';
 
@@ -12,6 +13,7 @@ export default function PushClient({
   totalTokens: number;
   distinctUsers: number;
 }) {
+  const dialog = useAdminDialog();
   const [audience, setAudience] = useState<Audience>('all');
   const [tier, setTier] = useState<'Free' | 'Plus' | 'Pro'>('Plus');
   const [userId, setUserId] = useState('');
@@ -23,11 +25,11 @@ export default function PushClient({
 
   const handleSend = async () => {
     if (!title.trim() || !body.trim()) {
-      alert('Başlık ve metin gerekli');
+      await dialog.alert({ title: 'Eksik bilgi', message: 'Başlık ve metin gerekli.', variant: 'error' });
       return;
     }
     if (audience === 'user' && !userId.trim()) {
-      alert('Kullanıcı ID gerekli');
+      await dialog.alert({ title: 'Kullanıcı seçilmedi', message: 'Tek kullanıcıya gönderim için ID gir.', variant: 'error' });
       return;
     }
 
@@ -37,9 +39,12 @@ export default function PushClient({
         ? `${tier} aboneleri`
         : `1 kullanıcı`;
 
-    if (!confirm(`"${title}" başlıklı push ${audienceLabel}'a gönderilecek. Devam?`)) {
-      return;
-    }
+    const ok = await dialog.confirm({
+      title: 'Push bildirim gönder',
+      message: `"${title}" başlıklı bildirim ${audienceLabel} hedefine gönderilecek.`,
+      confirmLabel: 'Gönder',
+    });
+    if (!ok) return;
 
     setBusy(true);
     setResult(null);

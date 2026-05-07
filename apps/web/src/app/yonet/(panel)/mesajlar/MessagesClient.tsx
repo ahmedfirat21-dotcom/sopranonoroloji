@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Mic, Image as ImageIcon, Trash2, Loader2 } from 'lucide-react';
+import { useAdminDialog } from '../../_components/AdminDialog';
 
 type Profile = { display_name: string; avatar_url: string };
 
@@ -44,6 +45,7 @@ export default function MessagesClient({
   recentMessages: Message[];
 }) {
   const router = useRouter();
+  const dialog = useAdminDialog();
   const [tab, setTab] = useState<Tab>('reported');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
@@ -62,10 +64,21 @@ export default function MessagesClient({
       }
       startTransition(() => router.refresh());
     } catch (e: any) {
-      alert(e.message);
+      await dialog.alert({ title: 'Hata', message: e.message, variant: 'error' });
     } finally {
       setBusyId(null);
     }
+  };
+
+  const handleDeleteMessage = async (messageId: string) => {
+    const ok = await dialog.confirm({
+      title: 'Mesajı sil',
+      message: 'Bu mesaj kullanıcılara "silinmiş" olarak gösterilecek. Devam edilsin mi?',
+      confirmLabel: 'Sil',
+      danger: true,
+    });
+    if (!ok) return;
+    callDelete(messageId);
   };
 
   return (
@@ -169,10 +182,7 @@ export default function MessagesClient({
                 {r.message && !r.message.is_deleted && (
                   <button
                     type="button"
-                    onClick={() => {
-                      if (!confirm('Bu mesaj silinmiş olarak işaretlensin mi?')) return;
-                      callDelete(r.message!.id);
-                    }}
+                    onClick={() => handleDeleteMessage(r.message!.id)}
                     disabled={busyId === r.message.id}
                     className="px-3 py-2 rounded-lg bg-red-500/15 hover:bg-red-500/25 border border-red-500/40 text-xs text-red-300 disabled:opacity-50 flex items-center gap-1.5 transition-colors shrink-0"
                   >
@@ -207,10 +217,7 @@ export default function MessagesClient({
                 </div>
                 <button
                   type="button"
-                  onClick={() => {
-                    if (!confirm('Mesaj silinmiş olarak işaretlensin mi?')) return;
-                    callDelete(m.id);
-                  }}
+                  onClick={() => handleDeleteMessage(m.id)}
                   disabled={busyId === m.id}
                   className="px-2 py-1.5 rounded-md bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-300 disabled:opacity-50 transition-colors shrink-0"
                   title="Sil"

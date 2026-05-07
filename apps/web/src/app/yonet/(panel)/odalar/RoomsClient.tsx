@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Radio, Lock, Power, Globe, Mic, Loader2, Trash2, Play, Crown } from 'lucide-react';
+import { useAdminDialog } from '../../_components/AdminDialog';
 
 type Room = {
   id: string;
@@ -35,6 +36,7 @@ export default function RoomsClient({
   closedRooms: Room[];
 }) {
   const router = useRouter();
+  const dialog = useAdminDialog();
   const [tab, setTab] = useState<Tab>('live');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
@@ -53,10 +55,64 @@ export default function RoomsClient({
       }
       startTransition(() => router.refresh());
     } catch (e: any) {
-      alert(e.message);
+      await dialog.alert({ title: 'Hata', message: e.message, variant: 'error' });
     } finally {
       setBusyId(null);
     }
+  };
+
+  const handleClose = async (r: Room) => {
+    const ok = await dialog.confirm({
+      title: 'Odayı kapat',
+      message: `"${r.name}" zorla kapatılsın mı?`,
+      confirmLabel: 'Kapat',
+      danger: true,
+    });
+    if (!ok) return;
+    callAction(r.id, { action: 'close' });
+  };
+
+  const handleWake = async (r: Room) => {
+    const ok = await dialog.confirm({
+      title: 'Odayı uyandır',
+      message: `"${r.name}" uyandırılsın mı? Tekrar canlıya alınır.`,
+      confirmLabel: 'Uyandır',
+    });
+    if (!ok) return;
+    callAction(r.id, { action: 'wake' });
+  };
+
+  const handleTierChange = async (r: Room) => {
+    const t = await dialog.prompt({
+      title: `${r.name} — Tier ata`,
+      message: 'Free / Plus / Pro değerlerinden birini gir.',
+      defaultValue: 'Plus',
+      placeholder: 'Plus',
+    });
+    if (!t) return;
+    if (!['Free', 'Plus', 'Pro'].includes(t.trim())) {
+      await dialog.alert({ title: 'Geçersiz tier', message: 'Sadece Free, Plus veya Pro.', variant: 'error' });
+      return;
+    }
+    callAction(r.id, { action: 'change_tier', tier: t.trim() });
+  };
+
+  const handleDelete = async (r: Room) => {
+    const first = await dialog.confirm({
+      title: `"${r.name}" kalıcı silinecek`,
+      message: 'Oda + katılımcılar + mesajlar silinecek. Geri alınamaz.',
+      confirmLabel: 'Devam',
+      danger: true,
+    });
+    if (!first) return;
+    const second = await dialog.confirm({
+      title: 'Son onay',
+      message: `"${r.name}" silinecek. Emin misin?`,
+      confirmLabel: 'Sil',
+      danger: true,
+    });
+    if (!second) return;
+    callAction(r.id, { action: 'delete' });
   };
 
   const list = tab === 'live' ? liveRooms : closedRooms;
@@ -128,10 +184,7 @@ export default function RoomsClient({
                 {r.is_live ? (
                   <button
                     type="button"
-                    onClick={() => {
-                      if (!confirm(`"${r.name}" zorla kapatılsın mı?`)) return;
-                      callAction(r.id, { action: 'close' });
-                    }}
+                    onClick={() => handleClose(r)}
                     disabled={isBusy}
                     className="px-2 py-2 rounded-md text-[10px] font-semibold border bg-amber-500/10 border-amber-500/30 text-amber-300 flex items-center justify-center gap-1"
                   >
@@ -140,10 +193,7 @@ export default function RoomsClient({
                 ) : (
                   <button
                     type="button"
-                    onClick={() => {
-                      if (!confirm(`"${r.name}" uyandırılsın mı?`)) return;
-                      callAction(r.id, { action: 'wake' });
-                    }}
+                    onClick={() => handleWake(r)}
                     disabled={isBusy}
                     className="px-2 py-2 rounded-md text-[10px] font-semibold border bg-emerald-500/10 border-emerald-500/30 text-emerald-300 flex items-center justify-center gap-1"
                   >
@@ -152,12 +202,7 @@ export default function RoomsClient({
                 )}
                 <button
                   type="button"
-                  onClick={() => {
-                    const t = prompt(`Tier (Free/Plus/Pro):`, 'Plus');
-                    if (!t) return;
-                    if (!['Free', 'Plus', 'Pro'].includes(t.trim())) return alert('Geçersiz tier');
-                    callAction(r.id, { action: 'change_tier', tier: t.trim() });
-                  }}
+                  onClick={() => handleTierChange(r)}
                   disabled={isBusy}
                   className="px-2 py-2 rounded-md text-[10px] font-semibold border bg-amber-500/10 border-amber-500/30 text-amber-300 flex items-center justify-center gap-1"
                 >
@@ -165,11 +210,7 @@ export default function RoomsClient({
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    if (!confirm(`⚠️ "${r.name}" KALICI silinecek!`)) return;
-                    if (!confirm(`Son onay: silinecek.`)) return;
-                    callAction(r.id, { action: 'delete' });
-                  }}
+                  onClick={() => handleDelete(r)}
                   disabled={isBusy}
                   className="px-2 py-2 rounded-md text-[10px] font-semibold border bg-red-500/15 border-red-500/40 text-red-200 flex items-center justify-center gap-1"
                 >
@@ -253,10 +294,7 @@ export default function RoomsClient({
                         {r.is_live ? (
                           <button
                             type="button"
-                            onClick={() => {
-                              if (!confirm(`"${r.name}" odası zorla kapatılsın mı?`)) return;
-                              callAction(r.id, { action: 'close' });
-                            }}
+                            onClick={() => handleClose(r)}
                             disabled={isBusy}
                             className="px-2 py-1.5 rounded-md text-[10px] font-semibold border bg-amber-500/10 border-amber-500/30 text-amber-300 hover:bg-amber-500/20 transition-colors flex items-center gap-1"
                             title="Odayı kapat"
@@ -266,10 +304,7 @@ export default function RoomsClient({
                         ) : (
                           <button
                             type="button"
-                            onClick={() => {
-                              if (!confirm(`"${r.name}" uyandırılsın mı? Sahibinin tier'ına göre süresi yenilenecek.`)) return;
-                              callAction(r.id, { action: 'wake' });
-                            }}
+                            onClick={() => handleWake(r)}
                             disabled={isBusy}
                             className="px-2 py-1.5 rounded-md text-[10px] font-semibold border bg-emerald-500/10 border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20 transition-colors flex items-center gap-1"
                             title="Odayı uyandır"
@@ -280,16 +315,7 @@ export default function RoomsClient({
                         {/* Tier değiştir */}
                         <button
                           type="button"
-                          onClick={() => {
-                            const newTier = prompt(`"${r.name}" tier değiştir.\nMevcut: Free/Plus/Pro\nYeni tier (Free/Plus/Pro):`, 'Plus');
-                            if (newTier === null) return;
-                            const t = newTier.trim();
-                            if (!['Free', 'Plus', 'Pro'].includes(t)) {
-                              alert('Geçersiz tier. Free, Plus veya Pro olmalı.');
-                              return;
-                            }
-                            callAction(r.id, { action: 'change_tier', tier: t });
-                          }}
+                          onClick={() => handleTierChange(r)}
                           disabled={isBusy}
                           className="px-2 py-1.5 rounded-md text-[10px] font-semibold border bg-amber-500/10 border-amber-500/30 text-amber-300 hover:bg-amber-500/20 transition-colors flex items-center gap-1"
                           title="Tier değiştir"
@@ -299,11 +325,7 @@ export default function RoomsClient({
                         {/* Kalıcı sil — cascade */}
                         <button
                           type="button"
-                          onClick={() => {
-                            if (!confirm(`⚠️ "${r.name}" odası KALICI olarak silinecek!\n\nMesajları, üye kayıtları, bağlantıları silinir.\n\nGERİ ALINAMAZ. Devam?`)) return;
-                            if (!confirm(`Son onay: "${r.name}" silinecek.`)) return;
-                            callAction(r.id, { action: 'delete' });
-                          }}
+                          onClick={() => handleDelete(r)}
                           disabled={isBusy}
                           className="px-2 py-1.5 rounded-md text-[10px] font-semibold border bg-red-500/15 border-red-500/40 text-red-200 hover:bg-red-500/25 transition-colors flex items-center gap-1"
                           title="Odayı kalıcı sil"

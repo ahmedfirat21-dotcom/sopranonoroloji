@@ -7,6 +7,7 @@
 import { useState, useRef } from 'react';
 import { Upload, FileText, Check, AlertTriangle, Loader2, Copy, Download } from 'lucide-react';
 import { CATEGORIES, getCategoryDef } from './categories';
+import { useAdminDialog } from '../../_components/AdminDialog';
 
 type ParsedItem = {
   category: string;
@@ -74,6 +75,7 @@ export default function BulkUploadModal({
   onClose: () => void;
   onUploaded: (insertedCount: number) => void;
 }) {
+  const dialog = useAdminDialog();
   const [phase, setPhase] = useState<Phase>('input');
   const [jsonText, setJsonText] = useState('');
   const [parsed, setParsed] = useState<ParsedItem[] | null>(null);
@@ -86,11 +88,11 @@ export default function BulkUploadModal({
 
   const handleFile = async (file: File) => {
     if (!file.name.toLowerCase().endsWith('.json')) {
-      alert('Sadece .json dosyası yükleyebilirsin');
+      await dialog.alert({ title: 'Geçersiz dosya', message: 'Sadece .json uzantılı dosya yükleyebilirsin.', variant: 'error' });
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
-      alert('Dosya max 2MB olabilir');
+      await dialog.alert({ title: 'Dosya çok büyük', message: 'Maksimum 2 MB olabilir.', variant: 'error' });
       return;
     }
     const text = await file.text();
@@ -157,7 +159,7 @@ export default function BulkUploadModal({
       a.click();
       URL.revokeObjectURL(url);
     } catch (e: any) {
-      alert('Export başarısız: ' + e.message);
+      await dialog.alert({ title: 'Export başarısız', message: e.message, variant: 'error' });
     }
   };
 
@@ -227,9 +229,9 @@ export default function BulkUploadModal({
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={async () => {
                     navigator.clipboard.writeText(SAMPLE_JSON);
-                    alert('Örnek JSON panoya kopyalandı');
+                    await dialog.alert({ title: 'Kopyalandı', message: 'Örnek JSON panoya alındı.', variant: 'success' });
                   }}
                   className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 flex items-center gap-1.5"
                 >

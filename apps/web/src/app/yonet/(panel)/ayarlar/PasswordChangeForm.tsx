@@ -1,21 +1,25 @@
 "use client";
 
 import { useState } from 'react';
-import { Lock, Loader2, Copy, Check, ShieldAlert } from 'lucide-react';
+import { Lock, Loader2, Copy, Check, ShieldAlert, AlertTriangle } from 'lucide-react';
+import { useAdminDialog } from '../../_components/AdminDialog';
 
 export default function PasswordChangeForm() {
+  const dialog = useAdminDialog();
   const [oldPwd, setOldPwd] = useState('');
   const [newPwd, setNewPwd] = useState('');
   const [confirmPwd, setConfirmPwd] = useState('');
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ hash: string } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!oldPwd) return alert('Mevcut şifreyi gir');
-    if (newPwd.length < 8) return alert('Yeni şifre en az 8 karakter olmalı');
-    if (newPwd !== confirmPwd) return alert('Yeni şifre onayı eşleşmiyor');
+    setFormError(null);
+    if (!oldPwd) { setFormError('Mevcut şifreyi gir'); return; }
+    if (newPwd.length < 8) { setFormError('Yeni şifre en az 8 karakter olmalı'); return; }
+    if (newPwd !== confirmPwd) { setFormError('Yeni şifre onayı eşleşmiyor'); return; }
 
     setBusy(true);
     setResult(null);
@@ -30,7 +34,7 @@ export default function PasswordChangeForm() {
       setResult({ hash: j.hash });
       setOldPwd(''); setNewPwd(''); setConfirmPwd('');
     } catch (e: any) {
-      alert(e.message);
+      await dialog.alert({ title: 'Hata', message: e.message, variant: 'error' });
     } finally {
       setBusy(false);
     }
@@ -43,7 +47,7 @@ export default function PasswordChangeForm() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      alert('Kopyalama başarısız — manuel seç ve Ctrl+C');
+      await dialog.alert({ title: 'Kopyalama başarısız', message: 'Manuel olarak seçip Ctrl+C ile kopyala.', variant: 'error' });
     }
   };
 
@@ -88,6 +92,12 @@ export default function PasswordChangeForm() {
               autoComplete="new-password"
             />
           </div>
+          {formError && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-xs">
+              <AlertTriangle className="w-3.5 h-3.5" />
+              {formError}
+            </div>
+          )}
           <button
             type="submit"
             disabled={busy}

@@ -7,6 +7,7 @@
 import type { ReactNode } from 'react';
 import AdminSidebar from '../_components/AdminSidebar';
 import AdminTopbar from '../_components/AdminTopbar';
+import AdminProviders from '../_components/AdminProviders';
 import { requireAdmin } from '@/lib/admin/auth';
 
 export const metadata = {
@@ -52,7 +53,9 @@ export default async function YonetPanelLayout({ children }: { children: ReactNo
       </div>
       <main className="flex-1 flex flex-col min-w-0 relative z-10">
         <AdminTopbar />
-        <div className="yonet-scrollbar flex-1 overflow-y-auto p-4 sm:p-6">{children}</div>
+        <div className="yonet-scrollbar flex-1 overflow-y-auto p-4 sm:p-6">
+          <AdminProviders>{children}</AdminProviders>
+        </div>
       </main>
     </div>
     </>

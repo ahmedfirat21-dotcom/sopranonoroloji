@@ -7,6 +7,7 @@ import { CATEGORIES, getCategoryDef } from './categories';
 import MobilePreview from './MobilePreview';
 import QuickAddModal from './QuickAddModal';
 import BulkUploadModal from './BulkUploadModal';
+import { useAdminDialog } from '../../_components/AdminDialog';
 
 type Item = {
   id: string;
@@ -48,6 +49,7 @@ export default function StoreClient({
   initialBundles: Bundle[];
 }) {
   const router = useRouter();
+  const dialog = useAdminDialog();
   const [tab, setTab] = useState<Tab>('items');
   const [items, setItems] = useState(initialItems);
   const [bundles, setBundles] = useState(initialBundles);
@@ -79,7 +81,7 @@ export default function StoreClient({
       }
       startTransition(() => router.refresh());
     } catch (e: any) {
-      alert(e.message);
+      await dialog.alert({ title: 'Hata', message: e.message, variant: 'error' });
     } finally {
       setBusyId(null);
     }
@@ -97,7 +99,7 @@ export default function StoreClient({
       setBundles(prev => prev.map(b => b.id === id ? { ...b, active } : b));
       startTransition(() => router.refresh());
     } catch (e: any) {
-      alert(e.message);
+      await dialog.alert({ title: 'Hata', message: e.message, variant: 'error' });
     } finally {
       setBusyId(null);
     }
@@ -308,8 +310,14 @@ export default function StoreClient({
                   </button>
                   <button
                     type="button"
-                    onClick={() => {
-                      if (!confirm(`"${it.name}" silinsin mi?`)) return;
+                    onClick={async () => {
+                      const ok = await dialog.confirm({
+                        title: `"${it.name}" silinecek`,
+                        message: 'Bu ürün mağazadan kalıcı olarak kaldırılacak.',
+                        confirmLabel: 'Sil',
+                        danger: true,
+                      });
+                      if (!ok) return;
                       callItemAction(it.id, { delete: true });
                     }}
                     disabled={isBusy}
@@ -419,8 +427,14 @@ export default function StoreClient({
                           </button>
                           <button
                             type="button"
-                            onClick={() => {
-                              if (!confirm(`"${it.name}" silinsin mi? Geri alınamaz.`)) return;
+                            onClick={async () => {
+                              const ok = await dialog.confirm({
+                                title: `"${it.name}" silinecek`,
+                                message: 'Bu ürün kalıcı olarak silinecek. Geri alınamaz.',
+                                confirmLabel: 'Sil',
+                                danger: true,
+                              });
+                              if (!ok) return;
                               callItemAction(it.id, { delete: true });
                             }}
                             disabled={isBusy}
@@ -606,6 +620,7 @@ function ItemEditModal({
   onClose: () => void;
   onSaved: (saved: Item, isNew: boolean) => void;
 }) {
+  const dialog = useAdminDialog();
   const isNew = !item;
   const [form, setForm] = useState<Partial<Item>>(
     item || {
@@ -629,7 +644,7 @@ function ItemEditModal({
 
   const handleSave = async () => {
     if (!form.id || !form.name) {
-      alert('ID ve isim gerekli');
+      await dialog.alert({ title: 'Eksik bilgi', message: 'ID ve isim gerekli.', variant: 'error' });
       return;
     }
     setSaving(true);
@@ -649,7 +664,7 @@ function ItemEditModal({
       const j = await res.json();
       onSaved(j.item || form as Item, isNew);
     } catch (e: any) {
-      alert(e.message);
+      await dialog.alert({ title: 'Hata', message: e.message, variant: 'error' });
     } finally {
       setSaving(false);
     }

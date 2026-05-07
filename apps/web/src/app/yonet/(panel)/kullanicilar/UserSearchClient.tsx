@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, Ban, ShieldCheck, Coins, Loader2, Crown, Trash2, AlertTriangle, Backpack } from 'lucide-react';
 import InventoryModal from './InventoryModal';
+import { useAdminDialog } from '../../_components/AdminDialog';
 
 type User = {
   id: string;
@@ -60,6 +61,7 @@ export default function UserSearchClient({ initialUsers, initialQuery }: {
 }) {
   const router = useRouter();
   const sp = useSearchParams();
+  const dialog = useAdminDialog();
   const [users, setUsers] = useState(initialUsers);
   const [q, setQ] = useState(initialQuery);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -96,17 +98,26 @@ export default function UserSearchClient({ initialUsers, initialQuery }: {
       }
       startTransition(() => router.refresh());
     } catch (e: any) {
-      alert(e.message);
+      await dialog.alert({ title: 'Hata', message: e.message, variant: 'error' });
     } finally {
       setBusyId(null);
     }
   };
 
-  const handleWarn = (uid: string, displayName: string) => {
-    const message = prompt(`"${displayName}" kullanıcısına gönderilecek uyarı mesajı:`,
-      'Davranışlarınız nedeniyle bir uyarı aldınız. Kuralları tekrar ihlal etmeniz durumunda hesabınız askıya alınabilir.');
+  // ★ 7 May 2026: alert/confirm/prompt → useAdminDialog (custom modal).
+  //   Kullanıcı talebi: "klasik popup pencere istemiyorum".
+  const handleWarn = async (uid: string, displayName: string) => {
+    const message = await dialog.prompt({
+      title: `${displayName} kullanıcısına uyarı gönder`,
+      message: 'Bu mesaj kullanıcının uyarı kutusuna yönetici uyarısı olarak düşer.',
+      defaultValue: 'Davranışlarınız nedeniyle bir uyarı aldınız. Kuralları tekrar ihlal etmeniz durumunda hesabınız askıya alınabilir.',
+      multiline: true,
+    });
     if (message === null) return;
-    if (!message.trim()) return alert('Mesaj boş olamaz');
+    if (!message.trim()) {
+      await dialog.alert({ title: 'Mesaj boş olamaz', variant: 'error' });
+      return;
+    }
     callAction(uid, { action: 'warn', message: message.trim() });
   };
 
@@ -114,6 +125,65 @@ export default function UserSearchClient({ initialUsers, initialQuery }: {
     const cur = currentTier || 'Free';
     if (newTier === cur) return;
     callAction(uid, { update: { subscription_tier: newTier } });
+  };
+
+  const handleBanToggle = async (u: User) => {
+    if (!u.is_banned) {
+      const ok = await dialog.confirm({
+        title: 'Kullanıcıyı banla',
+        message: `"${u.display_name}" banlanacak. Devam edilsin mi?`,
+        confirmLabel: 'Banla',
+        danger: true,
+      });
+      if (!ok) return;
+    }
+    callAction(u.id, { update: { is_banned: !u.is_banned } });
+  };
+
+  const handleSPEdit = async (u: User) => {
+    const cur = u.system_points || 0;
+    const newVal = await dialog.prompt({
+      title: `${u.display_name} — SP düzenle`,
+      message: 'Yeni SP miktarını gir',
+      defaultValue: String(cur),
+      inputType: 'number',
+    });
+    if (newVal === null) return;
+    const n = parseInt(newVal, 10);
+    if (!Number.isFinite(n) || n < 0) {
+      await dialog.alert({ title: 'Geçersiz değer', message: 'Pozitif bir sayı gir.', variant: 'error' });
+      return;
+    }
+    await callAction(u.id, { update: { system_points: n } });
+  };
+
+  const handleAdminToggle = async (u: User) => {
+    const willMakeAdmin = !u.is_admin;
+    const ok = await dialog.confirm({
+      title: `Admin yetkisi ${willMakeAdmin ? 'ver' : 'al'}`,
+      message: `"${u.display_name}" için ${willMakeAdmin ? 'ADMIN yapma' : 'admin yetkisini alma'} işlemi onaylansın mı?`,
+      confirmLabel: willMakeAdmin ? 'Admin yap' : 'Yetki al',
+    });
+    if (!ok) return;
+    callAction(u.id, { action: 'toggle_admin', make_admin: willMakeAdmin });
+  };
+
+  const handleDelete = async (u: User) => {
+    const first = await dialog.confirm({
+      title: `"${u.display_name}" kalıcı silinecek`,
+      message: 'Silinecekler:\n• Profil\n• Tüm odaları\n• Mesajları\n• Arkadaşlıkları\n• Raporları\n\nGERİ ALINAMAZ.',
+      confirmLabel: 'Devam',
+      danger: true,
+    });
+    if (!first) return;
+    const second = await dialog.confirm({
+      title: 'Son onay',
+      message: `"${u.display_name}" silinecek. Emin misin?`,
+      confirmLabel: 'Sil',
+      danger: true,
+    });
+    if (!second) return;
+    callAction(u.id, { action: 'delete' });
   };
 
   return (
@@ -192,10 +262,7 @@ export default function UserSearchClient({ initialUsers, initialQuery }: {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    if (!u.is_banned && !confirm(`"${u.display_name}" banlanacak. Devam?`)) return;
-                    callAction(u.id, { update: { is_banned: !u.is_banned } });
-                  }}
+                  onClick={() => handleBanToggle(u)}
                   disabled={isBusy}
                   className={`px-2 py-2 rounded-md text-[10px] font-semibold border transition-colors flex items-center justify-center gap-1 ${
                     u.is_banned
@@ -208,14 +275,7 @@ export default function UserSearchClient({ initialUsers, initialQuery }: {
                 </button>
                 <button
                   type="button"
-                  onClick={async () => {
-                    const cur = u.system_points || 0;
-                    const newVal = prompt(`${u.display_name} için yeni SP miktarı:`, String(cur));
-                    if (newVal === null) return;
-                    const n = parseInt(newVal, 10);
-                    if (!Number.isFinite(n) || n < 0) return alert('Geçersiz değer');
-                    await callAction(u.id, { update: { system_points: n } });
-                  }}
+                  onClick={() => handleSPEdit(u)}
                   disabled={isBusy}
                   className="px-2 py-2 rounded-md text-[10px] font-semibold border bg-amber-500/10 border-amber-500/30 text-amber-300 flex items-center justify-center gap-1"
                 >
@@ -235,11 +295,7 @@ export default function UserSearchClient({ initialUsers, initialQuery }: {
                 </select>
                 <button
                   type="button"
-                  onClick={() => {
-                    const willMakeAdmin = !u.is_admin;
-                    if (!confirm(`"${u.display_name}" — ${willMakeAdmin ? 'ADMIN yap' : 'admin yetkisini AL'}?`)) return;
-                    callAction(u.id, { action: 'toggle_admin', make_admin: willMakeAdmin });
-                  }}
+                  onClick={() => handleAdminToggle(u)}
                   disabled={isBusy}
                   className={`px-2 py-2 rounded-md text-[10px] font-semibold border transition-colors flex items-center justify-center gap-1 ${
                     u.is_admin
@@ -259,11 +315,7 @@ export default function UserSearchClient({ initialUsers, initialQuery }: {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    if (!confirm(`⚠️ "${u.display_name}" KALICI silinecek!\nGERİ ALINAMAZ. Devam?`)) return;
-                    if (!confirm(`Son onay: silinecek.`)) return;
-                    callAction(u.id, { action: 'delete' });
-                  }}
+                  onClick={() => handleDelete(u)}
                   disabled={isBusy}
                   className="px-2 py-2 rounded-md text-[10px] font-semibold border bg-red-500/15 border-red-500/40 text-red-200 flex items-center justify-center gap-1"
                 >
@@ -390,10 +442,7 @@ export default function UserSearchClient({ initialUsers, initialQuery }: {
                         </button>
                         {/* Ban toggle */}
                         <button
-                          onClick={() => {
-                            if (!u.is_banned && !confirm(`"${u.display_name}" kullanıcısı banlanacak. Devam?`)) return;
-                            callAction(u.id, { update: { is_banned: !u.is_banned } });
-                          }}
+                          onClick={() => handleBanToggle(u)}
                           disabled={isBusy}
                           className={`px-2 py-1.5 rounded-md text-[10px] font-semibold border transition-colors flex items-center gap-1 ${
                             u.is_banned
@@ -406,14 +455,7 @@ export default function UserSearchClient({ initialUsers, initialQuery }: {
                         </button>
                         {/* SP düzenle */}
                         <button
-                          onClick={async () => {
-                            const cur = u.system_points || 0;
-                            const newVal = prompt(`${u.display_name} için yeni SP miktarı:`, String(cur));
-                            if (newVal === null) return;
-                            const n = parseInt(newVal, 10);
-                            if (!Number.isFinite(n) || n < 0) return alert('Geçersiz değer');
-                            await callAction(u.id, { update: { system_points: n } });
-                          }}
+                          onClick={() => handleSPEdit(u)}
                           disabled={isBusy}
                           className="px-2 py-1.5 rounded-md text-[10px] font-semibold border bg-amber-500/10 border-amber-500/30 text-amber-300 hover:bg-amber-500/20 transition-colors flex items-center gap-1"
                         >
@@ -422,12 +464,7 @@ export default function UserSearchClient({ initialUsers, initialQuery }: {
                         {/* Admin yetki toggle */}
                         <button
                           type="button"
-                          onClick={() => {
-                            const willMakeAdmin = !u.is_admin;
-                            const verb = willMakeAdmin ? 'ADMIN yap' : 'admin yetkisini AL';
-                            if (!confirm(`"${u.display_name}" kullanıcısını ${verb}? Devam?`)) return;
-                            callAction(u.id, { action: 'toggle_admin', make_admin: willMakeAdmin });
-                          }}
+                          onClick={() => handleAdminToggle(u)}
                           disabled={isBusy}
                           className={`px-2 py-1.5 rounded-md text-[10px] font-semibold border transition-colors flex items-center gap-1 ${
                             u.is_admin
@@ -451,11 +488,7 @@ export default function UserSearchClient({ initialUsers, initialQuery }: {
                         {/* Kalıcı sil — cascade */}
                         <button
                           type="button"
-                          onClick={() => {
-                            if (!confirm(`⚠️ "${u.display_name}" KALICI olarak silinecek!\n\nSilinecekler:\n• Profil\n• Tüm odaları\n• Mesajları\n• Arkadaşlıkları\n• Raporları\n\nGERİ ALINAMAZ. Devam?`)) return;
-                            if (!confirm(`Son onay: "${u.display_name}" silinecek. Eminmisin?`)) return;
-                            callAction(u.id, { action: 'delete' });
-                          }}
+                          onClick={() => handleDelete(u)}
                           disabled={isBusy}
                           className="px-2 py-1.5 rounded-md text-[10px] font-semibold border bg-red-500/15 border-red-500/40 text-red-200 hover:bg-red-500/25 transition-colors flex items-center gap-1"
                           title="Kullanıcıyı kalıcı sil (cascade)"

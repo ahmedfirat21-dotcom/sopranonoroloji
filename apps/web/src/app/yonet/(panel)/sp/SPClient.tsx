@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Loader2, ArrowUpRight, ArrowDownRight, Search } from 'lucide-react';
+import { useAdminDialog } from '../../_components/AdminDialog';
 
 type Profile = { display_name: string; avatar_url: string };
 
@@ -164,6 +165,7 @@ export default function SPClient({ transactions }: { transactions: Tx[] }) {
 }
 
 function GrantModal({ onClose, onGranted }: { onClose: () => void; onGranted: () => void }) {
+  const dialog = useAdminDialog();
   const [userId, setUserId] = useState('');
   const [amount, setAmount] = useState(100);
   const [reason, setReason] = useState('');
@@ -188,11 +190,11 @@ function GrantModal({ onClose, onGranted }: { onClose: () => void; onGranted: ()
 
   const handleGrant = async () => {
     if (!userId.trim()) {
-      alert('Kullanıcı ID seçilmedi');
+      await dialog.alert({ title: 'Kullanıcı seçilmedi', message: 'Önce arama yapıp bir kullanıcı seç.', variant: 'error' });
       return;
     }
     if (!amount || amount === 0) {
-      alert('Geçersiz miktar');
+      await dialog.alert({ title: 'Geçersiz miktar', message: 'Miktar 0\'dan farklı olmalı.', variant: 'error' });
       return;
     }
     setBusy(true);
@@ -208,7 +210,7 @@ function GrantModal({ onClose, onGranted }: { onClose: () => void; onGranted: ()
       }
       onGranted();
     } catch (e: any) {
-      alert(e.message);
+      await dialog.alert({ title: 'Hata', message: e.message, variant: 'error' });
     } finally {
       setBusy(false);
     }
