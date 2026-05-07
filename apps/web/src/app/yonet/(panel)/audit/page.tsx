@@ -6,18 +6,37 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { ScrollText, AlertTriangle } from 'lucide-react';
 
 const ACTION_LABEL: Record<string, { label: string; color: string }> = {
+  // Kullanıcı
   user_delete: { label: 'Kullanıcı silindi', color: '#F87171' },
   user_update: { label: 'Kullanıcı güncellendi', color: '#5EEAD4' },
   user_toggle_admin: { label: 'Admin yetkisi değişti', color: '#C084FC' },
   user_warn: { label: 'Kullanıcı uyarıldı', color: '#FBBF24' },
+  // Para
   cashout_status_change: { label: 'Para çekme durum değişti', color: '#34D399' },
+  sp_grant: { label: 'SP grant', color: '#FBBF24' },
+  // Oda
   room_delete: { label: 'Oda silindi', color: '#F87171' },
   room_close: { label: 'Oda kapatıldı', color: '#FBBF24' },
   room_wake: { label: 'Oda uyandırıldı', color: '#5EEAD4' },
+  room_tier_change: { label: 'Oda tier değişti', color: '#C084FC' },
+  // Mesaj
+  message_soft_delete: { label: 'Mesaj silindi', color: '#F87171' },
+  // Mağaza
   store_item_delete: { label: 'Ürün silindi', color: '#F87171' },
+  store_item_update: { label: 'Ürün güncellendi', color: '#5EEAD4' },
   daily_deal_set: { label: 'Daily deal güncellendi', color: '#F472B6' },
+  daily_deal_delete: { label: 'Daily deal silindi', color: '#F87171' },
+  // Push
   push_send: { label: 'Push gönderildi', color: '#C084FC' },
-  sp_grant: { label: 'SP grant', color: '#FBBF24' },
+  // Şikayet
+  report_dismiss: { label: 'Şikayet reddedildi', color: '#94A3B8' },
+  report_resolve: { label: 'Şikayet çözüldü', color: '#34D399' },
+  report_ban: { label: 'Şikayet → ban', color: '#F87171' },
+  // Auth
+  login_success: { label: 'Admin giriş', color: '#5EEAD4' },
+  login_failed: { label: 'Yanlış giriş', color: '#FBBF24' },
+  login_locked: { label: 'IP kilitlendi', color: '#F87171' },
+  logout: { label: 'Çıkış', color: '#94A3B8' },
 };
 
 function fmtDate(iso: string): string {

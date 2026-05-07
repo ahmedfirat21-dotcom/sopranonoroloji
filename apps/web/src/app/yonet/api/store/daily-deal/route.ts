@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyAdminToken, ADMIN_COOKIE_NAME } from '@/lib/admin/auth';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { logAudit } from '@/lib/admin/audit';
 
 async function ensureAdmin(): Promise<boolean> {
   const cookieStore = await cookies();
@@ -60,6 +61,12 @@ export async function POST(req: Request) {
       { onConflict: 'deal_date' }
     );
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  logAudit({
+    action: 'daily_deal_set',
+    target_type: 'daily_deal',
+    target_id: dealDate,
+    payload: { item_id: itemId, discount, banner_text: bannerText.slice(0, 80) },
+  });
   return NextResponse.json({ ok: true });
 }
 
@@ -78,5 +85,6 @@ export async function DELETE(req: Request) {
     .delete()
     .eq('deal_date', dealDate);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  logAudit({ action: 'daily_deal_delete', target_type: 'daily_deal', target_id: dealDate });
   return NextResponse.json({ ok: true });
 }

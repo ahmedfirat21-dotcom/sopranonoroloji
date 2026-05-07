@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyAdminToken, ADMIN_COOKIE_NAME } from '@/lib/admin/auth';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { logAudit } from '@/lib/admin/audit';
 
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 const EXPO_BATCH_SIZE = 100;
@@ -117,5 +118,11 @@ export async function POST(req: Request) {
   }
 
   const result = await sendExpoBatch(tokens, title, text, data);
+  logAudit({
+    action: 'push_send',
+    target_type: audience === 'user' ? 'user' : audience === 'tier' ? 'tier' : 'all',
+    target_id: audience === 'user' ? userId || undefined : audience === 'tier' ? tier || undefined : 'broadcast',
+    payload: { title, body: text.slice(0, 100), total: tokens.length, sent: result.sent, failed: result.failed },
+  });
   return NextResponse.json({ ok: true, total: tokens.length, ...result });
 }

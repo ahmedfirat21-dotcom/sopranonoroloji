@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyAdminToken, ADMIN_COOKIE_NAME } from '@/lib/admin/auth';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { logAudit } from '@/lib/admin/audit';
 
 async function ensureAdmin(): Promise<boolean> {
   const cookieStore = await cookies();
@@ -29,6 +30,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       .update({ is_live: false, expires_at: new Date().toISOString() })
       .eq('id', id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    logAudit({ action: 'room_close', target_type: 'room', target_id: id });
     return NextResponse.json({ ok: true });
   }
 
@@ -36,6 +38,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (action === 'delete') {
     const { error } = await supabaseAdmin.rpc('admin_delete_room', { p_room_id: id });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    logAudit({ action: 'room_delete', target_type: 'room', target_id: id });
     return NextResponse.json({ ok: true });
   }
 
@@ -66,6 +69,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       })
       .eq('id', id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    logAudit({ action: 'room_wake', target_type: 'room', target_id: id, payload: { tier, hours } });
     return NextResponse.json({ ok: true });
   }
 
@@ -86,6 +90,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       })
       .eq('id', id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    logAudit({ action: 'room_tier_change', target_type: 'room', target_id: id, payload: { tier } });
     return NextResponse.json({ ok: true });
   }
 

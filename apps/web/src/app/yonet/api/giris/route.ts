@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   const lockState = checkLock(ip);
   if (lockState.locked) {
     const minutes = Math.ceil(lockState.remainingMs / 60000);
-    logAudit({ action: 'login_locked', ip, metadata: { remaining_minutes: minutes } });
+    logAudit({ action: 'login_locked', payload: { ip, remaining_minutes: minutes } });
     return NextResponse.json(
       { error: `Çok fazla yanlış deneme. ${minutes} dakika sonra tekrar dene.` },
       { status: 429 },
@@ -33,8 +33,7 @@ export async function POST(req: Request) {
     const failState = recordFail(ip);
     logAudit({
       action: 'login_failed',
-      ip,
-      metadata: { fails: failState.fails, locked: failState.locked },
+      payload: { ip, fails: failState.fails, locked: failState.locked },
     });
     if (failState.locked) {
       return NextResponse.json(
@@ -50,7 +49,7 @@ export async function POST(req: Request) {
 
   // Başarılı giriş
   recordSuccess(ip);
-  logAudit({ action: 'login_success', ip });
+  logAudit({ action: 'login_success', payload: { ip } });
 
   const token = makeAdminToken();
   if (!token) {

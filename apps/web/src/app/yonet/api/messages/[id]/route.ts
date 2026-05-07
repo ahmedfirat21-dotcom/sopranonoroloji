@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyAdminToken, ADMIN_COOKIE_NAME } from '@/lib/admin/auth';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { logAudit } from '@/lib/admin/audit';
 
 async function ensureAdmin(): Promise<boolean> {
   const cookieStore = await cookies();
@@ -21,6 +22,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       .update({ is_deleted: true })
       .eq('id', id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    logAudit({ action: 'message_soft_delete', target_type: 'message', target_id: id });
     return NextResponse.json({ ok: true });
   }
 
