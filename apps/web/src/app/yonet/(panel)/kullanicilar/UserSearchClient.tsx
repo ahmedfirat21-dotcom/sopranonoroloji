@@ -289,7 +289,7 @@ export default function UserSearchClient({ initialUsers, initialQuery }: {
                   className={`px-2 py-2 rounded-md text-[10px] font-bold border transition-colors cursor-pointer outline-none ${tierStyle(u.subscription_tier)}`}
                   title="Üyelik planı"
                 >
-                  <option value="Free">🆓 FREE</option>
+                  <option value="Free">🆓 ÜCRETSİZ</option>
                   <option value="Plus">🚀 PLUS</option>
                   <option value="Pro">👑 PRO</option>
                 </select>
@@ -348,7 +348,7 @@ export default function UserSearchClient({ initialUsers, initialQuery }: {
             <thead className="bg-white/[0.02] text-[10px] tracking-wider text-slate-400">
               <tr>
                 <th className="text-left px-5 py-3">KULLANICI</th>
-                <th className="text-left px-3 py-3">TIER</th>
+                <th className="text-left px-3 py-3">ÜYELİK</th>
                 <th className="text-right px-3 py-3">SP</th>
                 <th className="text-left px-3 py-3" title="Kayıt tarihi → kullanım süresi">KAYIT</th>
                 <th className="text-left px-3 py-3" title="Son aktiflik">SON AKTİF</th>

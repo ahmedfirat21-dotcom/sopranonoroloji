@@ -122,7 +122,10 @@ export default function ReportRow({ report }: { report: Report }) {
           </div>
         ) : (
           <span className="px-2 py-1 rounded-full bg-slate-500/10 border border-slate-500/30 text-slate-400 text-[10px] font-semibold">
-            {report.status === 'resolved' ? 'ÇÖZÜLDÜ' : report.status.toUpperCase()}
+            {report.status === 'resolved' ? 'ÇÖZÜLDÜ'
+              : report.status === 'dismissed' ? 'YOKSAYILDI'
+              : report.status === 'pending' ? 'BEKLİYOR'
+              : report.status.toUpperCase()}
           </span>
         )}
       </div>

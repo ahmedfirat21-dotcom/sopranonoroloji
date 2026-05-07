@@ -9,7 +9,7 @@ import {
 import SopranoLogoMini, { SopranoLogoStyleTag } from './SopranoLogoMini';
 
 const NAV = [
-  { href: '/yonet', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+  { href: '/yonet', label: 'Panel', icon: LayoutDashboard, exact: true },
   { href: '/yonet/ekonomi', label: 'Ekonomi', icon: TrendingUp },
   { href: '/yonet/sikayetler', label: 'Şikayetler', icon: Flag },
   { href: '/yonet/kullanicilar', label: 'Kullanıcılar', icon: Users },

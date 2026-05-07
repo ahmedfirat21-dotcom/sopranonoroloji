@@ -7,6 +7,37 @@ import { useAdminDialog } from '../../_components/AdminDialog';
 
 type Profile = { display_name: string; avatar_url: string };
 
+const TYPE_LABEL_TR: Record<string, string> = {
+  daily_login: 'Günlük giriş',
+  prime_time_return: 'Prime time bonusu',
+  stage_time: 'Sahne süresi',
+  camera_time: 'Kamera süresi',
+  message_sent: 'Mesaj ödülü',
+  room_create: 'Oda açma',
+  follower_gain: 'Takipçi kazanımı',
+  store_purchase: 'Mağaza alımı',
+  referral: 'Davet bonusu',
+  referral_bonus: 'Davet bonusu',
+  welcome_bonus: 'Hoşgeldin bonusu',
+  donation_sent: 'Bağış gönderildi',
+  donation_received: 'Bağış alındı',
+  gift_sent: 'Hediye gönderildi',
+  gift_received: 'Hediye alındı',
+  powerup_glow_message: 'Power-up: Parlak mesaj',
+  powerup_stage_light: 'Power-up: Sahne ışığı',
+  powerup_message_glow: 'Power-up: Mesaj parıltısı',
+  profile_boost: 'Profil boost',
+  badge_reward: 'Rozet ödülü',
+  room_boost: 'Oda boost',
+  entry_fee_share: 'Giriş ücreti payı',
+  admin_grant: 'Admin manuel',
+  web_admin_grant: 'Admin (web)',
+  cashout: 'Para çekme',
+};
+function typeLabel(t: string): string {
+  return TYPE_LABEL_TR[t] || t.replace(/_/g, ' ').toUpperCase();
+}
+
 type Tx = {
   id: string;
   user_id: string;
@@ -73,7 +104,7 @@ export default function SPClient({ transactions }: { transactions: Tx[] }) {
             </div>
             <div className="flex items-center gap-2 text-[10px] text-slate-400 mb-1">
               <span className="px-1.5 py-0.5 rounded-full bg-white/5 border border-white/10 font-bold tracking-wider">
-                {t.type.toUpperCase()}
+                {typeLabel(t.type)}
               </span>
               <span className="text-slate-500">{new Date(t.created_at).toLocaleString('tr-TR')}</span>
             </div>
@@ -117,7 +148,7 @@ export default function SPClient({ transactions }: { transactions: Tx[] }) {
                   </td>
                   <td className="px-3 py-3">
                     <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold tracking-wider text-slate-300">
-                      {t.type.toUpperCase()}
+                      {typeLabel(t.type)}
                     </span>
                   </td>
                   <td className="px-3 py-3 text-xs text-slate-400 max-w-xs truncate" title={t.description || ''}>
@@ -232,7 +263,7 @@ function GrantModal({ onClose, onGranted }: { onClose: () => void; onGranted: ()
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleSearch(); }}}
-                placeholder="İsim veya username..."
+                placeholder="İsim veya kullanıcı adı..."
                 className="flex-1 px-3 py-2 rounded-lg bg-black/30 border border-white/10 focus:border-amber-500/50 focus:outline-none"
               />
               <button

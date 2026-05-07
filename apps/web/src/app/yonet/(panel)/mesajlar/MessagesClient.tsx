@@ -37,6 +37,23 @@ type Report = {
 
 type Tab = 'reported' | 'recent';
 
+const REASON_LABEL_TR: Record<string, string> = {
+  spam: 'Spam',
+  harassment: 'Taciz',
+  hate_speech: 'Nefret söylemi',
+  inappropriate_content: 'Uygunsuz içerik',
+  impersonation: 'Kimliğe bürünme',
+  self_harm: 'Kendine zarar',
+  violence: 'Şiddet',
+  underage: 'Yaş altı',
+  other: 'Diğer',
+};
+const STATUS_LABEL_TR: Record<string, string> = {
+  pending: 'Bekliyor',
+  dismissed: 'Yoksayıldı',
+  resolved: 'Çözüldü',
+};
+
 export default function MessagesClient({
   reportedMessages,
   recentMessages,
@@ -120,7 +137,7 @@ export default function MessagesClient({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
                     <span className="px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/30 text-red-300 text-[10px] font-bold tracking-wider">
-                      {r.reason.toUpperCase()}
+                      {(REASON_LABEL_TR[r.reason] || r.reason).toUpperCase()}
                     </span>
                     <span className="text-[10px] text-slate-500">
                       {new Date(r.created_at).toLocaleString('tr-TR')}
@@ -131,7 +148,7 @@ export default function MessagesClient({
                         ? 'bg-amber-500/15 border border-amber-500/30 text-amber-300'
                         : 'bg-slate-500/10 border border-slate-500/30 text-slate-400'
                     }`}>
-                      {r.status.toUpperCase()}
+                      {(STATUS_LABEL_TR[r.status] || r.status).toUpperCase()}
                     </span>
                   </div>
                   <div className="text-xs text-slate-400 mb-2">

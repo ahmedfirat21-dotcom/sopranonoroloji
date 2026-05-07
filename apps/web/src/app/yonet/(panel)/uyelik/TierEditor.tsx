@@ -143,7 +143,7 @@ export default function TierEditor({ tiers: initialTiers }: { tiers: Tier[] }) {
           onClick={() => setShowExport(true)}
           className="px-4 py-2.5 rounded-lg bg-amber-500/15 border border-amber-500/40 text-amber-300 hover:bg-amber-500/25 text-sm font-semibold flex items-center gap-2 transition-colors"
         >
-          <Save className="w-4 h-4" /> Mobile Kodu Üret
+          <Save className="w-4 h-4" /> Mobil Kodu Üret
         </button>
         <button
           type="button"
@@ -158,7 +158,7 @@ export default function TierEditor({ tiers: initialTiers }: { tiers: Tier[] }) {
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-auto">
           <div className="bg-slate-900 border border-white/10 rounded-xl sm:rounded-2xl w-full max-w-3xl my-2 sm:my-8">
             <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
-              <h2 className="text-lg font-bold">Üretilmiş Mobile Kodu</h2>
+              <h2 className="text-lg font-bold">Üretilmiş Mobil Kodu</h2>
               <button type="button" onClick={() => setShowExport(false)} className="text-slate-400 hover:text-slate-200 text-xl">✕</button>
             </div>
             <div className="p-5 space-y-3">

@@ -105,7 +105,7 @@ export default function PushClient({
                   : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
               }`}
             >
-              <Crown className="w-3.5 h-3.5" /> Tier
+              <Crown className="w-3.5 h-3.5" /> Üyelik
             </button>
             <button
               type="button"
@@ -123,7 +123,7 @@ export default function PushClient({
 
         {audience === 'tier' && (
           <div>
-            <label className="block text-[10px] font-semibold tracking-wider mb-1 text-slate-400">TIER</label>
+            <label className="block text-[10px] font-semibold tracking-wider mb-1 text-slate-400">ÜYELİK PLANI</label>
             <div className="flex gap-2">
               {(['Free', 'Plus', 'Pro'] as const).map(t => (
                 <button
@@ -183,7 +183,7 @@ export default function PushClient({
         </div>
 
         <div>
-          <label className="block text-[10px] font-semibold tracking-wider mb-1 text-slate-400">DEEP LINK (OPSİYONEL)</label>
+          <label className="block text-[10px] font-semibold tracking-wider mb-1 text-slate-400">UYGULAMA İÇİ BAĞLANTI (OPSİYONEL)</label>
           <input
             type="text"
             value={link}

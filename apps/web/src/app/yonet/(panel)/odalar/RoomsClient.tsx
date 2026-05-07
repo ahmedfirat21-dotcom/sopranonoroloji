@@ -84,14 +84,14 @@ export default function RoomsClient({
 
   const handleTierChange = async (r: Room) => {
     const t = await dialog.prompt({
-      title: `${r.name} — Tier ata`,
-      message: 'Free / Plus / Pro değerlerinden birini gir.',
+      title: `${r.name} — Üyelik planı ata`,
+      message: 'Ücretsiz / Plus / Pro değerlerinden birini gir.',
       defaultValue: 'Plus',
       placeholder: 'Plus',
     });
     if (!t) return;
     if (!['Free', 'Plus', 'Pro'].includes(t.trim())) {
-      await dialog.alert({ title: 'Geçersiz tier', message: 'Sadece Free, Plus veya Pro.', variant: 'error' });
+      await dialog.alert({ title: 'Geçersiz üyelik', message: 'Sadece Free, Plus veya Pro.', variant: 'error' });
       return;
     }
     callAction(r.id, { action: 'change_tier', tier: t.trim() });
@@ -206,7 +206,7 @@ export default function RoomsClient({
                   disabled={isBusy}
                   className="px-2 py-2 rounded-md text-[10px] font-semibold border bg-amber-500/10 border-amber-500/30 text-amber-300 flex items-center justify-center gap-1"
                 >
-                  <Crown className="w-3 h-3" /> TIER
+                  <Crown className="w-3 h-3" /> ÜYELİK
                 </button>
                 <button
                   type="button"

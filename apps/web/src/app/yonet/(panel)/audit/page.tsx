@@ -43,6 +43,62 @@ function fmtDate(iso: string): string {
   return new Date(iso).toLocaleString('tr-TR', { day: '2-digit', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
 
+const PAYLOAD_KEY_LABEL: Record<string, string> = {
+  ip: 'IP',
+  fails: 'Başarısız deneme',
+  locked: 'Kilitli',
+  remaining_minutes: 'Kalan dk',
+  reason: 'Sebep',
+  amount: 'Miktar',
+  delta: 'Değişim',
+  message: 'Mesaj',
+  reported_user_id: 'Raporlanan kullanıcı',
+  status: 'Durum',
+  make_admin: 'Admin yapıldı',
+  is_banned: 'Banlı',
+  is_verified: 'Doğrulanmış',
+  is_admin: 'Admin',
+  system_points: 'SP',
+  subscription_tier: 'Üyelik',
+  display_name: 'İsim',
+  title: 'Başlık',
+  body: 'İçerik',
+  audience: 'Hedef kitle',
+  tier: 'Üyelik',
+  user_id: 'Kullanıcı',
+  sent: 'Gönderilen',
+  failed: 'Hatalı',
+  item_id: 'Ürün',
+  discount: 'İndirim',
+  banner_text: 'Banner',
+  active: 'Aktif',
+  price_sp: 'Fiyat (SP)',
+  category: 'Kategori',
+  rarity: 'Nadirlik',
+  request_id: 'Talep',
+  new_status: 'Yeni durum',
+  old_status: 'Eski durum',
+  admin_note: 'Admin notu',
+  link: 'Bağlantı',
+};
+
+function payloadToText(payload: any): { label: string; value: string }[] {
+  if (!payload || typeof payload !== 'object') return [];
+  const out: { label: string; value: string }[] = [];
+  for (const k of Object.keys(payload)) {
+    const v = (payload as any)[k];
+    if (v === undefined || v === null || v === '') continue;
+    const label = PAYLOAD_KEY_LABEL[k] || k;
+    let text: string;
+    if (typeof v === 'boolean') text = v ? 'Evet' : 'Hayır';
+    else if (typeof v === 'object') text = JSON.stringify(v);
+    else text = String(v);
+    if (text.length > 80) text = text.slice(0, 77) + '…';
+    out.push({ label, value: text });
+  }
+  return out;
+}
+
 async function loadLogs() {
   const { data } = await supabaseAdmin
     .from('admin_audit_log')
@@ -127,11 +183,20 @@ export default async function AuditPage() {
                         )}
                       </td>
                       <td className="px-3 py-2.5 text-[11px] text-slate-400 max-w-md">
-                        {log.payload ? (
-                          <code className="block bg-black/30 rounded px-1.5 py-0.5 text-[10px] truncate font-mono">
-                            {JSON.stringify(log.payload)}
-                          </code>
-                        ) : '—'}
+                        {(() => {
+                          const items = payloadToText(log.payload);
+                          if (items.length === 0) return <span className="text-slate-600">—</span>;
+                          return (
+                            <div className="space-y-0.5">
+                              {items.map((it, i) => (
+                                <div key={i} className="flex gap-1.5">
+                                  <span className="text-slate-500 shrink-0">{it.label}:</span>
+                                  <span className="text-slate-200 truncate">{it.value}</span>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td className="px-3 py-2.5 text-[10px] font-mono text-slate-500">
                         {log.ip || '—'}

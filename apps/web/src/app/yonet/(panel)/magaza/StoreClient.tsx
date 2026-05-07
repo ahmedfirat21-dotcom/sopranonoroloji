@@ -279,7 +279,7 @@ export default function StoreClient({
                 </div>
                 <div className="flex items-center justify-between text-[11px] mb-2">
                   <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold tracking-wider ${rarityStyle(it.rarity)}`}>
-                    {(it.rarity || 'common').toUpperCase()}
+                    {rarityLabel(it.rarity)}
                   </span>
                   <span className="text-amber-300 font-mono">{it.price_sp.toLocaleString('tr-TR')} SP</span>
                 </div>
@@ -384,7 +384,7 @@ export default function StoreClient({
                       </td>
                       <td className="px-3 py-3">
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider ${rarityStyle(it.rarity)}`}>
-                          {(it.rarity || 'common').toUpperCase()}
+                          {rarityLabel(it.rarity)}
                         </span>
                       </td>
                       <td className="px-3 py-3 text-right text-amber-300 font-mono text-xs">
@@ -611,6 +611,17 @@ function rarityStyle(rarity: string | null): string {
   }
 }
 
+function rarityLabel(rarity: string | null): string {
+  switch (rarity) {
+    case 'mythic': return 'EFSANEVİ';
+    case 'legendary': return 'EFSANE';
+    case 'epic': return 'DESTANSI';
+    case 'rare': return 'NADİR';
+    case 'common': return 'SIRADAN';
+    default: return (rarity || 'sıradan').toUpperCase();
+  }
+}
+
 function ItemEditModal({
   item,
   onClose,
@@ -717,14 +728,14 @@ function ItemEditModal({
               onChange={e => update('rarity', e.target.value)}
               className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 focus:border-amber-500/50 focus:outline-none"
             >
-              <option value="common">Common</option>
-              <option value="rare">Rare</option>
-              <option value="epic">Epic</option>
-              <option value="legendary">Legendary</option>
-              <option value="mythic">Mythic</option>
+              <option value="common">Sıradan</option>
+              <option value="rare">Nadir</option>
+              <option value="epic">Destansı</option>
+              <option value="legendary">Efsane</option>
+              <option value="mythic">Efsanevi</option>
             </select>
           </Field>
-          <Field label="Tagline" full>
+          <Field label="Slogan" full>
             <input
               type="text"
               value={form.tagline || ''}

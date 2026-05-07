@@ -109,7 +109,7 @@ export default function InventoryModal({
         '• Üyelik planı: PRO\n' +
         '• SP bakiyesi: 999.999\n' +
         '• Tüm aktif ürünler envantere eklenecek\n\n' +
-        'Geri almak için: tier\'ı Free yap, SP\'yi düşür, "Envanteri Temizle" tıkla.',
+        'Geri almak için: üyelik planını Ücretsiz yap, SP\'yi düşür, "Envanteri Temizle" tıkla.',
       confirmLabel: 'Test hesabı yap',
     });
     if (!ok) return;

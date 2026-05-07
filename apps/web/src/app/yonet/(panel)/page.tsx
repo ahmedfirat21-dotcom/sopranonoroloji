@@ -39,8 +39,8 @@ export default async function YonetDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-sm text-slate-400 mt-1">Genel durum ve son 24 saat metrikleri</p>
+        <h1 className="text-2xl font-bold tracking-tight">Panel</h1>
+        <p className="text-sm text-slate-400 mt-1">Genel durum ve son 24 saat ölçümleri</p>
       </div>
 
       {/* Top metrics grid */}
@@ -63,7 +63,7 @@ export default async function YonetDashboard() {
           </a>
           <a href="/yonet/kullanicilar" className="px-4 py-3 rounded-lg bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20 transition-colors">
             <div className="font-semibold text-cyan-300">Kullanıcı Yönetimi</div>
-            <div className="text-xs text-cyan-400/70 mt-0.5">Ban/Verify/SP</div>
+            <div className="text-xs text-cyan-400/70 mt-0.5">Ban / Doğrulama / SP</div>
           </a>
           <a href="/yonet/odalar" className="px-4 py-3 rounded-lg bg-green-500/10 border border-green-500/30 hover:bg-green-500/20 transition-colors">
             <div className="font-semibold text-green-300">Canlı Odalar</div>
