@@ -8,7 +8,6 @@ import { cookies } from 'next/headers';
 import { verifyAdminToken, ADMIN_COOKIE_NAME, checkAdminPassword } from '@/lib/admin/auth';
 import { hashPassword } from '@/lib/admin/password';
 import { logAudit } from '@/lib/admin/audit';
-import { getClientIp } from '@/lib/admin/rateLimit';
 
 async function ensureAdmin(): Promise<boolean> {
   const cookieStore = await cookies();
@@ -19,7 +18,6 @@ export async function POST(req: Request) {
   if (!(await ensureAdmin())) {
     return NextResponse.json({ error: 'Yetki yok' }, { status: 401 });
   }
-  const ip = getClientIp(req);
   let oldPassword: string;
   let newPassword: string;
   try {
@@ -31,7 +29,7 @@ export async function POST(req: Request) {
   }
 
   if (!checkAdminPassword(oldPassword)) {
-    logAudit({ action: 'password_change_wrong_old', ip });
+    logAudit({ action: 'password_change_wrong_old' });
     return NextResponse.json({ error: 'Mevcut şifre yanlış' }, { status: 401 });
   }
   if (!newPassword || newPassword.length < 8) {
@@ -42,7 +40,7 @@ export async function POST(req: Request) {
   }
 
   const hash = hashPassword(newPassword);
-  logAudit({ action: 'password_changed_hash_generated', ip });
+  logAudit({ action: 'password_changed_hash_generated' });
 
   return NextResponse.json({
     ok: true,
