@@ -5,6 +5,7 @@
  * Kategori bazlı: çerçeve, giriş animasyonu, hediye, parlak mesaj.
  */
 import { Smartphone, Sparkles, Mic } from 'lucide-react';
+import ItemLottiePreview from '@/components/store/ItemLottiePreview';
 
 type Item = {
   id: string;
@@ -111,7 +112,9 @@ function EntryEffectPreview({ item, grad, accent }: { item: Item; grad: string; 
         className="rounded-xl p-3 mb-2 border-2 relative overflow-hidden"
         style={{ background: grad, borderColor: accent, boxShadow: `0 0 20px ${accent}88` }}
       >
-        <div className="text-center text-2xl mb-1 animate-pulse">{item.art_emoji || '✨'}</div>
+        <div className="flex justify-center mb-1">
+          <ItemLottiePreview itemId={item.id} fallbackEmoji={item.art_emoji} size={56} />
+        </div>
         <div className="text-center text-[10px] text-white font-bold">Aranan odaya girdi</div>
         <div className="text-center text-[8px] text-white/70 mt-0.5">{item.name}</div>
       </div>
@@ -143,7 +146,9 @@ function GiftPreview({ item, grad, accent }: { item: Item; grad: string; accent:
           className="rounded-xl p-3 border-2 mx-auto max-w-[85%]"
           style={{ background: grad, borderColor: accent, boxShadow: `0 0 20px ${accent}66` }}
         >
-          <div className="text-center text-3xl mb-1">{item.art_emoji || '🎁'}</div>
+          <div className="flex justify-center mb-1">
+            <ItemLottiePreview itemId={item.id} fallbackEmoji={item.art_emoji || '🎁'} size={72} />
+          </div>
           <div className="text-center text-[10px] text-white font-bold">Aranan → Murat</div>
           <div className="text-center text-[10px] text-white/90">{item.name}</div>
           <div className="text-center text-[9px] mt-1 font-bold" style={{ color: accent }}>
@@ -190,10 +195,10 @@ function DefaultPreview({ item, grad, accent }: { item: Item; grad: string; acce
   return (
     <div className="flex flex-col items-center justify-center h-full px-4">
       <div
-        className="w-32 h-32 rounded-2xl flex items-center justify-center text-5xl"
+        className="w-32 h-32 rounded-2xl flex items-center justify-center overflow-hidden"
         style={{ background: grad, boxShadow: `0 0 40px ${accent}66` }}
       >
-        {item.art_emoji || '📦'}
+        <ItemLottiePreview itemId={item.id} fallbackEmoji={item.art_emoji} size={128} />
       </div>
       <div className="mt-4 text-white font-bold text-sm text-center">{item.name}</div>
       {item.tagline && <div className="text-[10px] text-slate-400 text-center mt-1">{item.tagline}</div>}

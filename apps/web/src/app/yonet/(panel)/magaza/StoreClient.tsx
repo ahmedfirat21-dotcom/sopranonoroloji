@@ -8,6 +8,7 @@ import MobilePreview from './MobilePreview';
 import QuickAddModal from './QuickAddModal';
 import BulkUploadModal from './BulkUploadModal';
 import { useAdminDialog } from '../../_components/AdminDialog';
+import ItemLottiePreview from '@/components/store/ItemLottiePreview';
 
 type Item = {
   id: string;
@@ -283,14 +284,14 @@ export default function StoreClient({
               >
                 <div className="flex items-center gap-3 mb-2">
                   <div
-                    className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl shrink-0"
+                    className="w-12 h-12 rounded-lg flex items-center justify-center shrink-0 overflow-hidden"
                     style={{
                       background: it.bg_gradient_start && it.bg_gradient_end
                         ? `linear-gradient(135deg, ${it.bg_gradient_start}, ${it.bg_gradient_end})`
                         : '#1e293b',
                     }}
                   >
-                    {it.art_emoji || '📦'}
+                    <ItemLottiePreview itemId={it.id} fallbackEmoji={it.art_emoji} size={48} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-sm text-slate-100 truncate flex items-center gap-1.5">
@@ -380,14 +381,14 @@ export default function StoreClient({
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-3">
                           <div
-                            className="w-9 h-9 rounded-lg flex items-center justify-center text-lg"
+                            className="w-9 h-9 rounded-lg flex items-center justify-center overflow-hidden"
                             style={{
                               background: it.bg_gradient_start && it.bg_gradient_end
                                 ? `linear-gradient(135deg, ${it.bg_gradient_start}, ${it.bg_gradient_end})`
                                 : '#1e293b',
                             }}
                           >
-                            {it.art_emoji || '📦'}
+                            <ItemLottiePreview itemId={it.id} fallbackEmoji={it.art_emoji} size={36} />
                           </div>
                           <div className="min-w-0">
                             <div className="font-semibold text-slate-100 truncate flex items-center gap-1.5">
