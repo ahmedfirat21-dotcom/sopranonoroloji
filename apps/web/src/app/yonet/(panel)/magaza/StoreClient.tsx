@@ -87,6 +87,36 @@ export default function StoreClient({
     }
   };
 
+  // ★ v110.14: Silme öncesi bağımlılık check + bilinçli onay
+  const confirmAndDelete = async (item: Item) => {
+    let counts = { bundles: 0, inventories: 0, deals: 0 };
+    try {
+      const res = await fetch(`/yonet/api/store/items/${encodeURIComponent(item.id)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ delete_check: true }),
+      });
+      const j = await res.json();
+      if (j?.counts) counts = j.counts;
+    } catch { /* preflight başarısız — varsayılan 0'larla devam */ }
+
+    let message = `"${item.name}" mağazadan kalıcı olarak kaldırılacak.`;
+    const warnings: string[] = [];
+    if (counts.inventories > 0) warnings.push(`⚠️ ${counts.inventories} kullanıcı bu ürünü satın almış — onların envanterinden de silinecek (geri alınamaz)`);
+    if (counts.bundles > 0) warnings.push(`📦 ${counts.bundles} paketten çıkarılacak`);
+    if (counts.deals > 0) warnings.push(`⚡ ${counts.deals} günün fırsatı kaldırılacak`);
+    if (warnings.length > 0) message += '\n\n' + warnings.join('\n');
+
+    const ok = await dialog.confirm({
+      title: `"${item.name}" silinecek`,
+      message,
+      confirmLabel: 'Sil',
+      danger: true,
+    });
+    if (!ok) return;
+    callItemAction(item.id, { delete: true });
+  };
+
   const callBundleToggle = async (id: string, active: boolean) => {
     setBusyId(id);
     try {
@@ -310,16 +340,7 @@ export default function StoreClient({
                   </button>
                   <button
                     type="button"
-                    onClick={async () => {
-                      const ok = await dialog.confirm({
-                        title: `"${it.name}" silinecek`,
-                        message: 'Bu ürün mağazadan kalıcı olarak kaldırılacak.',
-                        confirmLabel: 'Sil',
-                        danger: true,
-                      });
-                      if (!ok) return;
-                      callItemAction(it.id, { delete: true });
-                    }}
+                    onClick={() => confirmAndDelete(it)}
                     disabled={isBusy}
                     className="px-1 py-1.5 rounded-md text-[10px] font-semibold border bg-red-500/10 border-red-500/30 text-red-300 flex items-center justify-center"
                   >
@@ -427,16 +448,7 @@ export default function StoreClient({
                           </button>
                           <button
                             type="button"
-                            onClick={async () => {
-                              const ok = await dialog.confirm({
-                                title: `"${it.name}" silinecek`,
-                                message: 'Bu ürün kalıcı olarak silinecek. Geri alınamaz.',
-                                confirmLabel: 'Sil',
-                                danger: true,
-                              });
-                              if (!ok) return;
-                              callItemAction(it.id, { delete: true });
-                            }}
+                            onClick={() => confirmAndDelete(it)}
                             disabled={isBusy}
                             className="px-2 py-1.5 rounded-md text-[10px] font-semibold border bg-red-500/10 border-red-500/30 text-red-300 hover:bg-red-500/20 transition-colors"
                             title="Sil"

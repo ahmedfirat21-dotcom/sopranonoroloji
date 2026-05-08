@@ -22,11 +22,29 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
 
+  // ★ v110.14: Silme preflight check — bağımlılık sayılarını döndür.
+  //   UI önce bu count'la kullanıcıya uyarı gösterir, onaylarsa gerçek delete.
+  if (body?.delete_check) {
+    const [bundlesRes, invRes, dealsRes] = await Promise.all([
+      supabaseAdmin.from('cosmetic_bundle_items').select('*', { count: 'exact', head: true }).eq('item_id', id),
+      supabaseAdmin.from('user_inventory').select('*', { count: 'exact', head: true }).eq('item_id', id),
+      supabaseAdmin.from('daily_deals').select('*', { count: 'exact', head: true }).eq('item_id', id),
+    ]);
+    return NextResponse.json({
+      ok: true,
+      counts: {
+        bundles: bundlesRes.count || 0,
+        inventories: invRes.count || 0,
+        deals: dealsRes.count || 0,
+      },
+    });
+  }
+
   if (body?.delete) {
-    // ★ v110.14: FK ihlali önle — ürün silmeden önce ilişkili tabloları temizle.
-    //   cosmetic_bundle_items: ürün bir paket içindeyse paket girişi de silinir.
-    //   user_inventory: kullanıcılarda varsa onlardan da kaldır (sahip olduğu ürün gider).
-    //   daily_deals: bugün/yarın deal varsa o da silinmeli.
+    // ★ v110.14: Bağımlılıkları temizle — FK ihlali önle.
+    //   cosmetic_bundle_items: paket bağlantısı
+    //   user_inventory: kullanıcı satın aldıysa kaldır (kullanıcı bilgilendirilmiş olmalı, UI dialog ile)
+    //   daily_deals: günün fırsatı silinir
     try {
       await supabaseAdmin.from('cosmetic_bundle_items').delete().eq('item_id', id);
     } catch { /* tablo yok ya da boş — sessiz */ }
