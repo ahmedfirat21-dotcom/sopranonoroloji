@@ -23,6 +23,19 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const body = await req.json().catch(() => ({}));
 
   if (body?.delete) {
+    // ★ v110.14: FK ihlali önle — ürün silmeden önce ilişkili tabloları temizle.
+    //   cosmetic_bundle_items: ürün bir paket içindeyse paket girişi de silinir.
+    //   user_inventory: kullanıcılarda varsa onlardan da kaldır (sahip olduğu ürün gider).
+    //   daily_deals: bugün/yarın deal varsa o da silinmeli.
+    try {
+      await supabaseAdmin.from('cosmetic_bundle_items').delete().eq('item_id', id);
+    } catch { /* tablo yok ya da boş — sessiz */ }
+    try {
+      await supabaseAdmin.from('user_inventory').delete().eq('item_id', id);
+    } catch { /* sessiz */ }
+    try {
+      await supabaseAdmin.from('daily_deals').delete().eq('item_id', id);
+    } catch { /* sessiz */ }
     const { error } = await supabaseAdmin.from('cosmetic_items').delete().eq('id', id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     logAudit({ action: 'store_item_delete', target_type: 'item', target_id: id });
