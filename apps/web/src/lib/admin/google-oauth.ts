@@ -14,11 +14,11 @@ const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const USERINFO_URL = 'https://openidconnect.googleapis.com/v1/userinfo';
 
 export function getOAuthClientId(): string {
-  return process.env.GOOGLE_OAUTH_CLIENT_ID || '';
+  return process.env.GOOGLE_CLIENT_ID || '';
 }
 
 export function getOAuthClientSecret(): string {
-  return process.env.GOOGLE_OAUTH_CLIENT_SECRET || '';
+  return process.env.GOOGLE_CLIENT_SECRET || '';
 }
 
 /** Tam URL — request origin'inden inşa edilir (production veya preview) */

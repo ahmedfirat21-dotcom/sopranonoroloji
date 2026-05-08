@@ -13,7 +13,7 @@ const STATE_MAX_AGE = 10 * 60; // 10 dakika
 export async function GET(req: NextRequest) {
   if (!getOAuthClientId()) {
     return NextResponse.json(
-      { error: 'GOOGLE_OAUTH_CLIENT_ID env değişkeni tanımlı değil. Vercel ayarlarından ekleyin.' },
+      { error: 'GOOGLE_CLIENT_ID env değişkeni tanımlı değil. Vercel ayarlarından ekleyin.' },
       { status: 500 },
     );
   }
