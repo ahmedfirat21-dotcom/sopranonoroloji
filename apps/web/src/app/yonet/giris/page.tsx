@@ -1,20 +1,22 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import SopranoLogoMini, { SopranoLogoStyleTag } from '../_components/SopranoLogoMini';
 
 export default function YonetGirisPage() {
-  const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Callback redirect'ten ?err= ile gelen mesajları göster
+  // Callback redirect'ten ?err= ile gelen mesajları göster.
+  // ★ useSearchParams Next 16'da Suspense boundary istiyor; window.location.search
+  //   ile direkt parse — bu sayfa client'ta render olduğu için sorun çıkmaz.
   useEffect(() => {
-    const err = searchParams.get('err');
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const err = params.get('err');
     if (err) setError(err);
-  }, [searchParams]);
+  }, []);
 
   const handleGoogleLogin = () => {
     setError(null);
