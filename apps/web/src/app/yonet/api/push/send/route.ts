@@ -1,95 +1,97 @@
+// SopranoChat web admin — Push send endpoint
+// v110.18 (8 May 2026): Expo Push API kaldırıldı, Supabase edge function'a delegate edildi.
+// Edge fn (send-push) FCM V1 doğrudan gönderim + stale token temizliği yapıyor.
+//
+// Audience modları:
+// - 'all': tüm distinct user_id'lere
+// - 'tier': belirli subscription_tier kullanıcılarına
+// - 'user': tek kullanıcıya (UID ya da username/@username)
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyAdminToken, ADMIN_COOKIE_NAME } from '@/lib/admin/auth';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logAudit } from '@/lib/admin/audit';
 
-const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
-const EXPO_BATCH_SIZE = 100;
-
 async function ensureAdmin(): Promise<boolean> {
   const cookieStore = await cookies();
   return verifyAdminToken(cookieStore.get(ADMIN_COOKIE_NAME)?.value);
 }
 
-async function loadTokens(audience: string, tier: string | null, userId: string | null): Promise<string[]> {
+/**
+ * Input UID mi yoksa username mi anlamaya çalış. UID değilse profiles.username'de ara.
+ * Firebase UID'leri 28 karakter alphanumeric. Username genelde daha kısa veya `@` ile başlar.
+ */
+async function resolveUserId(input: string): Promise<string | null> {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  // UID görünüm: 28 char alphanumeric (Firebase) — direkt kullan
+  if (/^[A-Za-z0-9]{20,}$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  // Username olarak ara (@ varsa kaldır)
+  const username = trimmed.replace(/^@+/, '').toLowerCase();
+  const { data } = await supabaseAdmin
+    .from('profiles')
+    .select('id')
+    .ilike('username', username)
+    .maybeSingle();
+  return data?.id ?? null;
+}
+
+async function loadTargetUserIds(audience: string, tier: string | null, userId: string | null): Promise<string[]> {
   if (audience === 'user' && userId) {
-    const { data } = await supabaseAdmin
-      .from('push_tokens')
-      .select('token')
-      .eq('user_id', userId);
-    return (data || []).map(d => d.token);
+    const resolved = await resolveUserId(userId);
+    return resolved ? [resolved] : [];
   }
 
   if (audience === 'tier' && tier) {
-    // tier'a göre user_id'leri çek, sonra token'ları
     const { data: users } = await supabaseAdmin
       .from('profiles')
       .select('id')
       .eq('subscription_tier', tier);
-    const userIds = (users || []).map(u => u.id);
-    if (userIds.length === 0) return [];
-
-    // Supabase 'in' filter limit ~1000; gerekirse parçala
-    const tokens: string[] = [];
-    const CHUNK = 500;
-    for (let i = 0; i < userIds.length; i += CHUNK) {
-      const slice = userIds.slice(i, i + CHUNK);
-      const { data } = await supabaseAdmin
-        .from('push_tokens')
-        .select('token')
-        .in('user_id', slice);
-      if (data) tokens.push(...data.map(d => d.token));
-    }
-    return tokens;
+    return (users || []).map(u => u.id);
   }
 
-  // 'all' broadcast — tüm token'lar
+  // 'all' broadcast — push_tokens'taki distinct user_id'ler
   const { data } = await supabaseAdmin
     .from('push_tokens')
-    .select('token');
-  return (data || []).map(d => d.token);
+    .select('user_id');
+  if (!data) return [];
+  return [...new Set(data.map(d => d.user_id))];
 }
 
-async function sendExpoBatch(tokens: string[], title: string, body: string, data?: Record<string, any>) {
-  let sent = 0;
-  let failed = 0;
-
-  for (let i = 0; i < tokens.length; i += EXPO_BATCH_SIZE) {
-    const batch = tokens.slice(i, i + EXPO_BATCH_SIZE);
-    const messages = batch.map(token => ({
-      to: token,
-      title,
-      body,
-      sound: 'default',
-      data: data || {},
-    }));
-
-    try {
-      const res = await fetch(EXPO_PUSH_URL, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Accept-Encoding': 'gzip, deflate',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(messages),
-      });
-      const j = await res.json().catch(() => ({}));
-      const tickets: any[] = Array.isArray(j?.data) ? j.data : [];
-      for (const t of tickets) {
-        if (t?.status === 'ok') sent++;
-        else failed++;
-      }
-      // Eğer ticket sayısı batch'ten azsa, geri kalanını failed say
-      const missing = batch.length - tickets.length;
-      if (missing > 0) failed += missing;
-    } catch {
-      failed += batch.length;
+/**
+ * Tek bir user_id'ye edge fn üzerinden push gönder. Başarılı/başarısız sayısını döner.
+ * Edge fn yanıtı: { success, sent, failed, total }
+ */
+async function sendToUser(
+  userId: string,
+  title: string,
+  body: string,
+  data?: Record<string, unknown>,
+): Promise<{ sent: number; failed: number }> {
+  try {
+    const { data: result, error } = await supabaseAdmin.functions.invoke('send-push', {
+      body: {
+        target_user_id: userId,
+        title,
+        body,
+        data: data || {},
+        is_call: false,
+      },
+    });
+    if (error || !result?.success) {
+      return { sent: 0, failed: 1 };
     }
+    return {
+      sent: result.sent ?? 0,
+      failed: result.failed ?? 0,
+    };
+  } catch {
+    return { sent: 0, failed: 1 };
   }
-
-  return { sent, failed };
 }
 
 export async function POST(req: Request) {
@@ -112,17 +114,44 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Geçersiz audience' }, { status: 400 });
   }
 
-  const tokens = await loadTokens(audience, tier, userId);
-  if (tokens.length === 0) {
-    return NextResponse.json({ ok: true, sent: 0, failed: 0, total: 0, note: 'Hedef token bulunamadı' });
+  const userIds = await loadTargetUserIds(audience, tier, userId);
+  if (userIds.length === 0) {
+    const note = audience === 'user'
+      ? `Kullanıcı bulunamadı: "${userId}". UID veya @username kullan.`
+      : 'Hedef kullanıcı bulunamadı';
+    return NextResponse.json({ ok: true, sent: 0, failed: 0, total: 0, note });
   }
 
-  const result = await sendExpoBatch(tokens, title, text, data);
+  // Paralel gönder ama edge fn rate limit'ini zorlamayacak şekilde batch
+  const BATCH = 20;
+  let totalSent = 0;
+  let totalFailed = 0;
+  for (let i = 0; i < userIds.length; i += BATCH) {
+    const slice = userIds.slice(i, i + BATCH);
+    const results = await Promise.all(slice.map(uid => sendToUser(uid, title, text, data)));
+    for (const r of results) {
+      totalSent += r.sent;
+      totalFailed += r.failed;
+    }
+  }
+
   logAudit({
     action: 'push_send',
     target_type: audience === 'user' ? 'user' : audience === 'tier' ? 'tier' : 'all',
-    target_id: audience === 'user' ? userId || undefined : audience === 'tier' ? tier || undefined : 'broadcast',
-    payload: { title, body: text.slice(0, 100), total: tokens.length, sent: result.sent, failed: result.failed },
+    target_id: audience === 'user' ? userIds[0] : audience === 'tier' ? tier || undefined : 'broadcast',
+    payload: {
+      title,
+      body: text.slice(0, 100),
+      total_users: userIds.length,
+      sent: totalSent,
+      failed: totalFailed,
+    },
   });
-  return NextResponse.json({ ok: true, total: tokens.length, ...result });
+
+  return NextResponse.json({
+    ok: true,
+    total: userIds.length,
+    sent: totalSent,
+    failed: totalFailed,
+  });
 }
