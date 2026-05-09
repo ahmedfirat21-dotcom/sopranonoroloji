@@ -7,22 +7,43 @@ import SopranoLogoMini, { SopranoLogoStyleTag } from '../_components/SopranoLogo
 export default function YonetGirisPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isLocalhost, setIsLocalhost] = useState(false);
+  const [password, setPassword] = useState('');
+  const [pwLoading, setPwLoading] = useState(false);
 
-  // Callback redirect'ten ?err= ile gelen mesajları göster.
-  // ★ useSearchParams Next 16'da Suspense boundary istiyor; window.location.search
-  //   ile direkt parse — bu sayfa client'ta render olduğu için sorun çıkmaz.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
     const err = params.get('err');
     if (err) setError(err);
+    setIsLocalhost(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
   }, []);
 
   const handleGoogleLogin = () => {
     setError(null);
     setLoading(true);
-    // Server-side redirect: state cookie + Google auth URL
     window.location.href = '/yonet/api/auth/google/start';
+  };
+
+  const handlePasswordLogin = async () => {
+    setError(null);
+    setPwLoading(true);
+    try {
+      const res = await fetch('/yonet/api/auth/password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.error || 'Giriş başarısız');
+      }
+      window.location.href = '/yonet';
+    } catch (e: any) {
+      setError(e?.message || 'Giriş başarısız');
+    } finally {
+      setPwLoading(false);
+    }
   };
 
   return (
@@ -77,6 +98,31 @@ export default function YonetGirisPage() {
         {error && (
           <div className="mt-4 px-3 py-2.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-xs">
             {error}
+          </div>
+        )}
+
+        {/* ★ DEV-ONLY: localhost'ta şifre fallback (Google OAuth callback localhost'ta whitelist'te değil) */}
+        {isLocalhost && (
+          <div className="mt-6 pt-6 border-t border-white/10">
+            <p className="text-[10px] text-amber-300/80 mb-3 uppercase tracking-wider">
+              Yerel Geliştirme — ADMIN_ACCESS_KEY
+            </p>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handlePasswordLogin(); }}
+              placeholder="Yönetim şifresi"
+              className="w-full px-3 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-100 text-sm placeholder:text-slate-500 mb-2"
+            />
+            <button
+              type="button"
+              onClick={handlePasswordLogin}
+              disabled={pwLoading || !password}
+              className="w-full py-2.5 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:bg-slate-700 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors"
+            >
+              {pwLoading ? 'Giriş yapılıyor...' : 'Şifre ile Giriş'}
+            </button>
           </div>
         )}
 
