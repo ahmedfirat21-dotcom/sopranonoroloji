@@ -9,11 +9,13 @@ async function ensureAdmin(): Promise<boolean> {
   return verifyAdminToken(cookieStore.get(ADMIN_COOKIE_NAME)?.value);
 }
 
+// ★ 2026-05-10: system_points BURADAN ÇIKARILDI — direct UPDATE sp_transactions
+//   trigger'ını bypass ediyor, donatable_sp güncellenmeden kalıyordu (kullanıcı
+//   bağış yapamıyordu). SP değişiklikleri artık admin_grant_sp RPC'sine yönlendirilir.
 const ALLOWED_FIELDS = new Set([
   'is_banned',
   'is_verified',
   'is_admin',
-  'system_points',
   'subscription_tier',
   'display_name',
 ]);
@@ -59,10 +61,40 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ ok: true });
   }
 
-  // Default: alan güncelleme (is_banned, is_verified, system_points vb)
+  // Default: alan güncelleme (is_banned, is_verified, subscription_tier vb)
   const update = body?.update;
   if (!update || typeof update !== 'object') {
     return NextResponse.json({ error: 'Geçersiz gövde' }, { status: 400 });
+  }
+
+  // ★ 2026-05-10: system_points isteği gelirse RPC ile delta uygula (trigger devrede,
+  //   donatable_sp + lifetime metrics doğru güncellenir). Direct UPDATE yasak.
+  if ('system_points' in update) {
+    const targetSP = parseInt(String(update.system_points), 10);
+    if (!Number.isFinite(targetSP) || targetSP < 0) {
+      return NextResponse.json({ error: 'Geçersiz SP değeri' }, { status: 400 });
+    }
+    const { data: current } = await supabaseAdmin
+      .from('profiles')
+      .select('system_points')
+      .eq('id', id)
+      .maybeSingle();
+    const currentSP = (current as any)?.system_points ?? 0;
+    const delta = targetSP - currentSP;
+    if (delta !== 0) {
+      const externalRef = `web_admin:${id}:${delta}:${Date.now()}`;
+      const { error: rpcErr } = await supabaseAdmin.rpc('admin_grant_sp', {
+        p_user_id: id,
+        p_amount: delta,
+        p_action: 'web_admin_user_update',
+        p_external_ref: externalRef,
+      });
+      if (rpcErr) {
+        return NextResponse.json({ error: rpcErr.message }, { status: 500 });
+      }
+      logAudit({ action: 'user_sp_update', target_type: 'user', target_id: id, payload: { from: currentSP, to: targetSP, delta } });
+    }
+    delete (update as any).system_points;
   }
 
   const safe: Record<string, any> = {};
@@ -70,7 +102,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (ALLOWED_FIELDS.has(k)) safe[k] = update[k];
   }
   if (Object.keys(safe).length === 0) {
-    return NextResponse.json({ error: 'Güncellenebilir alan yok' }, { status: 400 });
+    // SP delta uygulanmış olabilir — boş gövde başarı sayılır
+    return NextResponse.json({ ok: true });
   }
 
   const { error } = await supabaseAdmin

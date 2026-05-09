@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3002';
+// ★ 2026-05-10: BACKEND_URL rewrite KALDIRILDI — eski NestJS apps/api artık silindi,
+//   /api/{giphy,livekit,yonet} hepsi Next.js native route'lar. Rewrite hâlâ aktifken
+//   Vercel'deki BACKEND_URL env eski backend'e yönlendiriyordu → /api/yonet/frames/* 404.
+//   Eski Prisma route'ları (economy/rooms-discover/webhooks) komple silinmiş durumda.
 
 const nextConfig: NextConfig = {
   // ★ Eski Prisma route'ları (api/economy/*, api/rooms/discover, webhooks/revenuecat) tip hatası
@@ -18,18 +21,6 @@ const nextConfig: NextConfig = {
             value: "frame-ancestors *;", // Allow all domains for dev/demo
           },
         ],
-      },
-    ];
-  },
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: `${BACKEND_URL}/:path*`,
-      },
-      {
-        source: '/socket.io/:path*',
-        destination: `${BACKEND_URL}/socket.io/:path*`,
       },
     ];
   },
