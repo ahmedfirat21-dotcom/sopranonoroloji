@@ -14,12 +14,49 @@ async function ensureAdmin(): Promise<boolean> {
   return verifyAdminToken(cookieStore.get(ADMIN_COOKIE_NAME)?.value);
 }
 
+async function resolveUserId(input: string): Promise<string | null> {
+  // ★ 2026-05-09: Admin paneli "Kullanıcı ID" alanına Firebase UID, username veya display_name
+  //   girebiliyor. Sırayla 3 katmanda ara: önce direkt id (UID), sonra username, sonra display_name.
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  // 1) Direkt UID match
+  const { data: byId } = await supabaseAdmin
+    .from('profiles')
+    .select('id')
+    .eq('id', trimmed)
+    .maybeSingle();
+  if (byId?.id) return byId.id;
+
+  // 2) Username (case-insensitive)
+  const { data: byUsername } = await supabaseAdmin
+    .from('profiles')
+    .select('id')
+    .ilike('username', trimmed)
+    .limit(1)
+    .maybeSingle();
+  if (byUsername?.id) return byUsername.id;
+
+  // 3) Display name (case-insensitive, exact)
+  const { data: byDisplay } = await supabaseAdmin
+    .from('profiles')
+    .select('id')
+    .ilike('display_name', trimmed)
+    .limit(1)
+    .maybeSingle();
+  if (byDisplay?.id) return byDisplay.id;
+
+  return null;
+}
+
 async function loadTokens(audience: string, tier: string | null, userId: string | null): Promise<string[]> {
   if (audience === 'user' && userId) {
+    const resolvedUid = await resolveUserId(userId);
+    if (!resolvedUid) return [];
     const { data } = await supabaseAdmin
       .from('push_tokens')
       .select('token')
-      .eq('user_id', userId);
+      .eq('user_id', resolvedUid);
     return (data || []).map(d => d.token);
   }
 
@@ -183,9 +220,39 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Geçersiz audience' }, { status: 400 });
   }
 
+  // ★ 2026-05-09: "Tek" akışında kullanıcı bulunamadı vs token yok ayrımı
+  if (audience === 'user' && userId) {
+    const resolvedUid = await resolveUserId(userId);
+    if (!resolvedUid) {
+      return NextResponse.json({
+        ok: false,
+        total: 0,
+        ticketsAccepted: 0,
+        ticketsRejected: 0,
+        delivered: 0,
+        receiptErrors: 0,
+        errorBreakdown: {},
+        cleanedTokens: 0,
+        note: `"${userId}" eşleşen kullanıcı bulunamadı (UID, kullanıcı adı veya görünen ad olarak ara).`,
+      });
+    }
+  }
+
   const tokens = await loadTokens(audience, tier, userId);
   if (tokens.length === 0) {
-    return NextResponse.json({ ok: true, sent: 0, failed: 0, total: 0, note: 'Hedef token bulunamadı' });
+    return NextResponse.json({
+      ok: true,
+      total: 0,
+      ticketsAccepted: 0,
+      ticketsRejected: 0,
+      delivered: 0,
+      receiptErrors: 0,
+      errorBreakdown: {},
+      cleanedTokens: 0,
+      note: audience === 'user'
+        ? 'Kullanıcı bulundu ama push token yok (uygulamayı son sürümle açıp bildirim izni vermesi gerekir).'
+        : 'Hedef token bulunamadı',
+    });
   }
 
   const result = await sendExpoBatch(tokens, title, text, data);

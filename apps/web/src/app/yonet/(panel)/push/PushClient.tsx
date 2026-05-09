@@ -163,12 +163,12 @@ export default function PushClient({
 
         {audience === 'user' && (
           <div>
-            <label className="block text-[10px] font-semibold tracking-wider mb-1 text-slate-400">KULLANICI ID</label>
+            <label className="block text-[10px] font-semibold tracking-wider mb-1 text-slate-400">KULLANICI ID, KULLANICI ADI VEYA İSİM</label>
             <input
               type="text"
               value={userId}
               onChange={e => setUserId(e.target.value)}
-              placeholder="Firebase UID"
+              placeholder="Firebase UID, kullanıcı adı (ahmedbercem) veya görünen ad"
               className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 focus:border-fuchsia-500/50 focus:outline-none font-mono text-xs"
             />
           </div>
