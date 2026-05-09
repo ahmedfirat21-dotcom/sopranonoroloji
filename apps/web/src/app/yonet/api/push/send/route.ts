@@ -5,7 +5,9 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logAudit } from '@/lib/admin/audit';
 
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
+const EXPO_RECEIPT_URL = 'https://exp.host/--/api/v2/push/getReceipts';
 const EXPO_BATCH_SIZE = 100;
+const RECEIPT_WAIT_MS = 6000;
 
 async function ensureAdmin(): Promise<boolean> {
   const cookieStore = await cookies();
@@ -51,9 +53,27 @@ async function loadTokens(audience: string, tier: string | null, userId: string 
   return (data || []).map(d => d.token);
 }
 
-async function sendExpoBatch(tokens: string[], title: string, body: string, data?: Record<string, any>) {
-  let sent = 0;
-  let failed = 0;
+type SendResult = {
+  ticketsAccepted: number;
+  ticketsRejected: number;
+  delivered: number;
+  receiptErrors: number;
+  errorBreakdown: Record<string, number>;
+  invalidTokens: string[];
+  ticketErrors: string[];
+};
+
+async function sendExpoBatch(tokens: string[], title: string, body: string, data?: Record<string, any>): Promise<SendResult> {
+  const result: SendResult = {
+    ticketsAccepted: 0,
+    ticketsRejected: 0,
+    delivered: 0,
+    receiptErrors: 0,
+    errorBreakdown: {},
+    invalidTokens: [],
+    ticketErrors: [],
+  };
+  const ticketToToken: Record<string, string> = {};
 
   for (let i = 0; i < tokens.length; i += EXPO_BATCH_SIZE) {
     const batch = tokens.slice(i, i + EXPO_BATCH_SIZE);
@@ -77,19 +97,70 @@ async function sendExpoBatch(tokens: string[], title: string, body: string, data
       });
       const j = await res.json().catch(() => ({}));
       const tickets: any[] = Array.isArray(j?.data) ? j.data : [];
-      for (const t of tickets) {
-        if (t?.status === 'ok') sent++;
-        else failed++;
+      for (let k = 0; k < tickets.length; k++) {
+        const t = tickets[k];
+        const tok = batch[k];
+        if (t?.status === 'ok' && t?.id) {
+          result.ticketsAccepted++;
+          ticketToToken[t.id] = tok;
+        } else {
+          result.ticketsRejected++;
+          const err = t?.details?.error || t?.message || 'unknown';
+          result.ticketErrors.push(`${err}`);
+          if (err === 'DeviceNotRegistered') result.invalidTokens.push(tok);
+        }
       }
-      // Eğer ticket sayısı batch'ten azsa, geri kalanını failed say
       const missing = batch.length - tickets.length;
-      if (missing > 0) failed += missing;
-    } catch {
-      failed += batch.length;
+      if (missing > 0) result.ticketsRejected += missing;
+    } catch (e: any) {
+      result.ticketsRejected += batch.length;
+      result.ticketErrors.push(`fetch_failed:${e?.message || 'unknown'}`);
     }
   }
 
-  return { sent, failed };
+  // ─── Receipt aşaması — Expo'dan FCM/APNs sonucu çek ───
+  const ticketIds = Object.keys(ticketToToken);
+  if (ticketIds.length > 0) {
+    await new Promise(r => setTimeout(r, RECEIPT_WAIT_MS));
+    for (let i = 0; i < ticketIds.length; i += EXPO_BATCH_SIZE) {
+      const idBatch = ticketIds.slice(i, i + EXPO_BATCH_SIZE);
+      try {
+        const res = await fetch(EXPO_RECEIPT_URL, {
+          method: 'POST',
+          headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: idBatch }),
+        });
+        const j = await res.json().catch(() => ({}));
+        const receipts = (j?.data || {}) as Record<string, any>;
+        for (const id of idBatch) {
+          const r = receipts[id];
+          if (!r) continue; // henüz işlenmemiş — bilinmiyor
+          if (r.status === 'ok') {
+            result.delivered++;
+          } else {
+            result.receiptErrors++;
+            const err = r?.details?.error || r?.message || 'unknown';
+            result.errorBreakdown[err] = (result.errorBreakdown[err] || 0) + 1;
+            if (err === 'DeviceNotRegistered') {
+              const tok = ticketToToken[id];
+              if (tok) result.invalidTokens.push(tok);
+            }
+          }
+        }
+      } catch (e: any) {
+        result.errorBreakdown[`receipt_fetch_failed`] = (result.errorBreakdown[`receipt_fetch_failed`] || 0) + idBatch.length;
+      }
+    }
+  }
+
+  return result;
+}
+
+async function cleanupInvalidTokens(tokens: string[]) {
+  if (tokens.length === 0) return;
+  try {
+    await supabaseAdmin.from('push_tokens').delete().in('token', tokens);
+  } catch { /* silent */ }
 }
 
 export async function POST(req: Request) {
@@ -118,11 +189,33 @@ export async function POST(req: Request) {
   }
 
   const result = await sendExpoBatch(tokens, title, text, data);
+  // Geçersiz (DeviceNotRegistered) token'ları DB'den otomatik temizle — bir daha denenmeyi önler
+  await cleanupInvalidTokens(result.invalidTokens);
+
   logAudit({
     action: 'push_send',
     target_type: audience === 'user' ? 'user' : audience === 'tier' ? 'tier' : 'all',
     target_id: audience === 'user' ? userId || undefined : audience === 'tier' ? tier || undefined : 'broadcast',
-    payload: { title, body: text.slice(0, 100), total: tokens.length, sent: result.sent, failed: result.failed },
+    payload: {
+      title,
+      body: text.slice(0, 100),
+      total: tokens.length,
+      ticketsAccepted: result.ticketsAccepted,
+      ticketsRejected: result.ticketsRejected,
+      delivered: result.delivered,
+      receiptErrors: result.receiptErrors,
+      errorBreakdown: result.errorBreakdown,
+      cleanedTokens: result.invalidTokens.length,
+    },
   });
-  return NextResponse.json({ ok: true, total: tokens.length, ...result });
+  return NextResponse.json({
+    ok: true,
+    total: tokens.length,
+    ticketsAccepted: result.ticketsAccepted,
+    ticketsRejected: result.ticketsRejected,
+    delivered: result.delivered,
+    receiptErrors: result.receiptErrors,
+    errorBreakdown: result.errorBreakdown,
+    cleanedTokens: result.invalidTokens.length,
+  });
 }

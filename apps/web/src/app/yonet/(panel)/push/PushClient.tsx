@@ -21,7 +21,17 @@ export default function PushClient({
   const [body, setBody] = useState('');
   const [link, setLink] = useState('');
   const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<{ ok: boolean; sent: number; failed: number; error?: string } | null>(null);
+  const [result, setResult] = useState<{
+    ok: boolean;
+    total?: number;
+    ticketsAccepted?: number;
+    ticketsRejected?: number;
+    delivered?: number;
+    receiptErrors?: number;
+    errorBreakdown?: Record<string, number>;
+    cleanedTokens?: number;
+    error?: string;
+  } | null>(null);
 
   const handleSend = async () => {
     if (!title.trim() || !body.trim()) {
@@ -63,16 +73,24 @@ export default function PushClient({
       });
       const j = await res.json();
       if (!res.ok) {
-        setResult({ ok: false, sent: 0, failed: 0, error: j.error || 'Hata' });
+        setResult({ ok: false, error: j.error || 'Hata' });
       } else {
-        setResult({ ok: true, sent: j.sent || 0, failed: j.failed || 0 });
-        // Reset form on success
+        setResult({
+          ok: true,
+          total: j.total || 0,
+          ticketsAccepted: j.ticketsAccepted || 0,
+          ticketsRejected: j.ticketsRejected || 0,
+          delivered: j.delivered || 0,
+          receiptErrors: j.receiptErrors || 0,
+          errorBreakdown: j.errorBreakdown || {},
+          cleanedTokens: j.cleanedTokens || 0,
+        });
         setTitle('');
         setBody('');
         setLink('');
       }
     } catch (e: any) {
-      setResult({ ok: false, sent: 0, failed: 0, error: e.message });
+      setResult({ ok: false, error: e.message });
     } finally {
       setBusy(false);
     }
@@ -204,14 +222,41 @@ export default function PushClient({
         </button>
 
         {result && (
-          <div className={`p-3 rounded-lg border text-sm ${
-            result.ok
+          <div className={`p-3 rounded-lg border text-sm space-y-1 ${
+            result.ok && (result.delivered || 0) > 0 && (result.receiptErrors || 0) === 0
               ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+              : result.ok
+              ? 'bg-amber-500/10 border-amber-500/30 text-amber-200'
               : 'bg-red-500/10 border-red-500/30 text-red-300'
           }`}>
-            {result.ok
-              ? `✓ Gönderildi: ${result.sent} başarılı, ${result.failed} hatalı`
-              : `✗ Hata: ${result.error}`}
+            {!result.ok && <div>✗ Hata: {result.error}</div>}
+            {result.ok && (
+              <>
+                <div className="font-semibold">
+                  {(result.delivered || 0) > 0 && (result.receiptErrors || 0) === 0 ? '✓' : '⚠'} Sonuç (toplam {result.total} hedef token)
+                </div>
+                <div className="text-xs space-y-0.5 opacity-90">
+                  <div>• Cihaza ulaşan: <b>{result.delivered || 0}</b></div>
+                  <div>• Expo kabul etti (ticket OK): {result.ticketsAccepted || 0}</div>
+                  {(result.ticketsRejected || 0) > 0 && (
+                    <div>• Expo reddetti: {result.ticketsRejected}</div>
+                  )}
+                  {(result.receiptErrors || 0) > 0 && (
+                    <div>• FCM/APNs hatası: <b>{result.receiptErrors}</b></div>
+                  )}
+                  {result.errorBreakdown && Object.keys(result.errorBreakdown).length > 0 && (
+                    <div className="pl-3 mt-1 border-l border-white/10">
+                      {Object.entries(result.errorBreakdown).map(([err, count]) => (
+                        <div key={err}>↳ <code className="text-[11px]">{err}</code>: {count}</div>
+                      ))}
+                    </div>
+                  )}
+                  {(result.cleanedTokens || 0) > 0 && (
+                    <div className="text-[11px] opacity-70 mt-1">{result.cleanedTokens} geçersiz token DB'den temizlendi.</div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
