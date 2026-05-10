@@ -1,0 +1,2294 @@
+﻿> Task :gradle-plugin:settings-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :gradle-plugin:shared:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:pluginDescriptors UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:pluginDescriptors UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:processResources UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:processResources UP-TO-DATE
+> Task :gradle-plugin:shared:compileKotlin UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:compileKotlin UP-TO-DATE
+> Task :gradle-plugin:shared:compileJava NO-SOURCE
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:compileJava NO-SOURCE
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:processResources NO-SOURCE
+> Task :gradle-plugin:shared:processResources NO-SOURCE
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:classes UP-TO-DATE
+> Task :gradle-plugin:shared:classes UP-TO-DATE
+> Task :gradle-plugin:shared:jar UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:jar UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:compileKotlin UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:compileJava NO-SOURCE
+> Task :gradle-plugin:settings-plugin:classes UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:jar UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:compileKotlin UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:compileJava NO-SOURCE
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:classes UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:jar UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :gradle-plugin:react-native-gradle-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-gradle-plugin:expo-max-sdk-override-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-dev-launcher-gradle-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-module-gradle-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-module-gradle-plugin:pluginDescriptors UP-TO-DATE
+> Task :expo-dev-launcher-gradle-plugin:pluginDescriptors UP-TO-DATE
+> Task :expo-dev-launcher-gradle-plugin:processResources UP-TO-DATE
+> Task :expo-module-gradle-plugin:processResources UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:compileKotlin UP-TO-DATE
+> Task :expo-gradle-plugin:expo-max-sdk-override-plugin:compileKotlin UP-TO-DATE
+> Task :expo-gradle-plugin:expo-max-sdk-override-plugin:compileJava NO-SOURCE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:compileJava NO-SOURCE
+> Task :gradle-plugin:react-native-gradle-plugin:compileKotlin UP-TO-DATE
+> Task :expo-gradle-plugin:expo-max-sdk-override-plugin:pluginDescriptors UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:pluginDescriptors UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:compileJava NO-SOURCE
+> Task :expo-gradle-plugin:expo-max-sdk-override-plugin:processResources UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:processResources UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:classes UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:pluginDescriptors UP-TO-DATE
+> Task :expo-gradle-plugin:expo-max-sdk-override-plugin:classes UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:processResources UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:classes UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:jar UP-TO-DATE
+> Task :expo-gradle-plugin:expo-max-sdk-override-plugin:jar UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:jar UP-TO-DATE
+> Task :expo-dev-launcher-gradle-plugin:compileKotlin UP-TO-DATE
+> Task :expo-module-gradle-plugin:compileKotlin UP-TO-DATE
+> Task :expo-dev-launcher-gradle-plugin:compileJava NO-SOURCE
+> Task :expo-dev-launcher-gradle-plugin:classes UP-TO-DATE
+> Task :expo-module-gradle-plugin:compileJava NO-SOURCE
+> Task :expo-module-gradle-plugin:classes UP-TO-DATE
+> Task :expo-dev-launcher-gradle-plugin:jar UP-TO-DATE
+> Task :expo-module-gradle-plugin:jar UP-TO-DATE
+
+> Configure project :app
+ Ôä╣´©Å  [33mApplying gradle plugin[0m '[32mexpo-max-sdk-override-plugin[0m'
+  [expo-max-sdk-override-plugin] This plugin will find all permissions declared with `android:maxSdkVersion`. If there exists a declaration with the `android:maxSdkVersion` annotation and another one without, the plugin will remove the annotation from the final merged manifest. In order to see a log with the changes run a clean build of the app.
+ Ôä╣´©Å  [33mApplying gradle plugin[0m '[32mexpo-dev-launcher-gradle-plugin[0m'
+
+> Configure project :
+[32m[ExpoRootProject][0m Using the following versions:
+  - buildTools:  [32m36.0.0[0m
+  - minSdk:      [32m24[0m
+  - compileSdk:  [32m36[0m
+  - targetSdk:   [32m36[0m
+  - ndk:         [32m27.1.12297006[0m
+  - kotlin:      [32m2.1.20[0m
+  - ksp:         [32m2.1.20-2.0.1[0m
+
+> Configure project :expo-modules-core
+Linking react-native-worklets native libs into expo-modules-core build tasks
+task ':react-native-worklets:mergeDebugNativeLibs'
+task ':react-native-worklets:mergeReleaseNativeLibs'
+
+> Configure project :expo
+
+Using expo modules
+  - [32mexpo-log-box[0m (55.0.7)
+  - [32mexpo-constants[0m (55.0.9)
+  - [32mexpo-dev-client[0m (55.0.18)
+  - [32mexpo-dev-launcher[0m (55.0.19)
+  - [32mexpo-dev-menu[0m (55.0.16)
+  - [32mexpo-dev-menu-interface[0m (55.0.1)
+  - [32mexpo-json-utils[0m (55.0.0)
+  - [32mexpo-manifests[0m (55.0.11)
+  - [32mexpo-modules-core[0m (55.0.17)
+  - [32mexpo-updates-interface[0m (55.1.3)
+  - [33m[­şôĞ][0m [32mexpo-dom-webview[0m (55.0.3)
+  - [33m[­şôĞ][0m [32mexpo-asset[0m (55.0.10)
+  - [33m[­şôĞ][0m [32mexpo-blur[0m (55.0.10)
+  - [33m[­şôĞ][0m [32mexpo-crypto[0m (55.0.10)
+  - [33m[­şôĞ][0m [32mexpo-file-system[0m (55.0.11)
+  - [33m[­şôĞ][0m [32mexpo-font[0m (55.0.4)
+  - [33m[­şôĞ][0m [32mexpo-haptics[0m (55.0.9)
+  - [33m[­şôĞ][0m [32mexpo-image[0m (55.0.6)
+  - [33m[­şôĞ][0m [32mexpo-image-loader[0m (55.0.0)
+  - [33m[­şôĞ][0m [32mexpo-image-picker[0m (55.0.13)
+  - [33m[­şôĞ][0m [32mexpo-keep-awake[0m (55.0.4)
+  - [33m[­şôĞ][0m [32mexpo-linear-gradient[0m (55.0.9)
+  - [33m[­şôĞ][0m [32mexpo-linking[0m (55.0.8)
+  - [33m[­şôĞ][0m [32mexpo-navigation-bar[0m (55.0.9)
+  - [33m[­şôĞ][0m [32mexpo-router[0m (55.0.7)
+  - [33m[­şôĞ][0m [32mexpo-splash-screen[0m (55.0.12)
+
+
+> Configure project :react-native-firebase_app
+:react-native-firebase_app package.json found at C:\Users\yogun\Desktop\sopranochatnorolji\apps\mobil2\node_modules\@react-native-firebase\app\package.json
+:react-native-firebase_app:firebase.bom using default value: 34.10.0
+:react-native-firebase_app:play.play-services-auth using default value: 21.5.0
+:react-native-firebase_app package.json found at C:\Users\yogun\Desktop\sopranochatnorolji\apps\mobil2\node_modules\@react-native-firebase\app\package.json
+:react-native-firebase_app:version set from package.json: 23.8.8 (23,8,8 - 23008008)
+:react-native-firebase_app:android.compileSdk using custom value: 36
+:react-native-firebase_app:android.targetSdk using custom value: 36
+:react-native-firebase_app:android.minSdk using custom value: 24
+:react-native-firebase_app:reactNativeAndroidDir C:\Users\yogun\Desktop\sopranochatnorolji\apps\mobil2\node_modules\react-native
+
+> Configure project :react-native-firebase_auth
+:react-native-firebase_auth package.json found at C:\Users\yogun\Desktop\sopranochatnorolji\apps\mobil2\node_modules\@react-native-firebase\auth\package.json
+:react-native-firebase_app package.json found at C:\Users\yogun\Desktop\sopranochatnorolji\apps\mobil2\node_modules\@react-native-firebase\app\package.json
+:react-native-firebase_auth:firebase.bom using default value: 34.10.0
+:react-native-firebase_auth package.json found at C:\Users\yogun\Desktop\sopranochatnorolji\apps\mobil2\node_modules\@react-native-firebase\auth\package.json
+:react-native-firebase_auth:version set from package.json: 23.8.8 (23,8,8 - 23008008)
+:react-native-firebase_auth:android.compileSdk using custom value: 36
+:react-native-firebase_auth:android.targetSdk using custom value: 36
+:react-native-firebase_auth:android.minSdk using custom value: 24
+:react-native-firebase_auth:reactNativeAndroidDir C:\Users\yogun\Desktop\sopranochatnorolji\apps\mobil2\node_modules\react-native
+
+> Task :expo-json-utils:preBuild UP-TO-DATE
+> Task :expo-modules-core:preBuild UP-TO-DATE
+> Task :expo-dev-menu-interface:preBuild UP-TO-DATE
+> Task :expo-dev-menu:preBuild UP-TO-DATE
+> Task :livekit_react-native:preBuild UP-TO-DATE
+> Task :expo-dev-client:preBuild UP-TO-DATE
+> Task :expo-log-box:preBuild UP-TO-DATE
+> Task :expo-updates-interface:preBuild UP-TO-DATE
+> Task :expo-manifests:preBuild UP-TO-DATE
+> Task :livekit_react-native-webrtc:preBuild UP-TO-DATE
+> Task :expo-dev-launcher:preBuild UP-TO-DATE
+> Task :react-native-firebase_app:preBuild UP-TO-DATE
+> Task :react-native-incall-manager:preBuild UP-TO-DATE
+> Task :expo:generatePackagesList UP-TO-DATE
+> Task :react-native-async-storage_async-storage:generateCodegenSchemaFromJavaScript UP-TO-DATE
+> Task :react-native-purchases:preBuild UP-TO-DATE
+> Task :lottie-react-native:generateCodegenSchemaFromJavaScript UP-TO-DATE
+> Task :react-native-google-signin_google-signin:generateCodegenSchemaFromJavaScript UP-TO-DATE
+> Task :react-native-gesture-handler:generateCodegenSchemaFromJavaScript UP-TO-DATE
+> Task :react-native-firebase_auth:preBuild UP-TO-DATE
+> Task :react-native-screens:generateCodegenSchemaFromJavaScript UP-TO-DATE
+> Task :expo-dev-client:preDebugBuild UP-TO-DATE
+> Task :react-native-safe-area-context:generateCodegenSchemaFromJavaScript UP-TO-DATE
+> Task :react-native-gesture-handler:generateCodegenArtifactsFromSchema UP-TO-DATE
+> Task :lottie-react-native:generateCodegenArtifactsFromSchema UP-TO-DATE
+> Task :expo-dev-launcher:preDebugBuild UP-TO-DATE
+> Task :expo-dev-menu:preDebugBuild UP-TO-DATE
+> Task :react-native-webrtc:preBuild UP-TO-DATE
+> Task :expo:preBuild UP-TO-DATE
+> Task :expo-dev-menu:writeDebugAarMetadata UP-TO-DATE
+> Task :expo-dev-menu-interface:preDebugBuild UP-TO-DATE
+> Task :react-native-async-storage_async-storage:generateCodegenArtifactsFromSchema UP-TO-DATE
+> Task :react-native-screens:generateCodegenArtifactsFromSchema UP-TO-DATE
+> Task :lottie-react-native:preBuild UP-TO-DATE
+> Task :expo-dev-launcher:writeDebugAarMetadata UP-TO-DATE
+> Task :expo-log-box:preDebugBuild UP-TO-DATE
+> Task :expo-dev-client:writeDebugAarMetadata UP-TO-DATE
+> Task :expo-manifests:preDebugBuild UP-TO-DATE
+> Task :react-native-google-signin_google-signin:generateCodegenArtifactsFromSchema UP-TO-DATE
+> Task :react-native-screens:preBuild UP-TO-DATE
+> Task :expo-manifests:writeDebugAarMetadata UP-TO-DATE
+> Task :react-native-async-storage_async-storage:preBuild UP-TO-DATE
+> Task :expo-json-utils:preDebugBuild UP-TO-DATE
+> Task :expo:preDebugBuild UP-TO-DATE
+> Task :expo-modules-core:preDebugBuild UP-TO-DATE
+> Task :expo-dev-menu-interface:writeDebugAarMetadata UP-TO-DATE
+> Task :expo-json-utils:writeDebugAarMetadata UP-TO-DATE
+> Task :react-native-google-signin_google-signin:preBuild UP-TO-DATE
+> Task :react-native-gesture-handler:preBuild UP-TO-DATE
+> Task :livekit_react-native-webrtc:preDebugBuild UP-TO-DATE
+> Task :expo-log-box:writeDebugAarMetadata UP-TO-DATE
+> Task :livekit_react-native:preDebugBuild UP-TO-DATE
+> Task :react-native-async-storage_async-storage:preDebugBuild UP-TO-DATE
+> Task :expo-updates-interface:preDebugBuild UP-TO-DATE
+> Task :react-native-async-storage_async-storage:writeDebugAarMetadata UP-TO-DATE
+> Task :expo:writeDebugAarMetadata UP-TO-DATE
+> Task :expo-updates-interface:writeDebugAarMetadata UP-TO-DATE
+> Task :react-native-safe-area-context:generateCodegenArtifactsFromSchema UP-TO-DATE
+> Task :react-native-firebase_app:preDebugBuild UP-TO-DATE
+> Task :react-native-safe-area-context:preBuild UP-TO-DATE
+> Task :react-native-firebase_app:writeDebugAarMetadata UP-TO-DATE
+> Task :expo-modules-core:writeDebugAarMetadata UP-TO-DATE
+> Task :react-native-firebase_auth:preDebugBuild UP-TO-DATE
+> Task :react-native-gesture-handler:preDebugBuild UP-TO-DATE
+> Task :react-native-gesture-handler:writeDebugAarMetadata UP-TO-DATE
+> Task :lottie-react-native:preDebugBuild UP-TO-DATE
+> Task :react-native-incall-manager:preDebugBuild UP-TO-DATE
+> Task :livekit_react-native:writeDebugAarMetadata UP-TO-DATE
+> Task :react-native-incall-manager:writeDebugAarMetadata UP-TO-DATE
+> Task :react-native-firebase_auth:writeDebugAarMetadata UP-TO-DATE
+> Task :react-native-safe-area-context:preDebugBuild UP-TO-DATE
+> Task :expo:generateDebugResValues UP-TO-DATE
+> Task :expo:generateDebugResources UP-TO-DATE
+> Task :react-native-purchases:preDebugBuild UP-TO-DATE
+> Task :react-native-google-signin_google-signin:preDebugBuild UP-TO-DATE
+> Task :lottie-react-native:writeDebugAarMetadata UP-TO-DATE
+> Task :livekit_react-native-webrtc:writeDebugAarMetadata UP-TO-DATE
+> Task :react-native-purchases:writeDebugAarMetadata UP-TO-DATE
+> Task :react-native-webrtc:preDebugBuild UP-TO-DATE
+> Task :react-native-screens:preDebugBuild UP-TO-DATE
+> Task :react-native-webrtc:writeDebugAarMetadata UP-TO-DATE
+> Task :react-native-safe-area-context:writeDebugAarMetadata UP-TO-DATE
+> Task :expo:packageDebugResources UP-TO-DATE
+> Task :expo-dev-menu:generateDebugResValues UP-TO-DATE
+> Task :expo-dev-menu-interface:generateDebugResValues UP-TO-DATE
+> Task :expo-dev-menu-interface:generateDebugResources UP-TO-DATE
+> Task :expo-dev-menu:generateDebugResources UP-TO-DATE
+> Task :react-native-google-signin_google-signin:writeDebugAarMetadata UP-TO-DATE
+> Task :expo-dev-launcher:generateDebugResValues UP-TO-DATE
+> Task :expo-dev-client:generateDebugResValues UP-TO-DATE
+> Task :expo-log-box:generateDebugResValues UP-TO-DATE
+> Task :react-native-screens:writeDebugAarMetadata UP-TO-DATE
+> Task :expo-json-utils:generateDebugResValues UP-TO-DATE
+> Task :expo-dev-client:generateDebugResources UP-TO-DATE
+> Task :expo-json-utils:generateDebugResources UP-TO-DATE
+> Task :expo-manifests:generateDebugResValues UP-TO-DATE
+> Task :expo-log-box:generateDebugResources UP-TO-DATE
+> Task :expo-dev-menu-interface:packageDebugResources UP-TO-DATE
+> Task :expo-dev-launcher:generateDebugResources UP-TO-DATE
+> Task :expo-modules-core:generateDebugResValues UP-TO-DATE
+> Task :expo-dev-menu:packageDebugResources UP-TO-DATE
+> Task :expo-manifests:generateDebugResources UP-TO-DATE
+> Task :expo-updates-interface:generateDebugResValues UP-TO-DATE
+> Task :expo-modules-core:generateDebugResources UP-TO-DATE
+> Task :expo-json-utils:packageDebugResources UP-TO-DATE
+> Task :expo-log-box:packageDebugResources UP-TO-DATE
+> Task :expo-updates-interface:generateDebugResources UP-TO-DATE
+> Task :livekit_react-native:generateDebugResValues UP-TO-DATE
+> Task :expo-manifests:packageDebugResources UP-TO-DATE
+> Task :livekit_react-native-webrtc:generateDebugResValues UP-TO-DATE
+> Task :livekit_react-native:generateDebugResources UP-TO-DATE
+> Task :livekit_react-native-webrtc:generateDebugResources UP-TO-DATE
+> Task :lottie-react-native:generateDebugResValues UP-TO-DATE
+> Task :expo-dev-client:packageDebugResources UP-TO-DATE
+> Task :expo-modules-core:packageDebugResources UP-TO-DATE
+> Task :expo-dev-launcher:packageDebugResources UP-TO-DATE
+> Task :livekit_react-native:packageDebugResources UP-TO-DATE
+> Task :expo-updates-interface:packageDebugResources UP-TO-DATE
+> Task :lottie-react-native:generateDebugResources UP-TO-DATE
+> Task :react-native-async-storage_async-storage:generateDebugResValues UP-TO-DATE
+> Task :react-native-firebase_app:generateDebugResValues UP-TO-DATE
+> Task :react-native-async-storage_async-storage:generateDebugResources UP-TO-DATE
+> Task :livekit_react-native-webrtc:packageDebugResources UP-TO-DATE
+> Task :react-native-firebase_auth:generateDebugResValues UP-TO-DATE
+> Task :react-native-gesture-handler:generateDebugResValues UP-TO-DATE
+> Task :react-native-firebase_app:generateDebugResources UP-TO-DATE
+> Task :react-native-google-signin_google-signin:generateDebugResValues UP-TO-DATE
+> Task :react-native-firebase_auth:generateDebugResources UP-TO-DATE
+> Task :react-native-google-signin_google-signin:generateDebugResources UP-TO-DATE
+> Task :react-native-gesture-handler:generateDebugResources UP-TO-DATE
+> Task :lottie-react-native:packageDebugResources UP-TO-DATE
+> Task :react-native-async-storage_async-storage:packageDebugResources UP-TO-DATE
+> Task :react-native-incall-manager:generateDebugResValues UP-TO-DATE
+> Task :react-native-purchases:generateDebugResValues UP-TO-DATE
+> Task :react-native-incall-manager:generateDebugResources UP-TO-DATE
+> Task :react-native-firebase_app:packageDebugResources UP-TO-DATE
+> Task :react-native-gesture-handler:packageDebugResources UP-TO-DATE
+> Task :react-native-google-signin_google-signin:packageDebugResources UP-TO-DATE
+> Task :react-native-safe-area-context:generateDebugResValues UP-TO-DATE
+> Task :react-native-firebase_auth:packageDebugResources UP-TO-DATE
+> Task :react-native-screens:generateDebugResValues UP-TO-DATE
+> Task :react-native-webrtc:generateDebugResValues UP-TO-DATE
+> Task :react-native-purchases:generateDebugResources UP-TO-DATE
+> Task :expo:extractDeepLinksDebug UP-TO-DATE
+> Task :react-native-safe-area-context:generateDebugResources UP-TO-DATE
+> Task :react-native-webrtc:generateDebugResources UP-TO-DATE
+> Task :react-native-screens:generateDebugResources UP-TO-DATE
+> Task :react-native-incall-manager:packageDebugResources UP-TO-DATE
+> Task :expo:processDebugManifest UP-TO-DATE
+> Task :expo-dev-launcher:extractDeepLinksDebug UP-TO-DATE
+> Task :react-native-purchases:packageDebugResources UP-TO-DATE
+> Task :react-native-webrtc:packageDebugResources UP-TO-DATE
+> Task :expo-dev-client:extractDeepLinksDebug UP-TO-DATE
+> Task :expo-dev-menu:extractDeepLinksDebug UP-TO-DATE
+> Task :expo-dev-menu-interface:extractDeepLinksDebug UP-TO-DATE
+> Task :react-native-safe-area-context:packageDebugResources UP-TO-DATE
+> Task :expo-dev-launcher:processDebugManifest UP-TO-DATE
+> Task :expo-json-utils:extractDeepLinksDebug UP-TO-DATE
+> Task :expo-log-box:extractDeepLinksDebug UP-TO-DATE
+> Task :expo-dev-client:processDebugManifest UP-TO-DATE
+> Task :expo-manifests:extractDeepLinksDebug UP-TO-DATE
+> Task :react-native-screens:packageDebugResources UP-TO-DATE
+> Task :expo-json-utils:processDebugManifest UP-TO-DATE
+> Task :expo-dev-menu-interface:processDebugManifest UP-TO-DATE
+> Task :expo-dev-menu:processDebugManifest UP-TO-DATE
+> Task :livekit_react-native:extractDeepLinksDebug UP-TO-DATE
+> Task :expo-updates-interface:extractDeepLinksDebug UP-TO-DATE
+> Task :expo-modules-core:extractDeepLinksDebug UP-TO-DATE
+> Task :livekit_react-native-webrtc:extractDeepLinksDebug UP-TO-DATE
+> Task :lottie-react-native:extractDeepLinksDebug UP-TO-DATE
+> Task :expo-log-box:processDebugManifest UP-TO-DATE
+> Task :expo-manifests:processDebugManifest UP-TO-DATE
+> Task :livekit_react-native:processDebugManifest UP-TO-DATE
+> Task :react-native-async-storage_async-storage:extractDeepLinksDebug UP-TO-DATE
+> Task :react-native-firebase_app:extractDeepLinksDebug UP-TO-DATE
+> Task :react-native-firebase_auth:extractDeepLinksDebug UP-TO-DATE
+> Task :expo-modules-core:processDebugManifest UP-TO-DATE
+> Task :expo-updates-interface:processDebugManifest UP-TO-DATE
+> Task :lottie-react-native:processDebugManifest UP-TO-DATE
+> Task :livekit_react-native-webrtc:processDebugManifest UP-TO-DATE
+> Task :react-native-async-storage_async-storage:processDebugManifest UP-TO-DATE
+> Task :react-native-firebase_app:processDebugManifest UP-TO-DATE
+> Task :react-native-google-signin_google-signin:extractDeepLinksDebug UP-TO-DATE
+> Task :react-native-firebase_auth:processDebugManifest UP-TO-DATE
+> Task :react-native-gesture-handler:extractDeepLinksDebug UP-TO-DATE
+> Task :react-native-purchases:extractDeepLinksDebug UP-TO-DATE
+> Task :react-native-screens:extractDeepLinksDebug UP-TO-DATE
+> Task :react-native-google-signin_google-signin:processDebugManifest UP-TO-DATE
+> Task :react-native-incall-manager:extractDeepLinksDebug UP-TO-DATE
+> Task :react-native-webrtc:extractDeepLinksDebug UP-TO-DATE
+> Task :react-native-safe-area-context:extractDeepLinksDebug UP-TO-DATE
+> Task :react-native-purchases:processDebugManifest UP-TO-DATE
+> Task :react-native-gesture-handler:processDebugManifest UP-TO-DATE
+> Task :react-native-screens:processDebugManifest UP-TO-DATE
+> Task :react-native-safe-area-context:processDebugManifest UP-TO-DATE
+> Task :react-native-incall-manager:processDebugManifest UP-TO-DATE
+> Task :expo:compileDebugLibraryResources UP-TO-DATE
+> Task :react-native-webrtc:processDebugManifest UP-TO-DATE
+> Task :expo-dev-client:compileDebugLibraryResources UP-TO-DATE
+> Task :expo-dev-launcher:compileDebugLibraryResources UP-TO-DATE
+> Task :expo-dev-menu:compileDebugLibraryResources UP-TO-DATE
+> Task :expo-json-utils:compileDebugLibraryResources UP-TO-DATE
+> Task :expo-dev-menu-interface:compileDebugLibraryResources UP-TO-DATE
+> Task :expo:parseDebugLocalResources UP-TO-DATE
+> Task :expo-dev-client:parseDebugLocalResources UP-TO-DATE
+> Task :expo-log-box:compileDebugLibraryResources UP-TO-DATE
+> Task :expo-json-utils:parseDebugLocalResources UP-TO-DATE
+> Task :expo-dev-launcher:parseDebugLocalResources UP-TO-DATE
+> Task :expo-dev-menu-interface:parseDebugLocalResources UP-TO-DATE
+> Task :expo-dev-menu:parseDebugLocalResources UP-TO-DATE
+> Task :expo-dev-client:generateDebugRFile UP-TO-DATE
+> Task :expo:generateDebugRFile UP-TO-DATE
+> Task :expo-log-box:parseDebugLocalResources UP-TO-DATE
+> Task :expo-manifests:compileDebugLibraryResources UP-TO-DATE
+> Task :expo-dev-launcher:generateDebugRFile UP-TO-DATE
+> Task :expo-json-utils:generateDebugRFile UP-TO-DATE
+> Task :expo-dev-menu-interface:generateDebugRFile UP-TO-DATE
+> Task :expo-log-box:generateDebugRFile UP-TO-DATE
+> Task :expo-updates-interface:compileDebugLibraryResources UP-TO-DATE
+> Task :expo-modules-core:compileDebugLibraryResources UP-TO-DATE
+> Task :livekit_react-native:compileDebugLibraryResources UP-TO-DATE
+> Task :livekit_react-native-webrtc:compileDebugLibraryResources UP-TO-DATE
+> Task :expo-dev-menu:generateDebugRFile UP-TO-DATE
+> Task :expo-updates-interface:parseDebugLocalResources UP-TO-DATE
+> Task :expo-modules-core:parseDebugLocalResources UP-TO-DATE
+> Task :lottie-react-native:compileDebugLibraryResources UP-TO-DATE
+> Task :expo-manifests:parseDebugLocalResources UP-TO-DATE
+> Task :livekit_react-native:parseDebugLocalResources UP-TO-DATE
+> Task :livekit_react-native-webrtc:parseDebugLocalResources UP-TO-DATE
+> Task :expo-modules-core:generateDebugRFile UP-TO-DATE
+> Task :expo-updates-interface:generateDebugRFile UP-TO-DATE
+> Task :expo-manifests:generateDebugRFile UP-TO-DATE
+> Task :livekit_react-native:generateDebugRFile UP-TO-DATE
+> Task :lottie-react-native:parseDebugLocalResources UP-TO-DATE
+> Task :react-native-async-storage_async-storage:compileDebugLibraryResources UP-TO-DATE
+> Task :react-native-firebase_app:compileDebugLibraryResources UP-TO-DATE
+> Task :react-native-gesture-handler:compileDebugLibraryResources UP-TO-DATE
+> Task :react-native-async-storage_async-storage:parseDebugLocalResources UP-TO-DATE
+> Task :react-native-firebase_auth:compileDebugLibraryResources UP-TO-DATE
+> Task :react-native-firebase_app:parseDebugLocalResources UP-TO-DATE
+> Task :lottie-react-native:generateDebugRFile UP-TO-DATE
+> Task :react-native-async-storage_async-storage:generateDebugRFile UP-TO-DATE
+> Task :livekit_react-native-webrtc:generateDebugRFile UP-TO-DATE
+> Task :react-native-firebase_auth:parseDebugLocalResources UP-TO-DATE
+> Task :react-native-gesture-handler:parseDebugLocalResources UP-TO-DATE
+> Task :react-native-google-signin_google-signin:compileDebugLibraryResources UP-TO-DATE
+> Task :react-native-incall-manager:compileDebugLibraryResources UP-TO-DATE
+> Task :react-native-firebase_app:generateDebugRFile UP-TO-DATE
+> Task :react-native-google-signin_google-signin:parseDebugLocalResources UP-TO-DATE
+> Task :react-native-purchases:compileDebugLibraryResources UP-TO-DATE
+> Task :react-native-incall-manager:parseDebugLocalResources UP-TO-DATE
+> Task :react-native-firebase_auth:generateDebugRFile UP-TO-DATE
+> Task :react-native-gesture-handler:generateDebugRFile UP-TO-DATE
+> Task :react-native-safe-area-context:compileDebugLibraryResources UP-TO-DATE
+> Task :react-native-google-signin_google-signin:generateDebugRFile UP-TO-DATE
+> Task :react-native-purchases:parseDebugLocalResources UP-TO-DATE
+> Task :react-native-screens:compileDebugLibraryResources UP-TO-DATE
+> Task :react-native-webrtc:compileDebugLibraryResources UP-TO-DATE
+> Task :expo:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :react-native-safe-area-context:parseDebugLocalResources UP-TO-DATE
+> Task :react-native-screens:parseDebugLocalResources UP-TO-DATE
+> Task :expo:generateDebugBuildConfig UP-TO-DATE
+> Task :react-native-webrtc:parseDebugLocalResources UP-TO-DATE
+> Task :react-native-purchases:generateDebugRFile UP-TO-DATE
+> Task :react-native-incall-manager:generateDebugRFile UP-TO-DATE
+> Task :expo-modules-core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :react-native-safe-area-context:generateDebugRFile UP-TO-DATE
+> Task :expo-dev-client:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :react-native-screens:generateDebugRFile UP-TO-DATE
+> Task :expo-dev-launcher:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-modules-core:generateDebugBuildConfig UP-TO-DATE
+> Task :expo-modules-core:javaPreCompileDebug UP-TO-DATE
+> Task :expo-dev-client:dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
+> Task :expo-dev-menu:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :react-native-webrtc:generateDebugRFile UP-TO-DATE
+> Task :expo-dev-menu-interface:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-json-utils:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-dev-menu:generateDebugBuildConfig UP-TO-DATE
+> Task :expo-manifests:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-dev-menu-interface:generateDebugBuildConfig UP-TO-DATE
+> Task :expo-dev-menu-interface:javaPreCompileDebug UP-TO-DATE
+> Task :expo-manifests:generateDebugBuildConfig UP-TO-DATE
+> Task :expo-updates-interface:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-dev-menu:javaPreCompileDebug UP-TO-DATE
+> Task :expo-log-box:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-log-box:generateDebugBuildConfig UP-TO-DATE
+> Task :expo-json-utils:generateDebugBuildConfig UP-TO-DATE
+> Task :expo-manifests:javaPreCompileDebug UP-TO-DATE
+> Task :expo-dev-client:dataBindingGenBaseClassesDebug UP-TO-DATE
+> Task :expo-json-utils:javaPreCompileDebug UP-TO-DATE
+> Task :expo-dev-client:generateDebugBuildConfig UP-TO-DATE
+> Task :expo-updates-interface:generateDebugBuildConfig UP-TO-DATE
+> Task :expo-log-box:javaPreCompileDebug UP-TO-DATE
+> Task :expo:javaPreCompileDebug UP-TO-DATE
+> Task :expo-dev-client:javaPreCompileDebug UP-TO-DATE
+> Task :expo-updates-interface:javaPreCompileDebug UP-TO-DATE
+> Task :livekit_react-native-webrtc:generateDebugBuildConfig UP-TO-DATE
+> Task :lottie-react-native:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :livekit_react-native:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :livekit_react-native:generateDebugBuildConfig UP-TO-DATE
+> Task :react-native-async-storage_async-storage:generateDebugBuildConfig UP-TO-DATE
+> Task :react-native-firebase_app:generateDebugBuildConfig UP-TO-DATE
+> Task :react-native-async-storage_async-storage:javaPreCompileDebug UP-TO-DATE
+> Task :lottie-react-native:generateDebugBuildConfig UP-TO-DATE
+> Task :react-native-firebase_app:javaPreCompileDebug UP-TO-DATE
+> Task :livekit_react-native-webrtc:javaPreCompileDebug UP-TO-DATE
+> Task :livekit_react-native:javaPreCompileDebug UP-TO-DATE
+> Task :react-native-firebase_auth:generateDebugBuildConfig UP-TO-DATE
+> Task :react-native-firebase_auth:javaPreCompileDebug UP-TO-DATE
+> Task :react-native-gesture-handler:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :react-native-google-signin_google-signin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :react-native-gesture-handler:generateDebugBuildConfig UP-TO-DATE
+> Task :react-native-gesture-handler:javaPreCompileDebug UP-TO-DATE
+> Task :react-native-google-signin_google-signin:generateDebugBuildConfig UP-TO-DATE
+> Task :react-native-incall-manager:generateDebugBuildConfig UP-TO-DATE
+> Task :expo-dev-launcher:dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
+> Task :react-native-incall-manager:javaPreCompileDebug UP-TO-DATE
+> Task :react-native-firebase_app:compileDebugJavaWithJavac UP-TO-DATE
+> Task :livekit_react-native-webrtc:compileDebugJavaWithJavac UP-TO-DATE
+> Task :react-native-async-storage_async-storage:compileDebugJavaWithJavac UP-TO-DATE
+> Task :livekit_react-native-webrtc:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :react-native-async-storage_async-storage:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :react-native-purchases:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :react-native-firebase_app:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :react-native-purchases:generateDebugBuildConfig UP-TO-DATE
+> Task :react-native-safe-area-context:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :react-native-safe-area-context:generateDebugBuildConfig UP-TO-DATE
+> Task :expo-dev-launcher:dataBindingGenBaseClassesDebug UP-TO-DATE
+> Task :expo-dev-launcher:generateDebugBuildConfig UP-TO-DATE
+> Task :react-native-firebase_auth:compileDebugJavaWithJavac UP-TO-DATE
+> Task :expo-dev-launcher:checkApolloVersions UP-TO-DATE
+> Task :expo-dev-launcher:generateServiceApolloOptions UP-TO-DATE
+> Task :react-native-firebase_auth:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :react-native-screens:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :react-native-screens:generateDebugBuildConfig UP-TO-DATE
+> Task :expo-dev-launcher:generateServiceApolloSources UP-TO-DATE
+> Task :react-native-incall-manager:compileDebugJavaWithJavac UP-TO-DATE
+> Task :expo-dev-launcher:javaPreCompileDebug UP-TO-DATE
+> Task :react-native-webrtc:generateDebugBuildConfig UP-TO-DATE
+> Task :react-native-incall-manager:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :react-native-webrtc:javaPreCompileDebug UP-TO-DATE
+> Task :expo:mergeDebugShaders UP-TO-DATE
+> Task :expo:compileDebugShaders NO-SOURCE
+> Task :expo:generateDebugAssets UP-TO-DATE
+> Task :lottie-react-native:compileDebugKotlin UP-TO-DATE
+> Task :react-native-webrtc:compileDebugJavaWithJavac UP-TO-DATE
+> Task :lottie-react-native:javaPreCompileDebug UP-TO-DATE
+> Task :react-native-webrtc:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :react-native-purchases:compileDebugKotlin UP-TO-DATE
+> Task :react-native-google-signin_google-signin:compileDebugKotlin UP-TO-DATE
+> Task :react-native-purchases:javaPreCompileDebug UP-TO-DATE
+> Task :expo-dev-client:mergeDebugShaders UP-TO-DATE
+> Task :expo:mergeDebugAssets UP-TO-DATE
+> Task :react-native-google-signin_google-signin:javaPreCompileDebug UP-TO-DATE
+> Task :lottie-react-native:compileDebugJavaWithJavac UP-TO-DATE
+> Task :lottie-react-native:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :expo-dev-client:compileDebugShaders NO-SOURCE
+> Task :expo-dev-client:generateDebugAssets UP-TO-DATE
+> Task :expo-dev-launcher:mergeDebugShaders UP-TO-DATE
+> Task :expo-dev-menu:mergeDebugShaders UP-TO-DATE
+> Task :expo-dev-launcher:compileDebugShaders NO-SOURCE
+> Task :expo-dev-client:mergeDebugAssets UP-TO-DATE
+> Task :expo-dev-launcher:generateDebugAssets UP-TO-DATE
+> Task :expo-dev-menu:compileDebugShaders NO-SOURCE
+> Task :expo-dev-menu:generateDebugAssets UP-TO-DATE
+> Task :react-native-google-signin_google-signin:compileDebugJavaWithJavac UP-TO-DATE
+> Task :react-native-safe-area-context:compileDebugKotlin UP-TO-DATE
+> Task :expo-dev-menu:mergeDebugAssets UP-TO-DATE
+> Task :expo-dev-launcher:mergeDebugAssets UP-TO-DATE
+> Task :expo-dev-menu-interface:mergeDebugShaders UP-TO-DATE
+> Task :react-native-safe-area-context:javaPreCompileDebug UP-TO-DATE
+> Task :react-native-purchases:compileDebugJavaWithJavac UP-TO-DATE
+> Task :react-native-google-signin_google-signin:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :livekit_react-native:compileDebugKotlin UP-TO-DATE
+> Task :expo-json-utils:mergeDebugShaders UP-TO-DATE
+> Task :expo-json-utils:compileDebugShaders NO-SOURCE
+> Task :expo-dev-menu-interface:compileDebugShaders NO-SOURCE
+> Task :expo-json-utils:generateDebugAssets UP-TO-DATE
+> Task :react-native-purchases:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :expo-log-box:mergeDebugShaders UP-TO-DATE
+> Task :expo-dev-menu-interface:generateDebugAssets UP-TO-DATE
+> Task :expo-log-box:compileDebugShaders NO-SOURCE
+> Task :expo-log-box:generateDebugAssets UP-TO-DATE
+> Task :expo-manifests:mergeDebugShaders UP-TO-DATE
+> Task :expo-log-box:mergeDebugAssets UP-TO-DATE
+> Task :expo-modules-core:mergeDebugShaders UP-TO-DATE
+> Task :expo-manifests:compileDebugShaders NO-SOURCE
+> Task :expo-dev-menu-interface:mergeDebugAssets UP-TO-DATE
+> Task :expo-json-utils:mergeDebugAssets UP-TO-DATE
+> Task :expo-updates-interface:mergeDebugShaders UP-TO-DATE
+> Task :expo-manifests:generateDebugAssets UP-TO-DATE
+> Task :livekit_react-native-webrtc:mergeDebugShaders UP-TO-DATE
+> Task :expo-updates-interface:compileDebugShaders NO-SOURCE
+> Task :expo-updates-interface:generateDebugAssets UP-TO-DATE
+> Task :lottie-react-native:mergeDebugShaders UP-TO-DATE
+> Task :expo-updates-interface:mergeDebugAssets UP-TO-DATE
+> Task :react-native-safe-area-context:compileDebugJavaWithJavac UP-TO-DATE
+> Task :react-native-async-storage_async-storage:mergeDebugShaders UP-TO-DATE
+> Task :react-native-safe-area-context:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :react-native-async-storage_async-storage:compileDebugShaders NO-SOURCE
+> Task :livekit_react-native:compileDebugJavaWithJavac UP-TO-DATE
+> Task :react-native-firebase_app:mergeDebugShaders UP-TO-DATE
+> Task :expo-manifests:mergeDebugAssets UP-TO-DATE
+> Task :livekit_react-native-webrtc:compileDebugShaders NO-SOURCE
+> Task :livekit_react-native-webrtc:generateDebugAssets UP-TO-DATE
+> Task :react-native-async-storage_async-storage:generateDebugAssets UP-TO-DATE
+> Task :expo-modules-core:compileDebugShaders NO-SOURCE
+> Task :expo-modules-core:generateDebugAssets UP-TO-DATE
+> Task :livekit_react-native:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :livekit_react-native-webrtc:mergeDebugAssets UP-TO-DATE
+> Task :lottie-react-native:compileDebugShaders NO-SOURCE
+> Task :expo-modules-core:mergeDebugAssets UP-TO-DATE
+> Task :react-native-firebase_app:compileDebugShaders NO-SOURCE
+> Task :react-native-firebase_app:generateDebugAssets UP-TO-DATE
+> Task :react-native-firebase_auth:mergeDebugShaders UP-TO-DATE
+> Task :livekit_react-native:mergeDebugShaders UP-TO-DATE
+> Task :react-native-async-storage_async-storage:mergeDebugAssets UP-TO-DATE
+> Task :react-native-gesture-handler:mergeDebugShaders UP-TO-DATE
+> Task :react-native-firebase_app:mergeDebugAssets UP-TO-DATE
+> Task :react-native-google-signin_google-signin:mergeDebugShaders UP-TO-DATE
+> Task :react-native-incall-manager:mergeDebugShaders UP-TO-DATE
+> Task :react-native-google-signin_google-signin:compileDebugShaders NO-SOURCE
+> Task :lottie-react-native:generateDebugAssets UP-TO-DATE
+> Task :react-native-google-signin_google-signin:generateDebugAssets UP-TO-DATE
+> Task :react-native-gesture-handler:compileDebugShaders NO-SOURCE
+> Task :livekit_react-native:compileDebugShaders NO-SOURCE
+> Task :react-native-firebase_auth:compileDebugShaders NO-SOURCE
+> Task :react-native-firebase_auth:generateDebugAssets UP-TO-DATE
+> Task :livekit_react-native:generateDebugAssets UP-TO-DATE
+> Task :react-native-purchases:mergeDebugShaders UP-TO-DATE
+> Task :react-native-purchases:compileDebugShaders NO-SOURCE
+> Task :react-native-purchases:generateDebugAssets UP-TO-DATE
+> Task :react-native-firebase_auth:mergeDebugAssets UP-TO-DATE
+> Task :react-native-reanimated:assertMinimalReactNativeVersionTask
+> Task :react-native-reanimated:assertNewArchitectureEnabledTask SKIPPED
+> Task :react-native-incall-manager:compileDebugShaders NO-SOURCE
+> Task :livekit_react-native:mergeDebugAssets UP-TO-DATE
+> Task :react-native-google-signin_google-signin:mergeDebugAssets UP-TO-DATE
+> Task :lottie-react-native:mergeDebugAssets UP-TO-DATE
+> Task :react-native-purchases:mergeDebugAssets UP-TO-DATE
+> Task :react-native-incall-manager:generateDebugAssets UP-TO-DATE
+> Task :react-native-webrtc:mergeDebugShaders UP-TO-DATE
+> Task :react-native-incall-manager:mergeDebugAssets UP-TO-DATE
+> Task :livekit_react-native-webrtc:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :react-native-safe-area-context:mergeDebugShaders UP-TO-DATE
+> Task :react-native-gesture-handler:generateDebugAssets UP-TO-DATE
+> Task :livekit_react-native:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :lottie-react-native:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :react-native-webrtc:compileDebugShaders NO-SOURCE
+> Task :react-native-safe-area-context:compileDebugShaders NO-SOURCE
+> Task :react-native-webrtc:generateDebugAssets UP-TO-DATE
+> Task :react-native-safe-area-context:generateDebugAssets UP-TO-DATE
+> Task :react-native-async-storage_async-storage:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :react-native-google-signin_google-signin:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :react-native-gesture-handler:mergeDebugAssets UP-TO-DATE
+> Task :react-native-firebase_auth:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :react-native-worklets:assertMinimalReactNativeVersionTask
+> Task :react-native-firebase_app:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :react-native-worklets:assertNewArchitectureEnabledTask SKIPPED
+> Task :react-native-safe-area-context:mergeDebugAssets UP-TO-DATE
+> Task :react-native-webrtc:mergeDebugAssets UP-TO-DATE
+> Task :react-native-webrtc:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :react-native-worklets:generateCodegenSchemaFromJavaScript UP-TO-DATE
+> Task :livekit_react-native:processDebugJavaRes UP-TO-DATE
+> Task :react-native-incall-manager:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :react-native-purchases:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :livekit_react-native-webrtc:processDebugJavaRes NO-SOURCE
+> Task :react-native-async-storage_async-storage:processDebugJavaRes NO-SOURCE
+> Task :react-native-firebase_app:processDebugJavaRes NO-SOURCE
+> Task :react-native-firebase_auth:processDebugJavaRes NO-SOURCE
+> Task :lottie-react-native:processDebugJavaRes UP-TO-DATE
+> Task :react-native-incall-manager:processDebugJavaRes NO-SOURCE
+> Task :react-native-safe-area-context:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :react-native-google-signin_google-signin:processDebugJavaRes UP-TO-DATE
+> Task :react-native-webrtc:processDebugJavaRes NO-SOURCE
+> Task :react-native-purchases:processDebugJavaRes UP-TO-DATE
+> Task :expo:mergeDebugJniLibFolders UP-TO-DATE
+> Task :expo-dev-client:mergeDebugJniLibFolders UP-TO-DATE
+> Task :expo:mergeDebugNativeLibs NO-SOURCE
+> Task :expo-dev-launcher:mergeDebugJniLibFolders UP-TO-DATE
+> Task :react-native-worklets:generateCodegenArtifactsFromSchema UP-TO-DATE
+> Task :expo-dev-menu:mergeDebugJniLibFolders UP-TO-DATE
+> Task :react-native-screens:compileDebugKotlin UP-TO-DATE
+> Task :expo-dev-menu-interface:mergeDebugJniLibFolders UP-TO-DATE
+> Task :expo:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :react-native-safe-area-context:processDebugJavaRes UP-TO-DATE
+> Task :expo-dev-client:mergeDebugNativeLibs NO-SOURCE
+> Task :react-native-screens:javaPreCompileDebug UP-TO-DATE
+> Task :expo-dev-client:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :expo-dev-menu-interface:mergeDebugNativeLibs NO-SOURCE
+> Task :expo-dev-launcher:mergeDebugNativeLibs NO-SOURCE
+> Task :expo-dev-menu:mergeDebugNativeLibs NO-SOURCE
+> Task :expo-json-utils:mergeDebugJniLibFolders UP-TO-DATE
+> Task :expo-dev-menu:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :expo-log-box:mergeDebugJniLibFolders UP-TO-DATE
+> Task :expo-dev-launcher:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :expo-json-utils:mergeDebugNativeLibs NO-SOURCE
+> Task :expo-manifests:mergeDebugJniLibFolders UP-TO-DATE
+> Task :expo-modules-core:mergeDebugJniLibFolders UP-TO-DATE
+> Task :expo-updates-interface:mergeDebugJniLibFolders UP-TO-DATE
+> Task :expo-dev-menu-interface:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :react-native-worklets:prepareWorkletsHeadersForPrefabs UP-TO-DATE
+> Task :react-native-worklets:preBuild
+> Task :livekit_react-native:mergeDebugJniLibFolders UP-TO-DATE
+> Task :livekit_react-native-webrtc:mergeDebugJniLibFolders UP-TO-DATE
+> Task :expo-json-utils:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :expo-manifests:mergeDebugNativeLibs NO-SOURCE
+> Task :expo-manifests:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :lottie-react-native:mergeDebugJniLibFolders UP-TO-DATE
+> Task :react-native-async-storage_async-storage:mergeDebugJniLibFolders UP-TO-DATE
+> Task :expo-log-box:mergeDebugNativeLibs NO-SOURCE
+> Task :react-native-firebase_auth:mergeDebugJniLibFolders UP-TO-DATE
+> Task :livekit_react-native-webrtc:mergeDebugNativeLibs NO-SOURCE
+> Task :lottie-react-native:mergeDebugNativeLibs NO-SOURCE
+> Task :react-native-worklets:preDebugBuild
+> Task :react-native-firebase_app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :react-native-screens:compileDebugJavaWithJavac UP-TO-DATE
+> Task :expo-updates-interface:mergeDebugNativeLibs NO-SOURCE
+> Task :livekit_react-native:mergeDebugNativeLibs NO-SOURCE
+> Task :lottie-react-native:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :livekit_react-native:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :react-native-firebase_app:mergeDebugNativeLibs NO-SOURCE
+> Task :react-native-async-storage_async-storage:mergeDebugNativeLibs NO-SOURCE
+> Task :expo-log-box:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :livekit_react-native-webrtc:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :react-native-worklets:writeDebugAarMetadata UP-TO-DATE
+> Task :react-native-firebase_auth:mergeDebugNativeLibs NO-SOURCE
+> Task :react-native-screens:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :react-native-gesture-handler:mergeDebugJniLibFolders UP-TO-DATE
+> Task :react-native-firebase_auth:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :react-native-screens:mergeDebugShaders UP-TO-DATE
+> Task :react-native-screens:compileDebugShaders NO-SOURCE
+> Task :react-native-screens:generateDebugAssets UP-TO-DATE
+> Task :expo-updates-interface:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :react-native-firebase_app:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :react-native-incall-manager:mergeDebugJniLibFolders UP-TO-DATE
+> Task :react-native-async-storage_async-storage:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :react-native-purchases:mergeDebugJniLibFolders UP-TO-DATE
+> Task :react-native-screens:mergeDebugAssets UP-TO-DATE
+> Task :react-native-safe-area-context:mergeDebugJniLibFolders UP-TO-DATE
+> Task :react-native-screens:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :react-native-worklets:generateDebugResValues UP-TO-DATE
+> Task :react-native-webrtc:mergeDebugJniLibFolders UP-TO-DATE
+> Task :expo-dev-client:stripDebugDebugSymbols NO-SOURCE
+> Task :expo-dev-launcher:stripDebugDebugSymbols NO-SOURCE
+> Task :react-native-safe-area-context:mergeDebugNativeLibs NO-SOURCE
+> Task :react-native-purchases:mergeDebugNativeLibs NO-SOURCE
+> Task :expo:stripDebugDebugSymbols NO-SOURCE
+> Task :react-native-incall-manager:mergeDebugNativeLibs NO-SOURCE
+> Task :react-native-webrtc:mergeDebugNativeLibs NO-SOURCE
+> Task :react-native-worklets:generateDebugResources UP-TO-DATE
+> Task :expo:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :react-native-incall-manager:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :react-native-purchases:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :react-native-safe-area-context:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :react-native-google-signin_google-signin:mergeDebugJniLibFolders UP-TO-DATE
+> Task :react-native-webrtc:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :expo:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :react-native-google-signin_google-signin:mergeDebugNativeLibs NO-SOURCE
+> Task :expo-dev-menu:stripDebugDebugSymbols NO-SOURCE
+> Task :expo-dev-launcher:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :expo-log-box:stripDebugDebugSymbols NO-SOURCE
+> Task :expo-dev-client:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :expo-dev-launcher:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :expo-json-utils:stripDebugDebugSymbols NO-SOURCE
+> Task :react-native-google-signin_google-signin:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :expo-dev-menu:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :expo-json-utils:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :expo:prepareDebugArtProfile UP-TO-DATE
+> Task :expo-dev-launcher:prepareDebugArtProfile UP-TO-DATE
+> Task :expo-dev-menu-interface:stripDebugDebugSymbols NO-SOURCE
+> Task :expo-json-utils:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :react-native-worklets:packageDebugResources UP-TO-DATE
+> Task :expo-dev-launcher:prepareLintJarForPublish UP-TO-DATE
+> Task :expo-dev-menu-interface:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :expo-json-utils:prepareDebugArtProfile UP-TO-DATE
+> Task :expo-manifests:stripDebugDebugSymbols NO-SOURCE
+> Task :react-native-worklets:extractDeepLinksDebug UP-TO-DATE
+> Task :expo-json-utils:prepareLintJarForPublish UP-TO-DATE
+> Task :expo-dev-menu:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :expo-dev-client:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :expo-modules-core:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :expo-log-box:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :expo:prepareLintJarForPublish UP-TO-DATE
+> Task :expo-dev-menu:prepareDebugArtProfile UP-TO-DATE
+> Task :expo-dev-client:prepareDebugArtProfile UP-TO-DATE
+> Task :expo-updates-interface:stripDebugDebugSymbols NO-SOURCE
+> Task :expo-modules-core:prepareDebugArtProfile UP-TO-DATE
+> Task :expo-dev-menu:prepareLintJarForPublish UP-TO-DATE
+> Task :expo-manifests:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :expo-log-box:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :expo-dev-menu-interface:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :expo-updates-interface:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :expo-updates-interface:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :expo-dev-menu-interface:prepareDebugArtProfile UP-TO-DATE
+> Task :react-native-screens:processDebugJavaRes UP-TO-DATE
+> Task :react-native-worklets:processDebugManifest UP-TO-DATE
+> Task :expo-manifests:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :expo-dev-client:prepareLintJarForPublish UP-TO-DATE
+> Task :expo-log-box:prepareDebugArtProfile UP-TO-DATE
+> Task :expo-modules-core:prepareLintJarForPublish UP-TO-DATE
+> Task :livekit_react-native:stripDebugDebugSymbols NO-SOURCE
+> Task :livekit_react-native-webrtc:stripDebugDebugSymbols NO-SOURCE
+> Task :expo-log-box:prepareLintJarForPublish UP-TO-DATE
+> Task :livekit_react-native:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :lottie-react-native:stripDebugDebugSymbols NO-SOURCE
+> Task :expo-dev-menu-interface:prepareLintJarForPublish UP-TO-DATE
+> Task :expo-updates-interface:prepareDebugArtProfile UP-TO-DATE
+> Task :lottie-react-native:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :react-native-async-storage_async-storage:stripDebugDebugSymbols NO-SOURCE
+> Task :react-native-firebase_app:stripDebugDebugSymbols NO-SOURCE
+> Task :expo-manifests:prepareDebugArtProfile UP-TO-DATE
+> Task :react-native-worklets:compileDebugLibraryResources UP-TO-DATE
+> Task :livekit_react-native-webrtc:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :react-native-firebase_app:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :expo-updates-interface:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-firebase_auth:stripDebugDebugSymbols NO-SOURCE
+> Task :react-native-async-storage_async-storage:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :expo-manifests:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-gesture-handler:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :react-native-google-signin_google-signin:stripDebugDebugSymbols NO-SOURCE
+> Task :lottie-react-native:extractDebugAnnotations UP-TO-DATE
+> Task :lottie-react-native:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :react-native-gesture-handler:prepareDebugArtProfile UP-TO-DATE
+> Task :lottie-react-native:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-gesture-handler:prepareLintJarForPublish UP-TO-DATE
+> Task :lottie-react-native:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :react-native-incall-manager:stripDebugDebugSymbols NO-SOURCE
+> Task :react-native-google-signin_google-signin:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :react-native-firebase_auth:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :livekit_react-native-webrtc:extractDebugAnnotations UP-TO-DATE
+> Task :livekit_react-native:extractDebugAnnotations UP-TO-DATE
+> Task :react-native-firebase_app:extractDebugAnnotations UP-TO-DATE
+> Task :react-native-worklets:parseDebugLocalResources UP-TO-DATE
+> Task :react-native-async-storage_async-storage:extractDebugAnnotations UP-TO-DATE
+> Task :livekit_react-native-webrtc:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :react-native-incall-manager:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :lottie-react-native:prepareDebugArtProfile UP-TO-DATE
+> Task :react-native-async-storage_async-storage:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :livekit_react-native:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :react-native-worklets:generateDebugRFile UP-TO-DATE
+> Task :lottie-react-native:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-async-storage_async-storage:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :livekit_react-native:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :livekit_react-native:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :lottie-react-native:mergeDebugJavaResource UP-TO-DATE
+> Task :react-native-firebase_auth:extractDebugAnnotations UP-TO-DATE
+> Task :livekit_react-native:prepareDebugArtProfile UP-TO-DATE
+> Task :react-native-async-storage_async-storage:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :react-native-incall-manager:extractDebugAnnotations UP-TO-DATE
+> Task :react-native-google-signin_google-signin:extractDebugAnnotations UP-TO-DATE
+> Task :livekit_react-native:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-firebase_auth:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :react-native-async-storage_async-storage:prepareDebugArtProfile UP-TO-DATE
+> Task :lottie-react-native:syncDebugLibJars UP-TO-DATE
+> Task :react-native-worklets:generateDebugBuildConfig UP-TO-DATE
+> Task :livekit_react-native:mergeDebugJavaResource UP-TO-DATE
+> Task :react-native-google-signin_google-signin:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :livekit_react-native-webrtc:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-async-storage_async-storage:prepareLintJarForPublish UP-TO-DATE
+> Task :livekit_react-native:syncDebugLibJars UP-TO-DATE
+> Task :livekit_react-native-webrtc:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :react-native-firebase_auth:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-firebase_app:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :livekit_react-native-webrtc:prepareDebugArtProfile UP-TO-DATE
+> Task :livekit_react-native-webrtc:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-firebase_app:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-incall-manager:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :react-native-firebase_app:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :react-native-google-signin_google-signin:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-incall-manager:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-async-storage_async-storage:mergeDebugJavaResource UP-TO-DATE
+> Task :react-native-worklets:javaPreCompileDebug UP-TO-DATE
+> Task :livekit_react-native:bundleDebugAar UP-TO-DATE
+> Task :react-native-firebase_app:prepareDebugArtProfile UP-TO-DATE
+> Task :react-native-google-signin_google-signin:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :react-native-incall-manager:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :react-native-google-signin_google-signin:prepareDebugArtProfile UP-TO-DATE
+> Task :react-native-firebase_auth:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :react-native-incall-manager:prepareDebugArtProfile UP-TO-DATE
+> Task :react-native-google-signin_google-signin:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-async-storage_async-storage:syncDebugLibJars UP-TO-DATE
+> Task :lottie-react-native:bundleDebugAar UP-TO-DATE
+> Task :livekit_react-native-webrtc:mergeDebugJavaResource UP-TO-DATE
+> Task :react-native-firebase_auth:prepareDebugArtProfile UP-TO-DATE
+> Task :react-native-incall-manager:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-google-signin_google-signin:mergeDebugJavaResource UP-TO-DATE
+> Task :livekit_react-native:assembleDebug UP-TO-DATE
+> Task :react-native-async-storage_async-storage:bundleDebugAar UP-TO-DATE
+> Task :react-native-async-storage_async-storage:assembleDebug UP-TO-DATE
+> Task :react-native-firebase_app:prepareLintJarForPublish UP-TO-DATE
+> Task :livekit_react-native-webrtc:syncDebugLibJars UP-TO-DATE
+> Task :react-native-purchases:stripDebugDebugSymbols NO-SOURCE
+> Task :react-native-safe-area-context:stripDebugDebugSymbols NO-SOURCE
+> Task :lottie-react-native:assembleDebug UP-TO-DATE
+> Task :react-native-safe-area-context:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :react-native-incall-manager:mergeDebugJavaResource UP-TO-DATE
+> Task :react-native-google-signin_google-signin:syncDebugLibJars UP-TO-DATE
+> Task :react-native-firebase_auth:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-purchases:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :livekit_react-native-webrtc:bundleDebugAar UP-TO-DATE
+> Task :livekit_react-native-webrtc:assembleDebug UP-TO-DATE
+> Task :react-native-webrtc:stripDebugDebugSymbols NO-SOURCE
+> Task :react-native-firebase_auth:mergeDebugJavaResource UP-TO-DATE
+> Task :react-native-google-signin_google-signin:bundleDebugAar UP-TO-DATE
+> Task :react-native-google-signin_google-signin:assembleDebug UP-TO-DATE
+> Task :react-native-webrtc:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :react-native-incall-manager:syncDebugLibJars UP-TO-DATE
+> Task :react-native-firebase_auth:syncDebugLibJars UP-TO-DATE
+> Task :react-native-firebase_auth:bundleDebugAar UP-TO-DATE
+> Task :react-native-firebase_auth:assembleDebug UP-TO-DATE
+> Task :react-native-incall-manager:bundleDebugAar UP-TO-DATE
+> Task :react-native-safe-area-context:extractDebugAnnotations UP-TO-DATE
+> Task :react-native-incall-manager:assembleDebug UP-TO-DATE
+> Task :react-native-firebase_app:mergeDebugJavaResource UP-TO-DATE
+> Task :react-native-webrtc:extractDebugAnnotations UP-TO-DATE
+> Task :react-native-purchases:extractDebugAnnotations UP-TO-DATE
+> Task :react-native-webrtc:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :react-native-safe-area-context:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :react-native-webrtc:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-webrtc:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :react-native-screens:configureCMakeDebug[arm64-v8a]
+> Task :react-native-purchases:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :react-native-safe-area-context:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-firebase_app:syncDebugLibJars UP-TO-DATE
+> Task :react-native-worklets:compileDebugJavaWithJavac UP-TO-DATE
+> Task :react-native-webrtc:prepareDebugArtProfile UP-TO-DATE
+> Task :react-native-firebase_app:bundleDebugAar UP-TO-DATE
+> Task :react-native-firebase_app:assembleDebug UP-TO-DATE
+> Task :react-native-worklets:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :react-native-webrtc:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-safe-area-context:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :react-native-worklets:mergeDebugShaders UP-TO-DATE
+> Task :react-native-webrtc:mergeDebugJavaResource UP-TO-DATE
+> Task :react-native-worklets:compileDebugShaders NO-SOURCE
+> Task :react-native-worklets:generateDebugAssets UP-TO-DATE
+> Task :react-native-webrtc:syncDebugLibJars UP-TO-DATE
+> Task :react-native-worklets:mergeDebugAssets UP-TO-DATE
+> Task :react-native-purchases:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-safe-area-context:prepareDebugArtProfile UP-TO-DATE
+> Task :react-native-purchases:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :react-native-safe-area-context:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-worklets:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :react-native-purchases:prepareDebugArtProfile UP-TO-DATE
+> Task :react-native-purchases:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-webrtc:bundleDebugAar UP-TO-DATE
+> Task :react-native-webrtc:assembleDebug UP-TO-DATE
+> Task :react-native-worklets:processDebugJavaRes NO-SOURCE
+> Task :react-native-purchases:mergeDebugJavaResource UP-TO-DATE
+> Task :react-native-safe-area-context:mergeDebugJavaResource UP-TO-DATE
+> Task :react-native-purchases:syncDebugLibJars UP-TO-DATE
+> Task :react-native-safe-area-context:syncDebugLibJars UP-TO-DATE
+> Task :react-native-purchases:bundleDebugAar UP-TO-DATE
+> Task :react-native-purchases:assembleDebug UP-TO-DATE
+> Task :react-native-safe-area-context:bundleDebugAar UP-TO-DATE
+> Task :react-native-safe-area-context:assembleDebug UP-TO-DATE
+> Task :react-native-reanimated:assertWorkletsVersionTask
+> Task :react-native-reanimated:generateCodegenSchemaFromJavaScript UP-TO-DATE
+> Task :react-native-reanimated:generateCodegenArtifactsFromSchema UP-TO-DATE
+> Task :react-native-screens:buildCMakeDebug[arm64-v8a]
+> Task :react-native-reanimated:prepareReanimatedHeadersForPrefabs UP-TO-DATE
+> Task :react-native-reanimated:preBuild
+> Task :react-native-reanimated:preDebugBuild
+> Task :react-native-reanimated:writeDebugAarMetadata UP-TO-DATE
+> Task :react-native-reanimated:generateDebugResValues UP-TO-DATE
+> Task :react-native-reanimated:generateDebugResources UP-TO-DATE
+> Task :react-native-reanimated:packageDebugResources UP-TO-DATE
+> Task :react-native-reanimated:extractDeepLinksDebug UP-TO-DATE
+> Task :react-native-reanimated:processDebugManifest UP-TO-DATE
+> Task :react-native-reanimated:compileDebugLibraryResources UP-TO-DATE
+> Task :react-native-reanimated:parseDebugLocalResources UP-TO-DATE
+> Task :react-native-reanimated:generateDebugRFile UP-TO-DATE
+> Task :react-native-reanimated:generateDebugBuildConfig UP-TO-DATE
+> Task :react-native-reanimated:javaPreCompileDebug UP-TO-DATE
+> Task :react-native-screens:configureCMakeDebug[armeabi-v7a]
+> Task :react-native-reanimated:compileDebugJavaWithJavac UP-TO-DATE
+> Task :react-native-reanimated:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :react-native-reanimated:mergeDebugShaders UP-TO-DATE
+> Task :react-native-reanimated:compileDebugShaders NO-SOURCE
+> Task :react-native-reanimated:generateDebugAssets UP-TO-DATE
+> Task :react-native-reanimated:mergeDebugAssets UP-TO-DATE
+> Task :react-native-reanimated:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :react-native-reanimated:processDebugJavaRes NO-SOURCE
+> Task :react-native-reanimated:mergeDebugJniLibFolders UP-TO-DATE
+> Task :react-native-reanimated:extractDebugAnnotations UP-TO-DATE
+> Task :react-native-reanimated:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :react-native-reanimated:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-reanimated:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :react-native-reanimated:prepareDebugArtProfile UP-TO-DATE
+> Task :react-native-reanimated:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-reanimated:mergeDebugJavaResource UP-TO-DATE
+
+> Task :expo-constants:createExpoConfig
+.\gradlew.bat : The NODE_ENV environment variable is required but was not specified. Ensure the project
+ is bundled with Expo CLI or NODE_ENV is set. Using only .env.local and .env
+At line:1 char:13
++ cd android; .\gradlew.bat assembleDebug > ..\build_error.txt 2>&1
++             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (The NODE_ENV en....local and .env:String) [], RemoteExcep 
+   tion
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+> Task :expo-constants:preBuild
+> Task :expo-constants:preDebugBuild
+> Task :react-native-reanimated:syncDebugLibJars UP-TO-DATE
+> Task :app:generateAutolinkingNewArchitectureFiles UP-TO-DATE
+> Task :expo-constants:writeDebugAarMetadata UP-TO-DATE
+> Task :app:generateAutolinkingPackageList UP-TO-DATE
+> Task :expo-constants:generateDebugResValues UP-TO-DATE
+> Task :expo-modules-core:compileDebugKotlin UP-TO-DATE
+> Task :app:generateCodegenSchemaFromJavaScript SKIPPED
+> Task :expo-constants:generateDebugResources UP-TO-DATE
+> Task :app:generateCodegenArtifactsFromSchema SKIPPED
+> Task :app:generateReactNativeEntryPoint UP-TO-DATE
+> Task :app:preBuild
+> Task :app:preDebugBuild
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:generateDebugBuildConfig UP-TO-DATE
+> Task :expo-constants:packageDebugResources UP-TO-DATE
+> Task :expo-constants:extractDeepLinksDebug UP-TO-DATE
+> Task :expo-constants:processDebugManifest UP-TO-DATE
+> Task :expo-constants:compileDebugLibraryResources UP-TO-DATE
+> Task :expo-constants:parseDebugLocalResources UP-TO-DATE
+> Task :expo-constants:generateDebugRFile UP-TO-DATE
+> Task :expo-constants:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-constants:generateDebugBuildConfig UP-TO-DATE
+> Task :expo-constants:javaPreCompileDebug UP-TO-DATE
+> Task :expo-constants:mergeDebugShaders UP-TO-DATE
+> Task :expo-constants:compileDebugShaders NO-SOURCE
+> Task :expo-constants:generateDebugAssets UP-TO-DATE
+> Task :expo-constants:mergeDebugAssets UP-TO-DATE
+> Task :expo-constants:mergeDebugJniLibFolders UP-TO-DATE
+> Task :expo-modules-core:compileDebugJavaWithJavac UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :expo-constants:mergeDebugNativeLibs NO-SOURCE
+> Task :expo-modules-core:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :expo-constants:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :expo-modules-core:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :expo-dev-menu-interface:compileDebugKotlin NO-SOURCE
+> Task :expo-dev-client:compileDebugKotlin NO-SOURCE
+> Task :react-native-gesture-handler:compileDebugKotlin UP-TO-DATE
+> Task :app:processDebugGoogleServices UP-TO-DATE
+> Task :expo-dev-menu-interface:compileDebugJavaWithJavac UP-TO-DATE
+> Task :expo-dev-menu-interface:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :expo-modules-core:processDebugJavaRes UP-TO-DATE
+> Task :expo-dev-client:compileDebugJavaWithJavac UP-TO-DATE
+> Task :expo-dev-client:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :expo-dev-client:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :expo-dev-client:processDebugJavaRes NO-SOURCE
+> Task :expo-dev-menu-interface:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :expo-dev-menu-interface:processDebugJavaRes NO-SOURCE
+> Task :react-native-gesture-handler:compileDebugJavaWithJavac UP-TO-DATE
+> Task :expo-modules-core:extractDebugAnnotations UP-TO-DATE
+> Task :expo-dev-client:extractDebugAnnotations UP-TO-DATE
+> Task :expo-dev-client:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :expo-modules-core:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-gesture-handler:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :expo-dev-client:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :expo-modules-core:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :react-native-gesture-handler:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :expo-modules-core:mergeDebugJavaResource UP-TO-DATE
+> Task :expo-dev-menu-interface:extractDebugAnnotations UP-TO-DATE
+> Task :expo-modules-core:syncDebugLibJars UP-TO-DATE
+> Task :react-native-gesture-handler:processDebugJavaRes UP-TO-DATE
+> Task :expo-dev-client:mergeDebugJavaResource UP-TO-DATE
+> Task :expo-dev-menu-interface:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :expo-dev-menu-interface:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :expo-updates-interface:compileDebugKotlin UP-TO-DATE
+> Task :expo-dev-client:syncDebugLibJars UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :expo-dev-client:bundleDebugAar UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :expo-dev-menu-interface:mergeDebugJavaResource UP-TO-DATE
+> Task :react-native-gesture-handler:extractDebugAnnotations UP-TO-DATE
+> Task :expo-dev-client:assembleDebug UP-TO-DATE
+> Task :expo-dev-menu-interface:syncDebugLibJars UP-TO-DATE
+> Task :react-native-gesture-handler:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-gesture-handler:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :expo-constants:compileDebugKotlin UP-TO-DATE
+> Task :react-native-gesture-handler:mergeDebugJavaResource UP-TO-DATE
+> Task :expo-updates-interface:compileDebugJavaWithJavac UP-TO-DATE
+> Task :expo-dev-menu-interface:bundleDebugAar UP-TO-DATE
+> Task :expo-dev-menu-interface:assembleDebug UP-TO-DATE
+> Task :expo-updates-interface:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :expo-updates-interface:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :react-native-screens:buildCMakeDebug[armeabi-v7a]
+> Task :expo-json-utils:compileDebugKotlin UP-TO-DATE
+> Task :expo-constants:compileDebugJavaWithJavac UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :expo-updates-interface:processDebugJavaRes UP-TO-DATE
+> Task :expo-constants:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :expo-updates-interface:extractDebugAnnotations UP-TO-DATE
+> Task :expo-constants:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :expo-updates-interface:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :expo-json-utils:compileDebugJavaWithJavac UP-TO-DATE
+> Task :expo-updates-interface:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :expo-json-utils:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :expo-updates-interface:mergeDebugJavaResource UP-TO-DATE
+> Task :expo-json-utils:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :expo-constants:processDebugJavaRes UP-TO-DATE
+> Task :expo-constants:stripDebugDebugSymbols NO-SOURCE
+> Task :react-native-gesture-handler:syncDebugLibJars UP-TO-DATE
+> Task :expo-updates-interface:syncDebugLibJars UP-TO-DATE
+> Task :expo-constants:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :expo-json-utils:processDebugJavaRes UP-TO-DATE
+> Task :expo-updates-interface:bundleDebugAar UP-TO-DATE
+> Task :expo-log-box:compileDebugKotlin UP-TO-DATE
+> Task :expo-updates-interface:assembleDebug UP-TO-DATE
+> Task :expo-json-utils:extractDebugAnnotations UP-TO-DATE
+> Task :expo-constants:extractDebugAnnotations UP-TO-DATE
+> Task :expo-json-utils:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :expo-json-utils:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :expo-constants:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :expo-json-utils:mergeDebugJavaResource UP-TO-DATE
+> Task :expo-log-box:compileDebugJavaWithJavac UP-TO-DATE
+> Task :expo-constants:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :expo-log-box:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :expo-constants:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :expo-log-box:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :expo-json-utils:syncDebugLibJars UP-TO-DATE
+> Task :expo-log-box:processDebugJavaRes UP-TO-DATE
+> Task :expo-json-utils:bundleDebugAar UP-TO-DATE
+> Task :expo-json-utils:assembleDebug UP-TO-DATE
+> Task :react-native-screens:configureCMakeDebug[x86]
+> Task :expo-constants:prepareDebugArtProfile UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :expo-constants:prepareLintJarForPublish UP-TO-DATE
+> Task :expo-constants:mergeDebugJavaResource UP-TO-DATE
+> Task :expo-manifests:compileDebugKotlin UP-TO-DATE
+> Task :expo-log-box:extractDebugAnnotations UP-TO-DATE
+> Task :expo-log-box:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :expo-constants:syncDebugLibJars UP-TO-DATE
+> Task :app:expoDebugOverrideMaxSdkConflicts UP-TO-DATE
+> Task :expo-log-box:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :expo-log-box:mergeDebugJavaResource UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :expo-constants:bundleDebugAar UP-TO-DATE
+> Task :expo-constants:assembleDebug UP-TO-DATE
+> Task :expo-manifests:compileDebugJavaWithJavac UP-TO-DATE
+> Task :expo-log-box:syncDebugLibJars UP-TO-DATE
+> Task :expo-manifests:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :expo-log-box:bundleDebugAar UP-TO-DATE
+> Task :expo-log-box:assembleDebug UP-TO-DATE
+> Task :expo-manifests:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :expo-manifests:processDebugJavaRes UP-TO-DATE
+> Task :expo-manifests:extractDebugAnnotations UP-TO-DATE
+> Task :expo-manifests:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :expo-manifests:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :expo-manifests:mergeDebugJavaResource UP-TO-DATE
+> Task :expo-manifests:syncDebugLibJars UP-TO-DATE
+> Task :expo-manifests:bundleDebugAar UP-TO-DATE
+> Task :expo-manifests:assembleDebug UP-TO-DATE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:mergeDebugShaders UP-TO-DATE
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :expo-dev-menu:compileDebugKotlin UP-TO-DATE
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:compressDebugAssets UP-TO-DATE
+> Task :app:desugarDebugFileDependencies UP-TO-DATE
+> Task :expo-dev-menu:compileDebugJavaWithJavac UP-TO-DATE
+> Task :expo-dev-menu:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :expo-dev-menu:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :expo-dev-menu:processDebugJavaRes UP-TO-DATE
+> Task :expo-dev-menu:extractDebugAnnotations UP-TO-DATE
+> Task :expo-dev-menu:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :expo-dev-menu:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :expo-dev-menu:mergeDebugJavaResource UP-TO-DATE
+> Task :expo-dev-menu:syncDebugLibJars UP-TO-DATE
+> Task :expo-dev-menu:bundleDebugAar UP-TO-DATE
+> Task :expo-dev-menu:assembleDebug UP-TO-DATE
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :app:validateSigningDebug UP-TO-DATE
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :react-native-screens:buildCMakeDebug[x86]
+> Task :react-native-screens:configureCMakeDebug[x86_64]
+> Task :expo-dev-launcher:compileDebugKotlin UP-TO-DATE
+> Task :expo-dev-launcher:compileDebugJavaWithJavac UP-TO-DATE
+> Task :expo-dev-launcher:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :expo-dev-launcher:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :expo-dev-launcher:processDebugJavaRes UP-TO-DATE
+> Task :expo-dev-launcher:extractDebugAnnotations UP-TO-DATE
+> Task :expo-dev-launcher:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :expo-dev-launcher:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :expo-dev-launcher:mergeDebugJavaResource UP-TO-DATE
+> Task :expo-dev-launcher:syncDebugLibJars UP-TO-DATE
+> Task :expo-dev-launcher:bundleDebugAar UP-TO-DATE
+> Task :expo-dev-launcher:assembleDebug UP-TO-DATE
+> Task :app:checkDebugDuplicateClasses FAILED
+> Task :expo:compileDebugKotlin UP-TO-DATE
+> Task :react-native-screens:buildCMakeDebug[x86_64]
+> Task :react-native-worklets:configureCMakeDebug[arm64-v8a]
+> Task :app:processDebugResources FAILED
+
+[Incubating] Problems report is available at: file:///C:/Users/yogun/Desktop/sopranochatnorolji/apps/mobil2/android/build/reports/problems/problems-report.html
+
+FAILURE: Build completed with 2 failures.
+
+1: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':app:checkDebugDuplicateClasses'.
+> A failure occurred while executing com.android.build.gradle.internal.tasks.CheckDuplicatesRunnable
+   > Duplicate class org.webrtc.AddIceObserver found in modules android-137.7151.04.aar -> android-137.
+7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-run
+time (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.AndroidVideoDecoder found in modules android-137.7151.04.aar -> android
+-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.
+0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.AndroidVideoDecoder$1 found in modules android-137.7151.04.aar -> andro
+id-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.
+0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.AndroidVideoDecoder$DecodedTextureMetadata found in modules android-137
+.7151.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0
+.0.aar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.AndroidVideoDecoder$FrameInfo found in modules android-137.7151.04.aar 
+-> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> web
+rtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.ApplicationContextProvider found in modules android-137.7151.04.aar -> 
+android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc
+-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.AudioDecoderFactoryFactory found in modules android-137.7151.04.aar -> 
+android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc
+-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.AudioEncoderFactoryFactory found in modules android-137.7151.04.aar -> 
+android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc
+-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.AudioProcessingFactory found in modules android-137.7151.04.aar -> andr
+oid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124
+.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.AudioSource found in modules android-137.7151.04.aar -> android-137.715
+1.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtim
+e (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.AudioTrack found in modules android-137.7151.04.aar -> android-137.7151
+.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtime
+ (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.BaseBitrateAdjuster found in modules android-137.7151.04.aar -> android
+-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.
+0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.BitrateAdjuster found in modules android-137.7151.04.aar -> android-137
+.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-ru
+ntime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.BuiltinAudioDecoderFactoryFactory found in modules android-137.7151.04.
+aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar ->
+ webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.BuiltinAudioEncoderFactoryFactory found in modules android-137.7151.04.
+aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar ->
+ webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CallSessionFileRotatingLogSink found in modules android-137.7151.04.aar
+ -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> we
+brtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CalledByNative found in modules android-137.7151.04.aar -> android-137.
+7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-run
+time (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CalledByNativeUnchecked found in modules android-137.7151.04.aar -> and
+roid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-12
+4.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.Camera1Capturer found in modules android-137.7151.04.aar -> android-137
+.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-ru
+ntime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.Camera1Enumerator found in modules android-137.7151.04.aar -> android-1
+37.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-
+runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.Camera1Session found in modules android-137.7151.04.aar -> android-137.
+7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-run
+time (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.Camera1Session$1 found in modules android-137.7151.04.aar -> android-13
+7.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-r
+untime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.Camera1Session$2 found in modules android-137.7151.04.aar -> android-13
+7.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-r
+untime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.Camera1Session$SessionState found in modules android-137.7151.04.aar ->
+ android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrt
+c-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.Camera2Capturer found in modules android-137.7151.04.aar -> android-137
+.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-ru
+ntime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.Camera2Enumerator found in modules android-137.7151.04.aar -> android-1
+37.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-
+runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.Camera2Session found in modules android-137.7151.04.aar -> android-137.
+7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-run
+time (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.Camera2Session$CameraCaptureCallback found in modules android-137.7151.
+04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar
+ -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.Camera2Session$CameraStateCallback found in modules android-137.7151.04
+.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -
+> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.Camera2Session$CaptureSessionCallback found in modules android-137.7151
+.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aa
+r -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.Camera2Session$SessionState found in modules android-137.7151.04.aar ->
+ android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrt
+c-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CameraCapturer found in modules android-137.7151.04.aar -> android-137.
+7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-run
+time (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CameraCapturer$1 found in modules android-137.7151.04.aar -> android-13
+7.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-r
+untime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CameraCapturer$2 found in modules android-137.7151.04.aar -> android-13
+7.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-r
+untime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CameraCapturer$3 found in modules android-137.7151.04.aar -> android-13
+7.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-r
+untime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CameraCapturer$4 found in modules android-137.7151.04.aar -> android-13
+7.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-r
+untime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CameraCapturer$5 found in modules android-137.7151.04.aar -> android-13
+7.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-r
+untime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CameraCapturer$6 found in modules android-137.7151.04.aar -> android-13
+7.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-r
+untime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CameraCapturer$7 found in modules android-137.7151.04.aar -> android-13
+7.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-r
+untime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CameraCapturer$8 found in modules android-137.7151.04.aar -> android-13
+7.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-r
+untime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CameraCapturer$9 found in modules android-137.7151.04.aar -> android-13
+7.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-r
+untime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CameraCapturer$SwitchState found in modules android-137.7151.04.aar -> 
+android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc
+-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CameraEnumerationAndroid found in modules android-137.7151.04.aar -> an
+droid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-1
+24.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CameraEnumerationAndroid$1 found in modules android-137.7151.04.aar -> 
+android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc
+-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CameraEnumerationAndroid$2 found in modules android-137.7151.04.aar -> 
+android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc
+-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CameraEnumerationAndroid$CaptureFormat found in modules android-137.715
+1.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.a
+ar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CameraEnumerationAndroid$CaptureFormat$FramerateRange found in modules 
+android-137.7151.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and w
+ebrtc-124.0.0.aar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CameraEnumerationAndroid$ClosestComparator found in modules android-137
+.7151.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0
+.0.aar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CameraEnumerator found in modules android-137.7151.04.aar -> android-13
+7.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-r
+untime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CameraSession found in modules android-137.7151.04.aar -> android-137.7
+151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runt
+ime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CameraSession$CreateSessionCallback found in modules android-137.7151.0
+4.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar 
+-> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CameraSession$Events found in modules android-137.7151.04.aar -> androi
+d-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0
+.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CameraSession$FailureType found in modules android-137.7151.04.aar -> a
+ndroid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-
+124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CameraVideoCapturer found in modules android-137.7151.04.aar -> android
+-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.
+0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CameraVideoCapturer$CameraEventsHandler found in modules android-137.71
+51.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.
+aar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CameraVideoCapturer$CameraStatistics found in modules android-137.7151.
+04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar
+ -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CameraVideoCapturer$CameraStatistics$1 found in modules android-137.715
+1.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.a
+ar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CameraVideoCapturer$CameraSwitchHandler found in modules android-137.71
+51.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.
+aar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CameraVideoCapturer$MediaRecorderHandler found in modules android-137.7
+151.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0
+.aar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CandidatePairChangeEvent found in modules android-137.7151.04.aar -> an
+droid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-1
+24.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CapturerObserver found in modules android-137.7151.04.aar -> android-13
+7.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-r
+untime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.ContextUtils found in modules android-137.7151.04.aar -> android-137.71
+51.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runti
+me (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CryptoOptions found in modules android-137.7151.04.aar -> android-137.7
+151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runt
+ime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CryptoOptions$Builder found in modules android-137.7151.04.aar -> andro
+id-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.
+0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CryptoOptions$SFrame found in modules android-137.7151.04.aar -> androi
+d-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0
+.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.CryptoOptions$Srtp found in modules android-137.7151.04.aar -> android-
+137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0
+-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.DataChannel found in modules android-137.7151.04.aar -> android-137.715
+1.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtim
+e (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.DataChannel$Buffer found in modules android-137.7151.04.aar -> android-
+137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0
+-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.DataChannel$Init found in modules android-137.7151.04.aar -> android-13
+7.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-r
+untime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.DataChannel$Observer found in modules android-137.7151.04.aar -> androi
+d-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0
+.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.DataChannel$State found in modules android-137.7151.04.aar -> android-1
+37.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-
+runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.DefaultVideoDecoderFactory found in modules android-137.7151.04.aar -> 
+android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc
+-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.DefaultVideoEncoderFactory found in modules android-137.7151.04.aar -> 
+android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc
+-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.DtmfSender found in modules android-137.7151.04.aar -> android-137.7151
+.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtime
+ (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.DynamicBitrateAdjuster found in modules android-137.7151.04.aar -> andr
+oid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124
+.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EglBase found in modules android-137.7151.04.aar -> android-137.7151.04
+-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtime (o
+rg.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EglBase$ConfigBuilder found in modules android-137.7151.04.aar -> andro
+id-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.
+0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EglBase$Context found in modules android-137.7151.04.aar -> android-137
+.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-ru
+ntime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EglBase$EglConnection found in modules android-137.7151.04.aar -> andro
+id-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.
+0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EglBase10 found in modules android-137.7151.04.aar -> android-137.7151.
+04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtime 
+(org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EglBase10$Context found in modules android-137.7151.04.aar -> android-1
+37.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-
+runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EglBase10$EglConnection found in modules android-137.7151.04.aar -> and
+roid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-12
+4.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EglBase10Impl found in modules android-137.7151.04.aar -> android-137.7
+151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runt
+ime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EglBase10Impl$1FakeSurfaceHolder found in modules android-137.7151.04.a
+ar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> 
+webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EglBase10Impl$Context found in modules android-137.7151.04.aar -> andro
+id-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.
+0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EglBase10Impl$EglConnection found in modules android-137.7151.04.aar ->
+ android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrt
+c-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EglBase14 found in modules android-137.7151.04.aar -> android-137.7151.
+04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtime 
+(org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EglBase14$Context found in modules android-137.7151.04.aar -> android-1
+37.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-
+runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EglBase14$EglConnection found in modules android-137.7151.04.aar -> and
+roid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-12
+4.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EglBase14Impl found in modules android-137.7151.04.aar -> android-137.7
+151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runt
+ime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EglBase14Impl$Context found in modules android-137.7151.04.aar -> andro
+id-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.
+0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EglBase14Impl$EglConnection found in modules android-137.7151.04.aar ->
+ android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrt
+c-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EglRenderer found in modules android-137.7151.04.aar -> android-137.715
+1.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtim
+e (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EglRenderer$1 found in modules android-137.7151.04.aar -> android-137.7
+151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runt
+ime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EglRenderer$2 found in modules android-137.7151.04.aar -> android-137.7
+151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runt
+ime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EglRenderer$EglSurfaceCreation found in modules android-137.7151.04.aar
+ -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> we
+brtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EglRenderer$ErrorCallback found in modules android-137.7151.04.aar -> a
+ndroid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-
+124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EglRenderer$FrameListener found in modules android-137.7151.04.aar -> a
+ndroid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-
+124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EglRenderer$FrameListenerAndParams found in modules android-137.7151.04
+.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -
+> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EglThread found in modules android-137.7151.04.aar -> android-137.7151.
+04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtime 
+(org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EglThread$HandlerWithExceptionCallbacks found in modules android-137.71
+51.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.
+aar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EglThread$ReleaseMonitor found in modules android-137.7151.04.aar -> an
+droid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-1
+24.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EglThread$RenderUpdate found in modules android-137.7151.04.aar -> andr
+oid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124
+.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.Empty found in modules android-137.7151.04.aar -> android-137.7151.04-r
+untime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtime (org
+.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EncodedImage found in modules android-137.7151.04.aar -> android-137.71
+51.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runti
+me (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EncodedImage$Builder found in modules android-137.7151.04.aar -> androi
+d-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0
+.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.EncodedImage$FrameType found in modules android-137.7151.04.aar -> andr
+oid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124
+.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.FecControllerFactoryFactoryInterface found in modules android-137.7151.
+04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar
+ -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.FileVideoCapturer found in modules android-137.7151.04.aar -> android-1
+37.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-
+runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.FileVideoCapturer$1 found in modules android-137.7151.04.aar -> android
+-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.
+0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.FileVideoCapturer$VideoReader found in modules android-137.7151.04.aar 
+-> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> web
+rtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.FileVideoCapturer$VideoReaderY4M found in modules android-137.7151.04.a
+ar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> 
+webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.FrameDecryptor found in modules android-137.7151.04.aar -> android-137.
+7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-run
+time (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.FrameEncryptor found in modules android-137.7151.04.aar -> android-137.
+7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-run
+time (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.FramerateBitrateAdjuster found in modules android-137.7151.04.aar -> an
+droid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-1
+24.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.GlGenericDrawer found in modules android-137.7151.04.aar -> android-137
+.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-ru
+ntime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.GlGenericDrawer$ShaderCallbacks found in modules android-137.7151.04.aa
+r -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> w
+ebrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.GlGenericDrawer$ShaderType found in modules android-137.7151.04.aar -> 
+android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc
+-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.GlRectDrawer found in modules android-137.7151.04.aar -> android-137.71
+51.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runti
+me (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.GlRectDrawer$ShaderCallbacks found in modules android-137.7151.04.aar -
+> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webr
+tc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.GlShader found in modules android-137.7151.04.aar -> android-137.7151.0
+4-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtime (
+org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.GlTextureFrameBuffer found in modules android-137.7151.04.aar -> androi
+d-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0
+.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.GlUtil found in modules android-137.7151.04.aar -> android-137.7151.04-
+runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtime (or
+g.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.GlUtil$GlOutOfMemoryException found in modules android-137.7151.04.aar 
+-> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> web
+rtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.H264Utils found in modules android-137.7151.04.aar -> android-137.7151.
+04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtime 
+(org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.HardwareVideoDecoderFactory found in modules android-137.7151.04.aar ->
+ android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrt
+c-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.HardwareVideoDecoderFactory$1 found in modules android-137.7151.04.aar 
+-> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> web
+rtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.HardwareVideoEncoder found in modules android-137.7151.04.aar -> androi
+d-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0
+.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.HardwareVideoEncoder$1 found in modules android-137.7151.04.aar -> andr
+oid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124
+.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.HardwareVideoEncoder$BusyCount found in modules android-137.7151.04.aar
+ -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> we
+brtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.HardwareVideoEncoderFactory found in modules android-137.7151.04.aar ->
+ android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrt
+c-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.HardwareVideoEncoderFactory$1 found in modules android-137.7151.04.aar 
+-> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> web
+rtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.Histogram found in modules android-137.7151.04.aar -> android-137.7151.
+04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtime 
+(org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.IceCandidate found in modules android-137.7151.04.aar -> android-137.71
+51.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runti
+me (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.IceCandidateErrorEvent found in modules android-137.7151.04.aar -> andr
+oid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124
+.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.JNILogging found in modules android-137.7151.04.aar -> android-137.7151
+.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtime
+ (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.JavaI420Buffer found in modules android-137.7151.04.aar -> android-137.
+7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-run
+time (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.JniCommon found in modules android-137.7151.04.aar -> android-137.7151.
+04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtime 
+(org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.JniHelper found in modules android-137.7151.04.aar -> android-137.7151.
+04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtime 
+(org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.LibaomAv1Encoder found in modules android-137.7151.04.aar -> android-13
+7.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-r
+untime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.LibvpxVp8Decoder found in modules android-137.7151.04.aar -> android-13
+7.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-r
+untime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.LibvpxVp8Encoder found in modules android-137.7151.04.aar -> android-13
+7.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-r
+untime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.LibvpxVp9Decoder found in modules android-137.7151.04.aar -> android-13
+7.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-r
+untime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.LibvpxVp9Encoder found in modules android-137.7151.04.aar -> android-13
+7.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-r
+untime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.Loggable found in modules android-137.7151.04.aar -> android-137.7151.0
+4-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtime (
+org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.Logging found in modules android-137.7151.04.aar -> android-137.7151.04
+-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtime (o
+rg.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.Logging$Severity found in modules android-137.7151.04.aar -> android-13
+7.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-r
+untime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.MediaCodecUtils found in modules android-137.7151.04.aar -> android-137
+.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-ru
+ntime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.MediaCodecUtils$1 found in modules android-137.7151.04.aar -> android-1
+37.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-
+runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.MediaCodecVideoDecoderFactory found in modules android-137.7151.04.aar 
+-> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> web
+rtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.MediaCodecWrapper found in modules android-137.7151.04.aar -> android-1
+37.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-
+runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.MediaCodecWrapperFactory found in modules android-137.7151.04.aar -> an
+droid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-1
+24.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.MediaCodecWrapperFactoryImpl found in modules android-137.7151.04.aar -
+> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webr
+tc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.MediaCodecWrapperFactoryImpl$MediaCodecWrapperImpl found in modules and
+roid-137.7151.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webr
+tc-124.0.0.aar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.MediaConstraints found in modules android-137.7151.04.aar -> android-13
+7.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-r
+untime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.MediaConstraints$KeyValuePair found in modules android-137.7151.04.aar 
+-> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> web
+rtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.MediaSource found in modules android-137.7151.04.aar -> android-137.715
+1.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtim
+e (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.MediaSource$State found in modules android-137.7151.04.aar -> android-1
+37.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-
+runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.MediaStream found in modules android-137.7151.04.aar -> android-137.715
+1.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtim
+e (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.MediaStreamTrack found in modules android-137.7151.04.aar -> android-13
+7.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-r
+untime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.MediaStreamTrack$MediaType found in modules android-137.7151.04.aar -> 
+android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc
+-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.MediaStreamTrack$State found in modules android-137.7151.04.aar -> andr
+oid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124
+.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.Metrics found in modules android-137.7151.04.aar -> android-137.7151.04
+-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtime (o
+rg.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.Metrics$HistogramInfo found in modules android-137.7151.04.aar -> andro
+id-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.
+0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.NV12Buffer found in modules android-137.7151.04.aar -> android-137.7151
+.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtime
+ (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.NV21Buffer found in modules android-137.7151.04.aar -> android-137.7151
+.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtime
+ (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.NativeAndroidVideoTrackSource found in modules android-137.7151.04.aar 
+-> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> web
+rtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.NativeCapturerObserver found in modules android-137.7151.04.aar -> andr
+oid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124
+.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.NativeLibrary found in modules android-137.7151.04.aar -> android-137.7
+151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runt
+ime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.NativeLibrary$DefaultLoader found in modules android-137.7151.04.aar ->
+ android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrt
+c-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.NativeLibraryLoader found in modules android-137.7151.04.aar -> android
+-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.
+0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.NativePeerConnectionFactory found in modules android-137.7151.04.aar ->
+ android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrt
+c-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.NetEqFactoryFactory found in modules android-137.7151.04.aar -> android
+-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.
+0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.NetworkChangeDetector found in modules android-137.7151.04.aar -> andro
+id-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.
+0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.NetworkChangeDetector$ConnectionType found in modules android-137.7151.
+04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar
+ -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.NetworkChangeDetector$IPAddress found in modules android-137.7151.04.aa
+r -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> w
+ebrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.NetworkChangeDetector$NetworkInformation found in modules android-137.7
+151.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0
+.aar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.NetworkChangeDetector$Observer found in modules android-137.7151.04.aar
+ -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> we
+brtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.NetworkChangeDetectorFactory found in modules android-137.7151.04.aar -
+> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webr
+tc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.NetworkControllerFactoryFactory found in modules android-137.7151.04.aa
+r -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> w
+ebrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.NetworkMonitor found in modules android-137.7151.04.aar -> android-137.
+7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-run
+time (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.NetworkMonitor$1 found in modules android-137.7151.04.aar -> android-13
+7.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-r
+untime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.NetworkMonitor$2 found in modules android-137.7151.04.aar -> android-13
+7.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-r
+untime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.NetworkMonitor$InstanceHolder found in modules android-137.7151.04.aar 
+-> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> web
+rtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.NetworkMonitor$NetworkObserver found in modules android-137.7151.04.aar
+ -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> we
+brtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.NetworkMonitorAutoDetect found in modules android-137.7151.04.aar -> an
+droid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-1
+24.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.NetworkMonitorAutoDetect$ConnectivityManagerDelegate found in modules a
+ndroid-137.7151.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and we
+brtc-124.0.0.aar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.NetworkMonitorAutoDetect$NetworkState found in modules android-137.7151
+.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aa
+r -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.NetworkMonitorAutoDetect$SimpleNetworkCallback found in modules android
+-137.7151.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-1
+24.0.0.aar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.NetworkMonitorAutoDetect$WifiDirectManagerDelegate found in modules and
+roid-137.7151.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webr
+tc-124.0.0.aar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.NetworkMonitorAutoDetect$WifiManagerDelegate found in modules android-1
+37.7151.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124
+.0.0.aar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.NetworkPreference found in modules android-137.7151.04.aar -> android-1
+37.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-
+runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.NetworkStatePredictorFactoryFactory found in modules android-137.7151.0
+4.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar 
+-> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PeerConnection found in modules android-137.7151.04.aar -> android-137.
+7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-run
+time (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PeerConnection$AdapterType found in modules android-137.7151.04.aar -> 
+android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc
+-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PeerConnection$BundlePolicy found in modules android-137.7151.04.aar ->
+ android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrt
+c-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PeerConnection$CandidateNetworkPolicy found in modules android-137.7151
+.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aa
+r -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PeerConnection$ContinualGatheringPolicy found in modules android-137.71
+51.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.
+aar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PeerConnection$IceConnectionState found in modules android-137.7151.04.
+aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar ->
+ webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PeerConnection$IceGatheringState found in modules android-137.7151.04.a
+ar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> 
+webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PeerConnection$IceServer found in modules android-137.7151.04.aar -> an
+droid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-1
+24.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PeerConnection$IceServer$Builder found in modules android-137.7151.04.a
+ar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> 
+webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PeerConnection$IceTransportsType found in modules android-137.7151.04.a
+ar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> 
+webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PeerConnection$KeyType found in modules android-137.7151.04.aar -> andr
+oid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124
+.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PeerConnection$Observer found in modules android-137.7151.04.aar -> and
+roid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-12
+4.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PeerConnection$PeerConnectionState found in modules android-137.7151.04
+.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -
+> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PeerConnection$PortPrunePolicy found in modules android-137.7151.04.aar
+ -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> we
+brtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PeerConnection$RTCConfiguration found in modules android-137.7151.04.aa
+r -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> w
+ebrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PeerConnection$RtcpMuxPolicy found in modules android-137.7151.04.aar -
+> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webr
+tc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PeerConnection$SdpSemantics found in modules android-137.7151.04.aar ->
+ android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrt
+c-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PeerConnection$SignalingState found in modules android-137.7151.04.aar 
+-> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> web
+rtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PeerConnection$TcpCandidatePolicy found in modules android-137.7151.04.
+aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar ->
+ webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PeerConnection$TlsCertPolicy found in modules android-137.7151.04.aar -
+> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webr
+tc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PeerConnectionDependencies found in modules android-137.7151.04.aar -> 
+android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc
+-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PeerConnectionDependencies$Builder found in modules android-137.7151.04
+.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -
+> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PeerConnectionFactory found in modules android-137.7151.04.aar -> andro
+id-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.
+0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PeerConnectionFactory$Builder found in modules android-137.7151.04.aar 
+-> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> web
+rtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PeerConnectionFactory$InitializationOptions found in modules android-13
+7.7151.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.
+0.0.aar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PeerConnectionFactory$InitializationOptions$Builder found in modules an
+droid-137.7151.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and web
+rtc-124.0.0.aar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PeerConnectionFactory$Options found in modules android-137.7151.04.aar 
+-> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> web
+rtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PeerConnectionFactory$ThreadInfo found in modules android-137.7151.04.a
+ar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> 
+webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PlatformSoftwareVideoDecoderFactory found in modules android-137.7151.0
+4.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar 
+-> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.PlatformSoftwareVideoDecoderFactory$1 found in modules android-137.7151
+.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aa
+r -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.Predicate found in modules android-137.7151.04.aar -> android-137.7151.
+04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtime 
+(org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.Predicate$1 found in modules android-137.7151.04.aar -> android-137.715
+1.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtim
+e (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.Predicate$2 found in modules android-137.7151.04.aar -> android-137.715
+1.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtim
+e (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.Predicate$3 found in modules android-137.7151.04.aar -> android-137.715
+1.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtim
+e (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.Priority found in modules android-137.7151.04.aar -> android-137.7151.0
+4-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtime (
+org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.RTCStats found in modules android-137.7151.04.aar -> android-137.7151.0
+4-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtime (
+org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.RTCStatsCollectorCallback found in modules android-137.7151.04.aar -> a
+ndroid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-
+124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.RTCStatsReport found in modules android-137.7151.04.aar -> android-137.
+7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-run
+time (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.RefCountDelegate found in modules android-137.7151.04.aar -> android-13
+7.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-r
+untime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.RefCounted found in modules android-137.7151.04.aar -> android-137.7151
+.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtime
+ (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.RenderSynchronizer found in modules android-137.7151.04.aar -> android-
+137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0
+-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.RenderSynchronizer$Listener found in modules android-137.7151.04.aar ->
+ android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrt
+c-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.RendererCommon found in modules android-137.7151.04.aar -> android-137.
+7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-run
+time (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.RendererCommon$GlDrawer found in modules android-137.7151.04.aar -> and
+roid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-12
+4.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.RendererCommon$RendererEvents found in modules android-137.7151.04.aar 
+-> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> web
+rtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.RendererCommon$ScalingType found in modules android-137.7151.04.aar -> 
+android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc
+-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.RendererCommon$VideoLayoutMeasure found in modules android-137.7151.04.
+aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar ->
+ webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.RtcCertificatePem found in modules android-137.7151.04.aar -> android-1
+37.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-
+runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.RtpCapabilities found in modules android-137.7151.04.aar -> android-137
+.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-ru
+ntime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.RtpCapabilities$CodecCapability found in modules android-137.7151.04.aa
+r -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> w
+ebrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.RtpCapabilities$HeaderExtensionCapability found in modules android-137.
+7151.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.
+0.aar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.RtpParameters found in modules android-137.7151.04.aar -> android-137.7
+151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runt
+ime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.RtpParameters$Codec found in modules android-137.7151.04.aar -> android
+-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.
+0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.RtpParameters$DegradationPreference found in modules android-137.7151.0
+4.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar 
+-> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.RtpParameters$Encoding found in modules android-137.7151.04.aar -> andr
+oid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124
+.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.RtpParameters$HeaderExtension found in modules android-137.7151.04.aar 
+-> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> web
+rtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.RtpParameters$Rtcp found in modules android-137.7151.04.aar -> android-
+137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0
+-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.RtpReceiver found in modules android-137.7151.04.aar -> android-137.715
+1.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtim
+e (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.RtpReceiver$Observer found in modules android-137.7151.04.aar -> androi
+d-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0
+.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.RtpSender found in modules android-137.7151.04.aar -> android-137.7151.
+04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtime 
+(org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.RtpTransceiver found in modules android-137.7151.04.aar -> android-137.
+7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-run
+time (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.RtpTransceiver$RtpTransceiverDirection found in modules android-137.715
+1.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.a
+ar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.RtpTransceiver$RtpTransceiverInit found in modules android-137.7151.04.
+aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar ->
+ webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.SSLCertificateVerifier found in modules android-137.7151.04.aar -> andr
+oid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124
+.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.ScreenCapturerAndroid found in modules android-137.7151.04.aar -> andro
+id-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.
+0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.ScreenCapturerAndroid$1 found in modules android-137.7151.04.aar -> and
+roid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-12
+4.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.SdpObserver found in modules android-137.7151.04.aar -> android-137.715
+1.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtim
+e (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.SessionDescription found in modules android-137.7151.04.aar -> android-
+137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0
+-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.SessionDescription$Type found in modules android-137.7151.04.aar -> and
+roid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-12
+4.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.Size found in modules android-137.7151.04.aar -> android-137.7151.04-ru
+ntime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtime (org.
+jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.SoftwareVideoDecoderFactory found in modules android-137.7151.04.aar ->
+ android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrt
+c-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.SoftwareVideoDecoderFactory$1 found in modules android-137.7151.04.aar 
+-> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> web
+rtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.SoftwareVideoEncoderFactory found in modules android-137.7151.04.aar ->
+ android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrt
+c-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.SoftwareVideoEncoderFactory$1 found in modules android-137.7151.04.aar 
+-> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> web
+rtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.StatsObserver found in modules android-137.7151.04.aar -> android-137.7
+151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runt
+ime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.StatsReport found in modules android-137.7151.04.aar -> android-137.715
+1.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtim
+e (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.StatsReport$Value found in modules android-137.7151.04.aar -> android-1
+37.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-
+runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.SurfaceEglRenderer found in modules android-137.7151.04.aar -> android-
+137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0
+-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.SurfaceTextureHelper found in modules android-137.7151.04.aar -> androi
+d-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0
+.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.SurfaceTextureHelper$1 found in modules android-137.7151.04.aar -> andr
+oid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124
+.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.SurfaceTextureHelper$2 found in modules android-137.7151.04.aar -> andr
+oid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124
+.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.SurfaceTextureHelper$3 found in modules android-137.7151.04.aar -> andr
+oid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124
+.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.SurfaceTextureHelper$FrameRefMonitor found in modules android-137.7151.
+04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar
+ -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.SurfaceViewRenderer found in modules android-137.7151.04.aar -> android
+-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.
+0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.TextureBufferImpl found in modules android-137.7151.04.aar -> android-1
+37.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-
+runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.TextureBufferImpl$1 found in modules android-137.7151.04.aar -> android
+-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.
+0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.TextureBufferImpl$2 found in modules android-137.7151.04.aar -> android
+-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.
+0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.TextureBufferImpl$RefCountMonitor found in modules android-137.7151.04.
+aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar ->
+ webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.ThreadUtils found in modules android-137.7151.04.aar -> android-137.715
+1.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtim
+e (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.ThreadUtils$1 found in modules android-137.7151.04.aar -> android-137.7
+151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runt
+ime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.ThreadUtils$1CaughtException found in modules android-137.7151.04.aar -
+> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webr
+tc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.ThreadUtils$1Result found in modules android-137.7151.04.aar -> android
+-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.
+0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.ThreadUtils$2 found in modules android-137.7151.04.aar -> android-137.7
+151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runt
+ime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.ThreadUtils$3 found in modules android-137.7151.04.aar -> android-137.7
+151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runt
+ime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.ThreadUtils$4 found in modules android-137.7151.04.aar -> android-137.7
+151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runt
+ime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.ThreadUtils$BlockingOperation found in modules android-137.7151.04.aar 
+-> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> web
+rtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.ThreadUtils$ThreadChecker found in modules android-137.7151.04.aar -> a
+ndroid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-
+124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.TimestampAligner found in modules android-137.7151.04.aar -> android-13
+7.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-r
+untime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.TurnCustomizer found in modules android-137.7151.04.aar -> android-137.
+7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-run
+time (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoCapturer found in modules android-137.7151.04.aar -> android-137.7
+151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runt
+ime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoCodecInfo found in modules android-137.7151.04.aar -> android-137.
+7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-run
+time (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoCodecMimeType found in modules android-137.7151.04.aar -> android-
+137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0
+-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoCodecStatus found in modules android-137.7151.04.aar -> android-13
+7.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-r
+untime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoDecoder found in modules android-137.7151.04.aar -> android-137.71
+51.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runti
+me (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoDecoder$Callback found in modules android-137.7151.04.aar -> andro
+id-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.
+0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoDecoder$DecodeInfo found in modules android-137.7151.04.aar -> and
+roid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-12
+4.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoDecoder$Settings found in modules android-137.7151.04.aar -> andro
+id-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.
+0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoDecoderFactory found in modules android-137.7151.04.aar -> android
+-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.
+0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoDecoderFallback found in modules android-137.7151.04.aar -> androi
+d-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0
+.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoDecoderWrapper found in modules android-137.7151.04.aar -> android
+-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.
+0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoEncoder found in modules android-137.7151.04.aar -> android-137.71
+51.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runti
+me (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoEncoder$BitrateAllocation found in modules android-137.7151.04.aar
+ -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> we
+brtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoEncoder$Callback found in modules android-137.7151.04.aar -> andro
+id-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.
+0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoEncoder$Capabilities found in modules android-137.7151.04.aar -> a
+ndroid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-
+124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoEncoder$CodecSpecificInfo found in modules android-137.7151.04.aar
+ -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> we
+brtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoEncoder$CodecSpecificInfoAV1 found in modules android-137.7151.04.
+aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar ->
+ webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoEncoder$CodecSpecificInfoH264 found in modules android-137.7151.04
+.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -
+> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoEncoder$CodecSpecificInfoVP8 found in modules android-137.7151.04.
+aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar ->
+ webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoEncoder$CodecSpecificInfoVP9 found in modules android-137.7151.04.
+aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar ->
+ webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoEncoder$EncodeInfo found in modules android-137.7151.04.aar -> and
+roid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-12
+4.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoEncoder$EncoderInfo found in modules android-137.7151.04.aar -> an
+droid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-1
+24.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoEncoder$RateControlParameters found in modules android-137.7151.04
+.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -
+> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoEncoder$ResolutionBitrateLimits found in modules android-137.7151.
+04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar
+ -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoEncoder$ScalingSettings found in modules android-137.7151.04.aar -
+> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webr
+tc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoEncoder$Settings found in modules android-137.7151.04.aar -> andro
+id-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.
+0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoEncoderFactory found in modules android-137.7151.04.aar -> android
+-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.
+0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoEncoderFactory$VideoEncoderSelector found in modules android-137.7
+151.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0
+.aar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoEncoderFallback found in modules android-137.7151.04.aar -> androi
+d-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0
+.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoEncoderWrapper found in modules android-137.7151.04.aar -> android
+-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.
+0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoFileRenderer found in modules android-137.7151.04.aar -> android-1
+37.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-
+runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoFileRenderer$1 found in modules android-137.7151.04.aar -> android
+-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.
+0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoFrame found in modules android-137.7151.04.aar -> android-137.7151
+.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtime
+ (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoFrame$Buffer found in modules android-137.7151.04.aar -> android-1
+37.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-
+runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoFrame$I420Buffer found in modules android-137.7151.04.aar -> andro
+id-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.
+0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoFrame$TextureBuffer found in modules android-137.7151.04.aar -> an
+droid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-1
+24.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoFrame$TextureBuffer$Type found in modules android-137.7151.04.aar 
+-> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> web
+rtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoFrameBufferType found in modules android-137.7151.04.aar -> androi
+d-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0
+.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoFrameDrawer found in modules android-137.7151.04.aar -> android-13
+7.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-r
+untime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoFrameDrawer$1 found in modules android-137.7151.04.aar -> android-
+137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0
+-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoFrameDrawer$YuvUploader found in modules android-137.7151.04.aar -
+> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webr
+tc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoProcessor found in modules android-137.7151.04.aar -> android-137.
+7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-run
+time (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoProcessor$FrameAdaptationParameters found in modules android-137.7
+151.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0
+.aar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoSink found in modules android-137.7151.04.aar -> android-137.7151.
+04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtime 
+(org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoSource found in modules android-137.7151.04.aar -> android-137.715
+1.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtim
+e (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoSource$1 found in modules android-137.7151.04.aar -> android-137.7
+151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runt
+ime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoSource$AspectRatio found in modules android-137.7151.04.aar -> and
+roid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-12
+4.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.VideoTrack found in modules android-137.7151.04.aar -> android-137.7151
+.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtime
+ (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.WebRtcClassLoader found in modules android-137.7151.04.aar -> android-1
+37.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-
+runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.WrappedNativeI420Buffer found in modules android-137.7151.04.aar -> and
+roid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-12
+4.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.WrappedNativeVideoDecoder found in modules android-137.7151.04.aar -> a
+ndroid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-
+124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.WrappedNativeVideoEncoder found in modules android-137.7151.04.aar -> a
+ndroid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-
+124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.YuvConverter found in modules android-137.7151.04.aar -> android-137.71
+51.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runti
+me (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.YuvConverter$ShaderCallbacks found in modules android-137.7151.04.aar -
+> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webr
+tc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.YuvHelper found in modules android-137.7151.04.aar -> android-137.7151.
+04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0-runtime 
+(org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.audio.AudioDeviceModule found in modules android-137.7151.04.aar -> and
+roid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-12
+4.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.audio.JavaAudioDeviceModule found in modules android-137.7151.04.aar ->
+ android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrt
+c-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.audio.JavaAudioDeviceModule$AudioRecordErrorCallback found in modules a
+ndroid-137.7151.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and we
+brtc-124.0.0.aar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.audio.JavaAudioDeviceModule$AudioRecordStartErrorCode found in modules 
+android-137.7151.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and w
+ebrtc-124.0.0.aar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.audio.JavaAudioDeviceModule$AudioRecordStateCallback found in modules a
+ndroid-137.7151.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and we
+brtc-124.0.0.aar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.audio.JavaAudioDeviceModule$AudioSamples found in modules android-137.7
+151.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0
+.aar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.audio.JavaAudioDeviceModule$AudioTrackErrorCallback found in modules an
+droid-137.7151.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and web
+rtc-124.0.0.aar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.audio.JavaAudioDeviceModule$AudioTrackStartErrorCode found in modules a
+ndroid-137.7151.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and we
+brtc-124.0.0.aar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.audio.JavaAudioDeviceModule$AudioTrackStateCallback found in modules an
+droid-137.7151.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and web
+rtc-124.0.0.aar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.audio.JavaAudioDeviceModule$Builder found in modules android-137.7151.0
+4.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar 
+-> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.audio.JavaAudioDeviceModule$SamplesReadyCallback found in modules andro
+id-137.7151.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc
+-124.0.0.aar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.audio.LowLatencyAudioBufferManager found in modules android-137.7151.04
+.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -
+> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.audio.VolumeLogger found in modules android-137.7151.04.aar -> android-
+137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124.0.0
+-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.audio.VolumeLogger$LogVolumeTask found in modules android-137.7151.04.a
+ar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> 
+webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.audio.WebRtcAudioEffects found in modules android-137.7151.04.aar -> an
+droid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-1
+24.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.audio.WebRtcAudioManager found in modules android-137.7151.04.aar -> an
+droid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-1
+24.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.audio.WebRtcAudioRecord found in modules android-137.7151.04.aar -> and
+roid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-12
+4.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.audio.WebRtcAudioRecord$1 found in modules android-137.7151.04.aar -> a
+ndroid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-
+124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.audio.WebRtcAudioRecord$AudioRecordThread found in modules android-137.
+7151.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.
+0.aar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.audio.WebRtcAudioTrack found in modules android-137.7151.04.aar -> andr
+oid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124
+.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     Duplicate class org.webrtc.audio.WebRtcAudioTrack$AudioTrackThread found in modules android-137.71
+51.04.aar -> android-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.
+aar -> webrtc-124.0.0-runtime (org.jitsi:webrtc:124.0.0)
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.0.0/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+817 actionable tasks: 15 executed, 802 up-to-date
+     Duplicate class org.webrtc.audio.WebRtcAudioUtils found in modules android-137.7151.04.aar -> andr
+oid-137.7151.04-runtime (io.github.webrtc-sdk:android:137.7151.04) and webrtc-124.0.0.aar -> webrtc-124
+.0.0-runtime (org.jitsi:webrtc:124.0.0)
+     
+     Learn how to fix dependency resolution errors at https://d.android.com/r/tools/classpath-sync-erro
+rs
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to generate a Build Scan (Powered by Develocity).
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+2: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':app:processDebugResources'.
+> A failure occurred while executing com.android.build.gradle.internal.res.LinkApplicationAndroidResour
+cesTask$TaskAction
+   > Android resource linking failed
+     com.sopranochat.mobil2.app-mergeDebugResources-93:/values/values.xml:7703: error: resource drawabl
+e/splashscreen_logo (aka com.sopranochat.mobil2:drawable/splashscreen_logo) not found.
+     com.sopranochat.mobil2.app-mergeDebugResources-93:/values/values.xml:7703: error: resource drawabl
+e/splashscreen_logo (aka com.sopranochat.mobil2:drawable/splashscreen_logo) not found.
+     error: failed linking references.
+
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to generate a Build Scan (Powered by Develocity).
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+BUILD FAILED in 12s

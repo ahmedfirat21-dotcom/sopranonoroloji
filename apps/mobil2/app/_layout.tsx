@@ -33,35 +33,22 @@ function InnerLayout() {
 
   useEffect(() => {
     SplashScreen.hideAsync().catch(() => {});
-    // Splash gösterildi mi kontrol et
-    AsyncStorage.getItem('@soprano_splash_seen').then((val) => {
-      setNeedsSplash(!val);
-      setSplashChecked(true);
-    }).catch(() => {
-      setNeedsSplash(true);
-      setSplashChecked(true);
-    });
   }, []);
 
   // ── Onboarding Router Guard ──
   useEffect(() => {
-    if (isLoading || !splashChecked) return;
+    if (isLoading) return;
 
     if (!isLoggedIn) {
-      if (needsSplash) {
-        // İlk açılış → splash animasyonu göster
-        AsyncStorage.setItem('@soprano_splash_seen', 'true').catch(() => {});
-        setNeedsSplash(false);
-        router.replace('/splash');
-      } else {
-        router.replace('/login');
-      }
+      // Çıkış yapmışsa veya giriş yapmamışsa, her zaman Splash'i göstererek lüks açılışı yapsın.
+      // (Splash zaten 4.5 sn sonra login'e atıyor)
+      router.replace('/splash');
     } else if (!isProfileComplete) {
       router.replace('/setup');
     } else {
       router.replace('/(tabs)');
     }
-  }, [isLoading, isLoggedIn, isProfileComplete, splashChecked]);
+  }, [isLoading, isLoggedIn, isProfileComplete]);
 
   // Push notification kurulumu
   useEffect(() => {

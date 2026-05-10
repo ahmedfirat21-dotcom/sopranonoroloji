@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
+// BlurView kaldırıldı — GPU yükü azaltıldı
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, RADIUS, SPACING, FONTS } from '../constants/theme';
 import { useTheme } from '../constants/ThemeContext';
@@ -109,7 +109,7 @@ function AllianceBanner({
 
   return (
     <Animated.View style={[styles.bannerContainer, { transform: [{ translateX: slideX }] }]}>
-      <BlurView intensity={40} tint="dark" style={[StyleSheet.absoluteFill, { borderRadius: 16 }]} />
+      <View style={[StyleSheet.absoluteFill, { borderRadius: 16, backgroundColor: 'rgba(8,14,28,0.92)' }]} />
       <LinearGradient
         colors={['rgba(92,225,230,0.08)', 'transparent']}
         style={[StyleSheet.absoluteFill, { borderRadius: 16 }]}
@@ -138,9 +138,12 @@ interface GiftVaultSheetProps {
   onClose: () => void;
   /** Hediye gönderildiğinde Lottie animasyonu tetikler */
   onPlayAnimation?: (giftId: string) => void;
+  onSendGift?: (giftId: string) => void;
+  roomId?: string;
+  userId?: string;
 }
 
-export default function GiftVaultSheet({ visible, onClose, onPlayAnimation }: GiftVaultSheetProps) {
+export default function GiftVaultSheet({ visible, onClose, onPlayAnimation, onSendGift, roomId, userId }: GiftVaultSheetProps) {
   const { colors: C, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<'authority' | 'gifts'>('gifts');
@@ -227,8 +230,8 @@ export default function GiftVaultSheet({ visible, onClose, onPlayAnimation }: Gi
       if (visa.id === 'a1') {
         setIsLoading(true);
         try {
-          // TODO: Gerçek userId ve roomId kullanılacak
-          const result = await buySpeakerVisa('current-user-id', 'current-room-id');
+          if (!userId || !roomId) throw new Error('Oda veya kullanıcı bilgisi eksik.');
+          const result = await buySpeakerVisa(userId, roomId);
 
           if (result.success && result.data) {
             // Başarılı — Lottie animasyonu tetikle
@@ -239,8 +242,8 @@ export default function GiftVaultSheet({ visible, onClose, onPlayAnimation }: Gi
 
             // LiveKit token al (speaker rolüyle)
             const tokenResult = await getLiveKitToken(
-              'current-room-id',
-              'current-user-name',
+              roomId,
+              userId,
               'speaker',
             );
 
@@ -277,12 +280,16 @@ export default function GiftVaultSheet({ visible, onClose, onPlayAnimation }: Gi
         setBannerMessage(`${gift.name} gönderdi!`);
       }
     }
+    if (activeTab === 'gifts' && selectedGift) {
+      if (onSendGift) onSendGift(selectedGift);
+    }
+    
     setCombo((prev) => prev + 1);
     closeSheet();
     // Lottie animasyonu tetikle
     const animGiftId = activeTab === 'gifts' && selectedGift ? selectedGift : 'g2';
     setTimeout(() => onPlayAnimation?.(animGiftId), 400);
-  }, [activeTab, selectedAuthority, selectedGift, closeSheet, isLoading]);
+  }, [activeTab, selectedAuthority, selectedGift, closeSheet, isLoading, onSendGift]);
 
   // Lottie bittiğinde banner göster (room.tsx'ten tetiklenir)
   // Banner'ı sheet kapandıktan sonra doğrudan göster
@@ -331,7 +338,7 @@ export default function GiftVaultSheet({ visible, onClose, onPlayAnimation }: Gi
               activeOpacity={1}
               onPress={closeSheet}
             />
-            <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.7)' }]} />
             <View style={styles.overlayDark} />
           </Animated.View>
 

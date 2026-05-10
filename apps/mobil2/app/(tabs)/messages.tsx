@@ -11,7 +11,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
+// BlurView kaldırıldı — GPU yükü azaltıldı
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -225,9 +225,9 @@ export default function MessagesScreen() {
         </View>
       </Animated.ScrollView>
 
-      {/* Blur top bar */}
+      {/* Opaque top bar (BlurView kaldırıldı) */}
       <Animated.View style={[styles.topBarBlur, { opacity: topBarOpacity }]}>
-        <BlurView intensity={60} tint="dark" style={StyleSheet.absoluteFill} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(8,14,28,0.97)' }]} />
       </Animated.View>
     </View>
   );

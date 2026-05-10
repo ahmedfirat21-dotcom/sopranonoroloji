@@ -13,9 +13,11 @@ import {
   Modal,
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
+// BlurView kaldırıldı — GPU yükü azaltıldı
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, RADIUS, SPACING, FONTS } from '../constants/theme';
@@ -82,20 +84,10 @@ function IgnitionShimmer() {
 // ─────────────────────────────────────────────────────
 // Ignition Glow (behind button)
 // ─────────────────────────────────────────────────────
+// IgnitionGlow — loop kaldırıldı, sabit opacity
 function IgnitionGlow() {
-  const pulse = useRef(new Animated.Value(0.3)).current;
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, { toValue: 0.7, duration: 1800, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 0.3, duration: 1800, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-      ])
-    ).start();
-  }, []);
-
   return (
-    <Animated.View style={[styles.ignitionGlow, { opacity: pulse }]} />
+    <View style={[styles.ignitionGlow, { opacity: 0.5 }]} />
   );
 }
 
@@ -172,12 +164,17 @@ export default function CreateRoomSheet({ visible, onClose, onRoomCreated }: Cre
       {/* Overlay */}
       <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]}>
         <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={closeSheet} />
-        <BlurView intensity={30} tint="dark" style={StyleSheet.absoluteFill} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.7)' }]} />
         <View style={styles.overlayDark} />
       </Animated.View>
 
       {/* Sheet */}
-      <Animated.View style={[styles.sheet, { transform: [{ translateY: sheetY }] }]}>
+      <KeyboardAvoidingView
+        style={[StyleSheet.absoluteFill, { justifyContent: 'flex-end' }]}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        pointerEvents="box-none"
+      >
+        <Animated.View style={[styles.sheet, { transform: [{ translateY: sheetY }] }]}>
         {/* Background */}
         <LinearGradient
           colors={['#0C1428', '#080E1E', '#060A16']}
@@ -200,7 +197,12 @@ export default function CreateRoomSheet({ visible, onClose, onRoomCreated }: Cre
           <View style={styles.dragHandle} />
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <ScrollView 
+          style={{ flexShrink: 1, width: '100%' }} 
+          showsVerticalScrollIndicator={false} 
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
           {/* ═══ HEADER ═══ */}
           <Text style={styles.sheetTitle}>Loca Kur</Text>
           <Text style={styles.sheetSubtitle}>Kendi VIP mekanını oluştur</Text>
@@ -408,7 +410,8 @@ export default function CreateRoomSheet({ visible, onClose, onRoomCreated }: Cre
             <Text style={styles.ignitionText}>{isCreating ? 'Oluşturuluyor...' : 'Locayı Aç — Yayını Başlat'}</Text>
           </TouchableOpacity>
         </View>
-      </Animated.View>
+        </Animated.View>
+      </KeyboardAvoidingView>
     </View>
     </Modal>
   );
@@ -422,10 +425,7 @@ const styles = StyleSheet.create({
   overlayDark: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' },
 
   sheet: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    width: '100%',
     maxHeight: height * 0.88,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,

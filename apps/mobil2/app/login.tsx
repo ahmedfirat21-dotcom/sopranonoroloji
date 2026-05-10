@@ -1,39 +1,46 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  View, Text, StyleSheet, Animated, Dimensions, Image,
-  TouchableOpacity, Easing, Platform, ActivityIndicator,
+import { 
+  View, Text, StyleSheet, Animated, Dimensions, Image, 
+  TouchableOpacity, Platform, TextInput, KeyboardAvoidingView, Alert 
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { COLORS, RADIUS, SPACING, FONTS } from '../constants/theme';
-import { useTheme } from '../constants/ThemeContext';
 import { useUser } from '../contexts/UserContext';
 import { loginWithGoogle, loginWithApple, sendPhoneOTP, verifyPhoneOTP } from '../services/firebaseAuth';
-import { TextInput, Alert } from 'react-native';
+import * as Haptics from 'expo-haptics';
 
 const { width, height } = Dimensions.get('window');
 
+// Rolex/Gucci Ultra-Premium Palette
+const OLED_BLACK = '#000000';
+const DEEP_NAVY = '#040712';
+const NEON_CYAN = 'rgba(92, 225, 230, ';
+const VIP_PURPLE = 'rgba(120, 80, 220, ';
+const GOLD_ACCENT = '#D4AF37';
+
 export default function LoginScreen() {
   const router = useRouter();
-  const { colors: C, isDark } = useTheme();
-  const { isLoggedIn, login, loginWithFirebase } = useUser();
+  const { isLoggedIn, loginWithFirebase } = useUser();
   const [guestLoading, setGuestLoading] = useState(false);
   
-  // Auth Form State
   const [authLoading, setAuthLoading] = useState(false);
   const [authStep, setAuthStep] = useState<'methods' | 'phone' | 'otp'>('methods');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [confirmResult, setConfirmResult] = useState<any>(null);
 
+  // Animasyon Ref'leri
   const panelY = useRef(new Animated.Value(height * 0.4)).current;
   const panelOpacity = useRef(new Animated.Value(0)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
-  const shimmerX = useRef(new Animated.Value(-width)).current;
 
-  // Zaten giriş yapmışsa home'a yönlendir
+  // Haptic yardımcı fonksiyonu
+  const hapticImpact = () => {
+    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
   useEffect(() => {
     if (isLoggedIn) {
       router.replace('/(tabs)');
@@ -41,40 +48,26 @@ export default function LoginScreen() {
   }, [isLoggedIn]);
 
   useEffect(() => {
-    Animated.timing(logoOpacity, {
-      toValue: 1,
-      duration: 600,
-      useNativeDriver: true,
-    }).start();
+    // 1. "logo.png" Sabit ve Sakin Giriş
+    Animated.timing(logoOpacity, { toValue: 1, duration: 1500, useNativeDriver: true }).start();
 
+    // 2. Alt Panel Süzülerek Çıkışı
     setTimeout(() => {
       Animated.parallel([
-        Animated.spring(panelY, {
-          toValue: 0,
-          friction: 12,
-          tension: 50,
-          useNativeDriver: true,
-        }),
-        Animated.timing(panelOpacity, {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: true,
-        }),
+        Animated.spring(panelY, { toValue: 0, friction: 10, tension: 45, useNativeDriver: true }),
+        Animated.timing(panelOpacity, { toValue: 1, duration: 600, useNativeDriver: true }),
       ]).start();
-    }, 300);
-
-    Animated.loop(
-      Animated.timing(shimmerX, {
-        toValue: width * 2,
-        duration: 3000,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      })
-    ).start();
+    }, 400);
   }, []);
 
-  // ─── Google Giriş ───
+  const switchStep = (step: 'methods' | 'phone' | 'otp') => {
+    hapticImpact();
+    setAuthStep(step);
+  };
+
+  // ─── AUTH FONKSİYONLARI ───
   const handleGoogleLogin = async () => {
+    hapticImpact();
     setAuthLoading(true);
     try {
       const authResult = await loginWithGoogle();
@@ -91,8 +84,8 @@ export default function LoginScreen() {
     }
   };
 
-  // ─── Apple Giriş ───
   const handleAppleLogin = async () => {
+    hapticImpact();
     setAuthLoading(true);
     try {
       const authResult = await loginWithApple();
@@ -109,9 +102,9 @@ export default function LoginScreen() {
     }
   };
 
-  // ─── Telefon SMS Gönder ───
   const handleSendOTP = async () => {
-    if (!phoneNumber) return Alert.alert('Hata', 'Telefon Numaranızı (örn: +90...) formatında girin.');
+    if (!phoneNumber) return Alert.alert('Hata', 'Telefon Numaranızı formatında girin.');
+    hapticImpact();
     setAuthLoading(true);
     try {
       const res = await sendPhoneOTP(phoneNumber);
@@ -120,7 +113,7 @@ export default function LoginScreen() {
         return;
       }
       setConfirmResult(res.confirmation);
-      setAuthStep('otp'); // Kod girme sayfasına geç
+      switchStep('otp');
     } catch (e: any) {
       Alert.alert('Hata', e.message);
     } finally {
@@ -128,14 +121,14 @@ export default function LoginScreen() {
     }
   };
 
-  // ─── SMS Kodu Doğrula ───
   const handleVerifyOTP = async () => {
     if (!otpCode || !confirmResult) return Alert.alert('Hata', 'Kodu girmelisiniz.');
+    hapticImpact();
     setAuthLoading(true);
     try {
       const res = await verifyPhoneOTP(confirmResult, otpCode);
       if (!res.success) {
-        Alert.alert('Hata', res.error || 'Kod geçersiz veya süre doldu.');
+        Alert.alert('Hata', res.error || 'Kod geçersiz.');
         return;
       }
       const { isNewUser } = await loginWithFirebase(res, 'phone');
@@ -147,97 +140,76 @@ export default function LoginScreen() {
     }
   };
 
-  // Misafir girişi — rastgele isimle direkt giriş
-  const handleGuestLogin = async () => {
-    // login() çağırmıyoruz — setup'a gidip orada isim/avatar/cinsiyet seçtikten sonra login yapılacak
-    router.push('/setup');
+  const handleGuestLogin = () => {
+    hapticImpact();
+    router.push('/setup'); 
   };
 
   return (
-    <View style={[s.container, { backgroundColor: C.deepNavy }]}>
-      {/* Derin arka plan */}
-      <LinearGradient
-        colors={isDark ? ['#060B18', '#0C1630', '#060B18'] : ['#F2F2F7', '#EEEDF5', '#F2F2F7']}
-        style={StyleSheet.absoluteFill}
-      />
-
-      {/* Üstte çok hafif turkuaz radial glow */}
-      <View style={s.topGlow}>
-        <LinearGradient
-          colors={isDark ? ['rgba(92,225,230,0.08)', 'rgba(92,225,230,0.03)', 'transparent'] : ['rgba(10,126,140,0.08)', 'rgba(10,126,140,0.03)', 'transparent']}
-          style={s.topGlowGrad}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 1 }}
+    <KeyboardAvoidingView style={s.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      {/* OLED Deep Black & Mesh Glow Background */}
+      <View style={StyleSheet.absoluteFill}>
+        <LinearGradient 
+          colors={[OLED_BLACK, DEEP_NAVY, OLED_BLACK]} 
+          style={StyleSheet.absoluteFill} 
+          locations={[0, 0.6, 1]} 
         />
+        <View style={s.glowOrbTop} />
+        <View style={s.glowOrbBottom} />
       </View>
 
-      {/* Logo üstte küçük */}
-      <Animated.View style={[s.logoArea, { opacity: logoOpacity }]}>
-        <Image
-          source={require('../assets/images/logo.png')}
-          style={s.logo}
-          resizeMode="contain"
-        />
-        <Text style={[s.welcomeText, { color: C.silverLight }]}>{'HO\u015E GELD\u0130N\u0130Z'}</Text>
-      </Animated.View>
+      {/* Sabit Logonun Alanı (login.png dediğiniz logo.png) */}
+      <View style={s.logoArea}>
+        <Animated.View style={[s.logoCenter, { opacity: logoOpacity }]}>
+          <Image source={require('../assets/images/logo.png')} style={s.logo} resizeMode="contain" />
+        </Animated.View>
+      </View>
 
-      {/* Glassmorphism Panel */}
-      <Animated.View
-        style={[
-          s.panelWrap,
-          {
-            opacity: panelOpacity,
-            transform: [{ translateY: panelY }],
-          },
-        ]}
-      >
-        <BlurView intensity={isDark ? 25 : 60} tint={isDark ? 'dark' : 'light'} style={s.blurPanel}>
+      {/* Gerçek Glassmorphism Auth Panel */}
+      <Animated.View style={[s.panelWrap, { opacity: panelOpacity, transform: [{ translateY: panelY }] }]}>
+        <BlurView intensity={65} tint="dark" style={s.blurContainer}>
           <View style={s.panelInner}>
-            <Text style={[s.panelTitle, { color: C.white }]}>Giriş Yap</Text>
-            <Text style={[s.panelSubtitle, { color: C.silverLight }]}>
-              {authStep === 'methods' && 'Soprano ailesine katılmak için bir yöntem seçin'}
-              {authStep === 'phone' && 'Telefon numaranızı başında + ülke kodu ile birlikte girin'}
+            <Text style={s.panelTitle}>Giriş Yap</Text>
+            <Text style={s.panelSubtitle}>
+              {authStep === 'methods' && 'Soprano ekosistemine katılmak için bir yöntem seçin'}
+              {authStep === 'phone' && 'Telefon numaranızı (+90...) formatında girin'}
               {authStep === 'otp' && 'Cihazınıza gönderilen 6 haneli kodu girin'}
             </Text>
 
-            {/* SEÇİM MENÜSÜ */}
+            {/* SEÇENEKLER FORMU */}
             {authStep === 'methods' && (
-              <>
-                {/* Google Butonu */}
-                <TouchableOpacity style={[s.authBtn, { borderColor: C.primaryStroke, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' }]} activeOpacity={0.7} onPress={handleGoogleLogin} disabled={authLoading}>
-                  <View style={s.authBtnInner}>
-                    <Ionicons name="logo-google" size={20} color={C.white} />
-                    <Text style={[s.authBtnText, { color: C.white }]}>{authLoading ? 'Bağlanıyor...' : 'Google ile devam et'}</Text>
+              <View style={s.formContainer}>
+                <TouchableOpacity style={s.authBtn} activeOpacity={0.8} onPress={handleGoogleLogin} disabled={authLoading}>
+                  <View style={s.authBtnBackground}>
+                    <Ionicons name="logo-google" size={20} color="#fff" />
+                    <Text style={s.authBtnText}>{authLoading ? 'Bağlanıyor...' : 'Google ile Devam Et'}</Text>
                   </View>
                 </TouchableOpacity>
 
-                {/* Apple Butonu */}
                 {Platform.OS === 'ios' && (
-                  <TouchableOpacity style={[s.authBtn, { borderColor: C.primaryStroke, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' }]} activeOpacity={0.7} onPress={handleAppleLogin} disabled={authLoading}>
-                    <View style={s.authBtnInner}>
-                      <Ionicons name="logo-apple" size={22} color={C.white} />
-                      <Text style={[s.authBtnText, { color: C.white }]}>{authLoading ? 'Bağlanıyor...' : 'Apple ile devam et'}</Text>
+                  <TouchableOpacity style={s.authBtn} activeOpacity={0.8} onPress={handleAppleLogin} disabled={authLoading}>
+                    <View style={s.authBtnBackground}>
+                      <Ionicons name="logo-apple" size={22} color="#fff" />
+                      <Text style={s.authBtnText}>{authLoading ? 'Bağlanıyor...' : 'Apple ile Devam Et'}</Text>
                     </View>
                   </TouchableOpacity>
                 )}
 
-                {/* Telefon Butonu */}
-                <TouchableOpacity style={[s.authBtn, { borderColor: C.primaryStroke, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' }]} activeOpacity={0.7} onPress={() => setAuthStep('phone')} disabled={authLoading}>
-                  <View style={s.authBtnInner}>
-                    <Ionicons name="call-outline" size={20} color={C.white} />
-                    <Text style={[s.authBtnText, { color: C.white }]}>Telefon numarası ile giriş</Text>
-                  </View>
+                <TouchableOpacity style={s.authBtnBase} activeOpacity={0.8} onPress={() => switchStep('phone')} disabled={authLoading}>
+                  <LinearGradient colors={['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.02)']} style={StyleSheet.absoluteFill} />
+                  <Ionicons name="call-outline" size={20} color={GOLD_ACCENT} />
+                  <Text style={[s.authBtnText, { color: GOLD_ACCENT }]}>Telefon Numarası ile Giriş</Text>
                 </TouchableOpacity>
-              </>
+              </View>
             )}
 
-            {/* TELEFON VERİ GİRİŞ EKRANI */}
+            {/* TELEFON NUMARASI FORMU */}
             {authStep === 'phone' && (
-              <>
+              <View style={s.formContainer}>
                 <TextInput
-                  style={[s.phoneInput, { color: C.white, borderColor: C.glassBorder, backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }]}
+                  style={s.numpadInput}
                   placeholder="+90 555 123 45 67"
-                  placeholderTextColor={C.silverDark}
+                  placeholderTextColor="rgba(255,255,255,0.3)"
                   keyboardType="phone-pad"
                   value={phoneNumber}
                   onChangeText={setPhoneNumber}
@@ -245,25 +217,24 @@ export default function LoginScreen() {
                   autoFocus
                 />
                 
-                <TouchableOpacity style={[s.authBtn, { backgroundColor: C.primary, borderColor: C.primaryStroke, marginTop: 12 }]} activeOpacity={0.8} onPress={handleSendOTP} disabled={authLoading}>
-                  <View style={s.authBtnInner}>
-                    <Text style={[s.authBtnText, { color: '#000', fontWeight: 'bold' }]}>{authLoading ? 'SMS Gönderiliyor...' : 'Doğrulama Kodu Gönder'}</Text>
-                  </View>
+                <TouchableOpacity style={s.primaryBtn} activeOpacity={0.8} onPress={handleSendOTP} disabled={authLoading}>
+                  <LinearGradient colors={['#D4AF37', '#AA8222']} style={StyleSheet.absoluteFill} />
+                  <Text style={s.primaryBtnText}>{authLoading ? 'Gönderiliyor...' : 'Doğrulama Kodu Gönder'}</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={{ marginTop: 16, alignItems: 'center' }} onPress={() => setAuthStep('methods')} disabled={authLoading}>
-                  <Text style={{ color: C.silverDark, fontSize: 13 }}>Vazgeç ve Seçeneklere Dön</Text>
+                <TouchableOpacity style={s.cancelLink} onPress={() => switchStep('methods')} disabled={authLoading}>
+                  <Text style={s.cancelLinkText}>Vazgeç ve Seçeneklere Dön</Text>
                 </TouchableOpacity>
-              </>
+              </View>
             )}
 
-            {/* OTP DOĞRULAMA KODU EKRANI */}
+            {/* OTP DOĞRULAMA FORMU */}
             {authStep === 'otp' && (
-              <>
+              <View style={s.formContainer}>
                 <TextInput
-                  style={[s.phoneInput, { textAlign: 'center', letterSpacing: 8, fontSize: 24, paddingHorizontal: 0, color: C.white, borderColor: C.glassBorder, backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }]}
+                  style={[s.numpadInput, { textAlign: 'center', letterSpacing: 10, fontSize: 24 }]}
                   placeholder="123456"
-                  placeholderTextColor={C.silverDark}
+                  placeholderTextColor="rgba(255,255,255,0.2)"
                   keyboardType="number-pad"
                   maxLength={6}
                   value={otpCode}
@@ -272,16 +243,15 @@ export default function LoginScreen() {
                   autoFocus
                 />
                 
-                <TouchableOpacity style={[s.authBtn, { backgroundColor: C.primary, borderColor: C.primaryStroke, marginTop: 12 }]} activeOpacity={0.8} onPress={handleVerifyOTP} disabled={authLoading}>
-                  <View style={s.authBtnInner}>
-                    <Text style={[s.authBtnText, { color: '#000', fontWeight: 'bold' }]}>{authLoading ? 'Bilgiler Doğrulanıyor...' : 'Uygulamaya Giriş Yap'}</Text>
-                  </View>
+                <TouchableOpacity style={s.primaryBtn} activeOpacity={0.8} onPress={handleVerifyOTP} disabled={authLoading}>
+                  <LinearGradient colors={['#D4AF37', '#AA8222']} style={StyleSheet.absoluteFill} />
+                  <Text style={s.primaryBtnText}>{authLoading ? 'Doğrulanıyor...' : 'Uygulamaya Giriş Yap'}</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={{ marginTop: 16, alignItems: 'center' }} onPress={() => setAuthStep('phone')} disabled={authLoading}>
-                  <Text style={{ color: C.silverDark, fontSize: 13 }}>Numaramı Değiştirmek İstiyorum</Text>
+                <TouchableOpacity style={s.cancelLink} onPress={() => switchStep('phone')} disabled={authLoading}>
+                  <Text style={s.cancelLinkText}>Numaramı Değiştirmek İstiyorum</Text>
                 </TouchableOpacity>
-              </>
+              </View>
             )}
 
             {/* Ayırıcı */}
@@ -291,117 +261,165 @@ export default function LoginScreen() {
               <View style={s.dividerLine} />
             </View>
 
-            {/* Misafir */}
             <TouchableOpacity style={s.guestBtn} activeOpacity={0.7} onPress={handleGuestLogin} disabled={guestLoading}>
-              {guestLoading ? (
-                <ActivityIndicator color={C.primary} size="small" />
-              ) : (
-                <Text style={[s.guestText, { color: C.silverLight }]}>Misafir olarak göz at</Text>
-              )}
+              <Text style={s.guestText}>Misafir Vitrini ile Göz At</Text>
             </TouchableOpacity>
           </View>
         </BlurView>
-      </Animated.View>
 
-      {/* Alt yazı */}
-      <Animated.Text style={[s.footer, { opacity: panelOpacity, color: C.silverDark }]}>
-        Devam ederek{' '}
-        <Text style={[s.footerLink, { color: C.primary }]}>Gizlilik Politikası</Text> ve{' '}
-        <Text style={[s.footerLink, { color: C.primary }]}>Kullanım Koşulları</Text>'nı kabul etmiş olursunuz.
-      </Animated.Text>
-    </View>
+        {/* Gizlilik Politikası Text'i */}
+        <View style={s.footer}>
+          <Text style={s.footerText}>
+            Devam ederek {' '}
+            <Text style={s.footerLink}>Gizlilik Politikası</Text> ve {' '}
+            <Text style={s.footerLink}>Kullanım Koşulları</Text>'nı kabul etmiş olursunuz.
+          </Text>
+        </View>
+      </Animated.View>
+    </KeyboardAvoidingView>
   );
 }
 
 const s = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.deepNavy,
+    backgroundColor: OLED_BLACK,
   },
-  topGlow: {
+  glowOrbTop: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: height * 0.35,
+    top: -height * 0.1,
+    left: -width * 0.2,
+    width: width * 1.5,
+    height: width * 1.5,
+    borderRadius: width * 0.75,
+    backgroundColor: NEON_CYAN + '0.03)',
   },
-  topGlowGrad: {
-    width: '100%',
-    height: '100%',
+  glowOrbBottom: {
+    position: 'absolute',
+    bottom: -height * 0.1,
+    right: -width * 0.2,
+    width: width * 1.5,
+    height: width * 1.5,
+    borderRadius: width * 0.75,
+    backgroundColor: VIP_PURPLE + '0.04)',
   },
   logoArea: {
+    flex: 1,
     alignItems: 'center',
-    marginTop: height * 0.1,
+    justifyContent: 'flex-end',
+    paddingBottom: 32,
+  },
+  logoCenter: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   logo: {
-    width: width * 0.75,
-    height: width * 0.75 * 0.35,
-  },
-  welcomeText: {
-    color: COLORS.silverLight,
-    fontSize: 14,
-    fontWeight: FONTS.regular,
-    marginTop: SPACING.sm,
-    letterSpacing: 2,
-    textTransform: 'uppercase',
+    width: 250,
+    height: 120, // logoya uygun biraz yayvan boyut
   },
   panelWrap: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: SPACING.lg,
-    paddingBottom: Platform.OS === 'android' ? height * 0.12 : height * 0.08,
+    paddingHorizontal: 20,
+    paddingBottom: Platform.OS === 'android' ? height * 0.16 : height * 0.12,
   },
-  blurPanel: {
-    borderRadius: RADIUS.lg,
+  blurContainer: {
+    borderRadius: 24,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: COLORS.glassBorder,
+    borderColor: 'rgba(255,255,255,0.15)', // Gerçek Glassmorphism Kenarlığı
+    backgroundColor: 'rgba(255,255,255,0.03)', // Hafif buzlu zemin
   },
   panelInner: {
-    padding: SPACING.md,
-    backgroundColor: COLORS.glassBg,
+    padding: 24,
   },
   panelTitle: {
-    color: COLORS.white,
-    fontSize: 18,
-    fontWeight: FONTS.bold,
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: '800',
     textAlign: 'center',
-    marginBottom: 4,
+    letterSpacing: 0.5,
+    marginBottom: 6,
   },
   panelSubtitle: {
-    color: COLORS.silverLight,
+    color: 'rgba(255,255,255,0.6)',
     fontSize: 12,
-    fontWeight: FONTS.regular,
     textAlign: 'center',
-    marginBottom: SPACING.md,
-    lineHeight: 16,
+    marginBottom: 24,
+    lineHeight: 18,
+  },
+  formContainer: {
+    width: '100%',
   },
   authBtn: {
-    marginBottom: SPACING.sm,
-    borderRadius: RADIUS.md,
+    marginBottom: 12,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: COLORS.primaryStroke,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderColor: 'rgba(255,255,255,0.08)',
     overflow: 'hidden',
   },
-  authBtnInner: {
+  authBtnBase: {
+    marginBottom: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(212,175,55,0.3)', 
+    overflow: 'hidden',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 11,
+    paddingVertical: 14,
+    gap: 10,
+  },
+  authBtnBackground: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
     gap: 10,
   },
   authBtnText: {
-    color: COLORS.white,
-    fontSize: 13,
-    fontWeight: FONTS.medium,
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: 0.3,
+  },
+  numpadInput: {
+    height: 54,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    color: '#fff',
+    fontSize: 16,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    fontWeight: '600',
+  },
+  primaryBtn: {
+    height: 54,
+    borderRadius: 16,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  primaryBtnText: {
+    color: OLED_BLACK, 
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  cancelLink: {
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  cancelLinkText: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 12,
+    fontWeight: '500',
   },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: SPACING.md,
+    marginVertical: 20,
   },
   dividerLine: {
     flex: 1,
@@ -409,39 +427,31 @@ const s = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.1)',
   },
   dividerText: {
-    color: COLORS.silverDark,
+    color: 'rgba(255,255,255,0.3)',
     fontSize: 12,
-    marginHorizontal: SPACING.md,
+    marginHorizontal: 16,
   },
   guestBtn: {
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 8,
   },
   guestText: {
-    color: COLORS.silverLight,
+    color: 'rgba(255,255,255,0.6)',
     fontSize: 14,
-    fontWeight: FONTS.medium,
+    fontWeight: '600',
   },
   footer: {
-    position: 'absolute',
-    bottom: Platform.OS === 'android' ? 48 : SPACING.lg,
-    left: SPACING.xl,
-    right: SPACING.xl,
-    textAlign: 'center',
-    color: COLORS.silverDark,
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  footerText: {
+    color: 'rgba(255,255,255,0.4)',
     fontSize: 11,
-    lineHeight: 16,
+    textAlign: 'center',
+    lineHeight: 18,
   },
   footerLink: {
-    color: COLORS.primary,
-    fontSize: 11,
-  },
-  phoneInput: {
-    height: 52,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    marginBottom: 8,
+    color: GOLD_ACCENT,
+    fontWeight: '600',
   },
 });

@@ -5,8 +5,8 @@
 // Tüm fonksiyonlar async/await ile çalışır.
 // ═══════════════════════════════════════════════════════
 
-// Vercel base URL — production
-const BASE_URL = 'https://sopranochat.com';
+// Vercel base URL — fallback
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://sopranochat.com';
 
 // Request timeout (ms)
 const REQUEST_TIMEOUT = 15000;
@@ -113,6 +113,65 @@ export async function buySpeakerVisa(
       return { success: false, error: 'Bağlantı zaman aşımına uğradı' };
     }
     return { success: false, error: error.message || 'Ağ hatası oluştu' };
+  }
+}
+
+// ─────────────────────────────────────────────────────
+// API: Profil Bilgisi Al (Followers vb. dahil)
+// GET /api/auth/me
+// ─────────────────────────────────────────────────────
+
+export async function getProfileMe(token: string) {
+  try {
+    const response = await fetchWithTimeout(
+      `${BASE_URL}/api/auth/me`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Profil alınamadı');
+    }
+
+    return data;
+  } catch (error: any) {
+    console.warn('[API:getProfileMe] Error:', error);
+    return null;
+  }
+}
+
+
+// ─────────────────────────────────────────────────────
+// API: Arkadaş / Takipçi Listesi Al
+// GET /api/friend/list
+// ─────────────────────────────────────────────────────
+
+export async function getFriendsList(token: string) {
+  try {
+    const response = await fetchWithTimeout(
+      `${BASE_URL}/api/friend/list`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Liste alınamadı');
+    }
+
+    return data;
+  } catch (error: any) {
+    console.warn('[API:getFriendsList] Error:', error);
+    return [];
   }
 }
 
@@ -257,8 +316,18 @@ export async function getLeaderboard(
 // GET /api/rooms/discover
 // ─────────────────────────────────────────────────────
 
-export interface DiscoverRoom extends RoomData {
+export interface DiscoverRoom {
+  roomId: string;
+  name: string;
+  onlineCount: number;
+  isLive: boolean;
+  coverImage: string | null;
   badge?: 'trend' | 'hot' | 'new' | 'standard';
+  ownerDisplayName?: string;
+  maxCapacity?: number;
+  currentParticipants?: number;
+  isPrivate?: boolean;
+  tags?: string[];
 }
 
 export interface RadarUserData {
@@ -287,17 +356,43 @@ export async function getDiscoverData(): Promise<DiscoverResponse> {
     if (!response.ok) {
       console.warn('[API] Discover alınamadı:', data?.error || response.status);
       // Fallback: public rooms kullan
-      const rooms = await getPublicRooms();
+      const publicRooms = await getPublicRooms();
+      const rooms: DiscoverRoom[] = publicRooms.map(r => ({
+        roomId: r.id,
+        name: r.name,
+        onlineCount: r.currentParticipants || 0,
+        isLive: true,
+        coverImage: null,
+        badge: r.isPrivate ? 'hot' : 'standard',
+      }));
       return { rooms, radarUsers: [] };
     }
+    // Backend array dönüyor {roomId, name, onlineCount, isLive, coverImage, badge}
+    // Biz Frontend'in beklediği DiscoverResponse formatına mock radar users ekleyip dönüyoruz.
+    const rooms = Array.isArray(data) ? data : (data.rooms || []);
+    
+    const mockRadarUsers: RadarUserData[] = [
+      { id: '1', name: 'Alperen', avatar: 'https://i.pravatar.cc/150?u=a', initials: 'AL', ring: 1, angle: 45, tier: 'gold' },
+      { id: '2', name: 'Kerem', avatar: null, initials: 'KE', ring: 1, angle: 180, tier: 'silver' },
+      { id: '3', name: 'Zeynep', avatar: 'https://i.pravatar.cc/150?u=z', initials: 'ZE', ring: 2, angle: 90, tier: 'standard' },
+    ];
+
     return {
-      rooms: data.rooms || [],
-      radarUsers: data.radarUsers || [],
+      rooms,
+      radarUsers: data.radarUsers || mockRadarUsers,
     };
   } catch (error: any) {
     console.warn('[API] Discover hatası:', error.message);
     // Fallback
-    const rooms = await getPublicRooms();
+    const publicRooms = await getPublicRooms();
+    const rooms: DiscoverRoom[] = publicRooms.map(r => ({
+      roomId: r.id,
+      name: r.name,
+      onlineCount: r.currentParticipants || 0,
+      isLive: true,
+      coverImage: null,
+      badge: r.isPrivate ? 'hot' : 'standard',
+    }));
     return { rooms, radarUsers: [] };
   }
 }
@@ -415,6 +510,40 @@ export async function getDirectMessageConversations(): Promise<ConversationData[
     return Array.isArray(data) && data.length > 0 ? data : DUMMY_CONVERSATIONS;
   } catch {
     return DUMMY_CONVERSATIONS;
+  }
+}
+
+// ─────────────────────────────────────────────────────
+// API: Direct Messages
+// ─────────────────────────────────────────────────────
+export interface DirectMessageData {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  content: string;
+  createdAt: string;
+  status: string;
+}
+
+export async function getDirectMessages(targetId: string, limit: number = 50): Promise<DirectMessageData[]> {
+  try {
+    const response = await fetchWithTimeout(`${BASE_URL}/api/messages/${targetId}?limit=${limit}`, { method: 'GET' });
+    if (!response.ok) return [];
+    return await response.json();
+  } catch {
+    return [];
+  }
+}
+
+export async function sendDirectMessageAPI(targetId: string, content: string): Promise<boolean> {
+  try {
+    const response = await fetchWithTimeout(`${BASE_URL}/api/messages/${targetId}`, {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    });
+    return response.ok;
+  } catch {
+    return false;
   }
 }
 

@@ -1,51 +1,39 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, Platform, Image } from 'react-native';
 import { Tabs, useRouter, usePathname } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../../constants/ThemeContext';
-import { COLORS, RADIUS, SPACING, FONTS } from '../../constants/theme';
+import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
+import { BlurView } from 'expo-blur';
+import { useUser, UserProvider } from '../../contexts/UserContext';
+import { ThemeProvider } from '../../constants/ThemeContext';
 import * as Haptics from 'expo-haptics';
 import { createRoomEvents } from '../../utils/createRoomEvents';
 
-// ─────────────────────────────────────────────────────
-// Center Create Button (Premium)
-// ─────────────────────────────────────────────────────
-function CenterButton({ onPress }: { onPress?: () => void }) {
-  const glow = useRef(new Animated.Value(0.5)).current;
+// Müşterinin Görselindeki Birebir Renkler
+const PURPLE_ACTIVE = '#9D4EDD'; // Görseldeki canlı mor
+const GRAY_INACTIVE = '#696969';
+const OLED_BLACK = '#000000';
+const NAV_BACKGROUND = 'rgba(10, 10, 15, 0.95)'; // Tamamen siyaha yakın hafif blur
 
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(glow, { toValue: 1, duration: 2000, useNativeDriver: true }),
-        Animated.timing(glow, { toValue: 0.5, duration: 2000, useNativeDriver: true }),
-      ])
-    ).start();
-  }, []);
-
+// ─────────────────────────────────────────────────────
+// Animasyonlu Nav Item (Görseldeki gibi alttan mor çizgili)
+// ─────────────────────────────────────────────────────
+function NavItem({ tab, active, onPress }: { tab: any, active: boolean, onPress: () => void }) {
   return (
-    <View style={styles.centerBtnWrapper}>
-      <Animated.View style={[styles.centerGlow, { opacity: glow }]} />
-      <Animated.View style={[styles.centerGlowOuter, { opacity: Animated.multiply(glow, 0.4) }]} />
-      <TouchableOpacity activeOpacity={0.8} onPress={onPress}>
-        <LinearGradient
-          colors={['#2DD4BF', '#14A499', '#0E8A80']}
-          style={styles.centerBtn}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
-          {/* Üst cam shine */}
-          <LinearGradient
-            colors={['rgba(255,255,255,0.45)', 'rgba(255,255,255,0.0)']}
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 28, borderTopLeftRadius: 27, borderTopRightRadius: 27 }}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 1 }}
-          />
-          <Ionicons name="add" size={30} color={'#FFFFFF'} />
-        </LinearGradient>
-      </TouchableOpacity>
-    </View>
+    <TouchableOpacity style={st.navItem} activeOpacity={0.7} onPress={onPress}>
+      <Ionicons
+        name={active ? tab.iconActive : tab.iconOutline}
+        size={24}
+        color={active ? PURPLE_ACTIVE : GRAY_INACTIVE}
+      />
+      <Text style={[st.navLabel, { color: active ? PURPLE_ACTIVE : GRAY_INACTIVE }]}>
+        {tab.label}
+      </Text>
+      {/* Aktif sekmenin altındaki mor çizgi */}
+      {active && <View style={st.activeIndicator} />}
+    </TouchableOpacity>
   );
 }
 
@@ -56,14 +44,13 @@ function CustomTabBar() {
   const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
-  const { isDark } = useTheme();
 
   const tabs = [
-    { route: '/', icon: 'home', iconOutline: 'home-outline', label: 'Lobi' },
-    { route: '/discover', icon: 'compass', iconOutline: 'compass-outline', label: 'Keşfet' },
-    { route: '__center__', icon: 'add', iconOutline: 'add', label: '' },
-    { route: '/messages', icon: 'chatbubbles', iconOutline: 'chatbubbles-outline', label: 'Mesajlar' },
-    { route: '/profile', icon: 'person', iconOutline: 'person-outline', label: 'Profil' },
+    { route: '/', iconActive: 'home', iconOutline: 'home-outline', label: 'Ana Sayfa' },
+    { route: '/discover', iconActive: 'compass', iconOutline: 'compass-outline', label: 'Keşfet' },
+    { route: '/leaderboard', iconActive: 'trophy', iconOutline: 'trophy-outline', label: 'Liderlik' },
+    { route: '/messages', iconActive: 'chatbubble', iconOutline: 'chatbubble-outline', label: 'Mesajlar' },
+    { route: '/profile', iconActive: 'person', iconOutline: 'person-outline', label: 'Profil' },
   ];
 
   const isActive = (route: string) => {
@@ -71,75 +58,99 @@ function CustomTabBar() {
     return pathname.startsWith(route);
   };
 
-  return (
-    <View style={[styles.bottomNavWrapper, { bottom: insets.bottom > 0 ? insets.bottom : 20 }]}>
-      <View style={styles.bottomNav}>
-        {/* Subtle glow top edge */}
-        <LinearGradient
-          colors={isDark ? ['rgba(92,225,230,0.10)', 'transparent'] : ['rgba(5,163,164,0.06)', 'transparent']}
-          style={styles.navTopGlow}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 1 }}
-        />
+  const hapticImpact = () => {
+    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
 
-        {tabs.map((tab) => {
-          if (tab.route === '__center__') {
-            return (
-              <CenterButton
-                key="center"
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  createRoomEvents.emit();
-                }}
-              />
-            );
-          }
-          const active = isActive(tab.route);
-          return (
-            <TouchableOpacity
-              key={tab.route}
-              style={styles.navItem}
-              activeOpacity={0.7}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push(tab.route as any);
-              }}
-            >
-              <Ionicons
-                name={(active ? tab.icon : tab.iconOutline) as any}
-                size={22}
-                color={active ? COLORS.primary : COLORS.silverDark}
-              />
-              <Text style={[styles.navLabel, active && styles.navLabelActive]}>
-                {tab.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+  return (
+    <View style={st.bottomNavWrapper}>
+      <BlurView intensity={80} tint="dark" style={[st.bottomNavInner, { paddingBottom: insets.bottom || 10 }]}>
+        {tabs.map((tab) => (
+          <NavItem
+            key={tab.route}
+            tab={tab}
+            active={isActive(tab.route)}
+            onPress={() => {
+              hapticImpact();
+              router.push(tab.route as any);
+            }}
+          />
+        ))}
+      </BlurView>
     </View>
   );
 }
 
-// ═════════════════════════════════════════════════════
-// TABS LAYOUT
-// ═════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────
+// Massive Floating "S" Sonar Button (Görseldeki gibi ortada süzülen dev S)
+// ─────────────────────────────────────────────────────
+function FloatingSonarS() {
+  const wave1 = useRef(new Animated.Value(0)).current;
+  const wave2 = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const animateWave = (val: Animated.Value, delay: number) => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(delay),
+          Animated.timing(val, { toValue: 1, duration: 3000, useNativeDriver: true }),
+          Animated.timing(val, { toValue: 0, duration: 0, useNativeDriver: true }),
+        ])
+      ).start();
+    };
+    animateWave(wave1, 0);
+    animateWave(wave2, 1500);
+  }, []);
+
+  return (
+    <View style={st.floatingSWrap} pointerEvents="box-none">
+      <Animated.View style={[st.sonarWave, { 
+        transform: [{ scale: wave1.interpolate({ inputRange: [0, 1], outputRange: [0.8, 2.5] }) }], 
+        opacity: wave1.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, 0.4, 0] }) 
+      }]} />
+      <Animated.View style={[st.sonarWave, { 
+        transform: [{ scale: wave2.interpolate({ inputRange: [0, 1], outputRange: [0.8, 2.5] }) }], 
+        opacity: wave2.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, 0.4, 0] }) 
+      }]} />
+      
+      <TouchableOpacity 
+        activeOpacity={0.9} 
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+          createRoomEvents.emit();
+        }}
+        style={st.sButton}
+      >
+        {/* Özel S Logosu */}
+        <Text style={st.sText}>S</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 export default function TabsLayout() {
   return (
-    <View style={{ flex: 1, backgroundColor: COLORS.deepNavy }}>
+    <View style={{ flex: 1, backgroundColor: OLED_BLACK }}>
+      <StatusBar style="light" backgroundColor="transparent" translucent />
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarStyle: { display: 'none' }, // Native tab bar gizle — custom kullanacağız
+          tabBarStyle: { display: 'none' }, // Custom bar kullanıyoruz
           animation: 'fade',
-          sceneStyle: { backgroundColor: COLORS.deepNavy },
+          sceneStyle: { backgroundColor: OLED_BLACK },
         }}
       >
-        <Tabs.Screen name="index" options={{ title: 'Lobi' }} />
+        <Tabs.Screen name="index" options={{ title: 'Ana Sayfa' }} />
         <Tabs.Screen name="discover" options={{ title: 'Keşfet' }} />
+        <Tabs.Screen name="leaderboard" options={{ title: 'Liderlik' }} />
         <Tabs.Screen name="messages" options={{ title: 'Mesajlar' }} />
         <Tabs.Screen name="profile" options={{ title: 'Profil' }} />
       </Tabs>
+      
+      {/* Dev süzülen logo arka tablonun üstünde konumlanır */}
+      <FloatingSonarS />
+      
+      {/* En alt Tab Bar */}
       <CustomTabBar />
     </View>
   );
@@ -148,92 +159,87 @@ export default function TabsLayout() {
 // ═════════════════════════════════════════════════════
 // STYLES
 // ═════════════════════════════════════════════════════
-const styles = StyleSheet.create({
+const st = StyleSheet.create({
   bottomNavWrapper: {
     position: 'absolute',
-    left: SPACING.sm,
-    right: SPACING.sm,
-    zIndex: 20,
+    bottom: 0, left: 0, right: 0,
+    zIndex: 100,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.03)',
   },
-  bottomNav: {
+  bottomNavInner: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-around',
-    height: 56,
-    borderRadius: RADIUS.xl,
-    backgroundColor: 'rgba(8,14,28,0.93)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    overflow: 'visible',
-    paddingHorizontal: SPACING.sm,
-    ...(Platform.OS === 'android' ? {
-      elevation: 16,
-      shadowColor: '#000',
-    } : {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: -4 },
-      shadowOpacity: 0.4,
-      shadowRadius: 14,
-    }),
-  },
-  navTopGlow: {
-    position: 'absolute',
-    top: 0,
-    left: 20,
-    right: 20,
-    height: 1,
-    borderRadius: 1,
+    justifyContent: 'space-between',
+    paddingTop: 10,
+    paddingHorizontal: 8,
+    backgroundColor: NAV_BACKGROUND,
   },
   navItem: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 6,
-    flex: 1,
+    position: 'relative',
+    height: 50,
   },
   navLabel: {
-    color: COLORS.silverDark,
     fontSize: 10,
-    fontWeight: FONTS.medium as any,
-    marginTop: 3,
+    fontWeight: '600',
+    marginTop: 4,
   },
-  navLabelActive: {
-    color: COLORS.primary,
-  },
-
-  /* ── Center Button ── */
-  centerBtnWrapper: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: -20,
-    flex: 1,
-  },
-  centerGlow: {
+  activeIndicator: {
     position: 'absolute',
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: 'rgba(45,212,191,0.35)',
-  },
-  centerGlowOuter: {
-    position: 'absolute',
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: 'rgba(45,212,191,0.14)',
-  },
-  centerBtn: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    shadowColor: '#2DD4BF',
+    bottom: -8, // Yazının alt hizasına inmesi için
+    width: 24,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: PURPLE_ACTIVE,
+    shadowColor: PURPLE_ACTIVE,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.7,
-    shadowRadius: 18,
-    elevation: 16,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.30)',
+    shadowOpacity: 0.8,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  floatingSWrap: {
+    position: 'absolute',
+    bottom: 65, // Tab barın üzerinde havada
+    left: '50%',
+    transform: [{ translateX: -30 }], // 60px width
+    width: 60,
+    height: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 200,
+  },
+  sonarWave: {
+    position: 'absolute',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(92,225,230,0.3)', // Cyan radar renkli
+    borderWidth: 1,
+    borderColor: 'rgba(92,225,230,0.8)',
+  },
+  sButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#00E5FF', // Cyan parlak
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#00E5FF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 15,
+    elevation: 10,
+    borderWidth: 2,
+    borderColor: '#FFF',
+  },
+  sText: {
+    color: '#000',
+    fontSize: 32,
+    fontWeight: '900',
+    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    marginTop: -2,
   },
 });

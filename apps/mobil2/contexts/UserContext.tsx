@@ -6,6 +6,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { guestLogin, updateProfile, type UserData, type AuthResponse } from '../services/auth';
+import { getProfileMe } from '../services/api';
 import {
   type FirebaseUser,
   type AuthResult,
@@ -29,6 +30,7 @@ export interface ProfileExtra {
   followingCount?: number;
   alliancesCount?: number;
   visitorsCount?: number;
+  assets?: { unlocked: string[]; equipped: string[] };
 }
 
 // Lokal kullanıcı — API'den gelmese bile setup'tan dolduruluyor
@@ -59,9 +61,11 @@ interface UserContextType {
   // Auth
   login: (username: string, avatar?: string, gender?: string) => Promise<void>;
   loginWithFirebase: (authResult: AuthResult, provider: 'google' | 'apple' | 'phone') => Promise<{ isNewUser: boolean }>;
-  update: (payload: { displayName?: string; avatar?: string; gender?: string; bio?: string }) => Promise<void>;
+  update: (payload: { displayName?: string; avatar?: string; gender?: string; bio?: string; assets?: any }) => Promise<void>;
   saveProfileExtra: (extra: ProfileExtra) => Promise<void>;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType>({
@@ -76,6 +80,8 @@ const UserContext = createContext<UserContextType>({
   update: async () => {},
   saveProfileExtra: async () => {},
   logout: async () => {},
+  deleteAccount: async () => {},
+  refreshProfile: async () => {},
 });
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
@@ -180,6 +186,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         points: result.user.points || 0,
         isVip: result.user.isVip || false,
         role: result.user.role || 'member',
+        isProfileComplete: false, // Firebase login → her zaman setup gerekli
       };
       setUser(mergedUser);
       setToken(result.access_token);
@@ -232,7 +239,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // Profil güncelle
-  const update = useCallback(async (payload: { displayName?: string; avatar?: string; gender?: string; bio?: string }) => {
+  const update = useCallback(async (payload: { displayName?: string; avatar?: string; gender?: string; bio?: string; assets?: any }) => {
     if (user) {
       const updated: LocalUser = {
         ...user,
@@ -245,8 +252,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updated));
     }
 
-    if (payload.bio !== undefined) {
-      const merged = { ...profileExtra, bio: payload.bio };
+    if (payload.bio !== undefined || payload.assets !== undefined) {
+      const merged: any = { ...profileExtra };
+      if (payload.bio !== undefined) merged.bio = payload.bio;
+      if (payload.assets !== undefined) merged.assets = payload.assets;
       setProfileExtra(merged);
       await AsyncStorage.setItem(STORAGE_KEYS.PROFILE_EXTRA, JSON.stringify(merged));
     }
@@ -287,6 +296,39 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     ]);
   }, []);
 
+  const deleteAccount = useCallback(async () => {
+    if (token) {
+      try {
+        const HOST = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+        await fetch(`${HOST}/auth/me`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } catch (e) {
+        console.warn('[UserContext] Hesap silme backend hatasi', e);
+      }
+    }
+    await logout();
+  }, [token, logout]);
+
+  // API'den en güncel profil statlarını (takipçi vb.) çeker
+  const refreshProfile = useCallback(async () => {
+    if (!token) return;
+    const data = await getProfileMe(token);
+    if (data && data.profileExtra) {
+      const mergedExtra = { ...profileExtra, ...data.profileExtra };
+      setProfileExtra(mergedExtra);
+      await AsyncStorage.setItem(STORAGE_KEYS.PROFILE_EXTRA, JSON.stringify(mergedExtra));
+      
+      // Update localUser balances if needed (points, wallet)
+      if (user) {
+         const mergedUser = { ...user, walletBalance: data.walletBalance ?? user.walletBalance, points: data.points ?? user.points };
+         setUser(mergedUser);
+         await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(mergedUser));
+      }
+    }
+  }, [token, profileExtra, user]);
+
   return (
     <UserContext.Provider
       value={{
@@ -301,6 +343,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         update,
         saveProfileExtra,
         logout,
+        deleteAccount,
+        refreshProfile,
       }}
     >
       {children}

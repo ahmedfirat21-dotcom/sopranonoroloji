@@ -239,8 +239,7 @@ export default function ChatScreen() {
                   senderId: user?.id || '',
                   receiverId: finalTargetId,
                   createdAt: new Date().toISOString(),
-                  isRead: false,
-                  sender: { id: user?.id || '', displayName: 'Ben' },
+                  status: 'sending',
                 };
                 setMessages(prev => [...prev, tempMsg]);
                 setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);

@@ -5,8 +5,9 @@
  * sistemiyle birlikte çalışır: Google'dan email doğrulanınca standart admin
  * cookie set edilir, requireAdmin() değişmeden çalışmaya devam eder.
  *
- * Yetkili e-posta listesi GOOGLE_ALLOWED_EMAILS env (virgül ayrılı) ile
- * kontrol edilir. Boş veya tanımsızsa default olarak 44burakdeniz@gmail.com.
+ * ★ 2026-05-10 SECURITY: Yetkili e-posta listesi sadece GOOGLE_ALLOWED_EMAILS
+ *   env'inden okunur. Default e-posta KALDIRILDI — env eksikse tüm girişler
+ *   reddedilir (fail-closed). Production'da env zorunlu.
  */
 
 const AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
@@ -27,7 +28,7 @@ export function getRedirectUri(origin: string): string {
 }
 
 export function getAllowedEmails(): string[] {
-  const raw = process.env.GOOGLE_ALLOWED_EMAILS || '44burakdeniz@gmail.com';
+  const raw = process.env.GOOGLE_ALLOWED_EMAILS || '';
   return raw
     .split(',')
     .map(s => s.trim().toLowerCase())

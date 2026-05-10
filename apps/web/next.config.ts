@@ -12,14 +12,22 @@ const nextConfig: NextConfig = {
   eslint: { ignoreDuringBuilds: true },
   allowedDevOrigins: ['http://localhost:3000', 'http://192.168.1.4:3000', 'http://FIRAT:3000', 'http://firat:3000'],
   async headers() {
+    // ★ 2026-05-10 SECURITY: frame-ancestors whitelist — sadece kendi domain + *.sopranochat.com.
+    //   Wildcard (*) clickjacking riski yaratıyordu. Embed'i başka site iframe etmek isterse,
+    //   EMBED_FRAME_ANCESTORS env'i ile ekleme yapılabilir (boşluk ayrılı domain listesi).
+    const extraAncestors = process.env.EMBED_FRAME_ANCESTORS || '';
+    const ancestorList = ["'self'", 'https://sopranochat.com', 'https://*.sopranochat.com', extraAncestors]
+      .filter(Boolean)
+      .join(' ');
     return [
       {
         source: "/embed/:path*",
         headers: [
           {
             key: "Content-Security-Policy",
-            value: "frame-ancestors *;", // Allow all domains for dev/demo
+            value: `frame-ancestors ${ancestorList};`,
           },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
         ],
       },
     ];

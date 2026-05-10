@@ -15,54 +15,24 @@ import {
   ScrollView,
   Easing,
   Image,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
+// BlurView import kaldırıldı — kullanılmıyordu
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { COLORS, SPACING, RADIUS, FONTS } from '../constants/theme';
 import { useUser } from '../contexts/UserContext';
-import useLiveKit from '../hooks/useLiveKit';
+import useRoomSocket from '../hooks/useRoomSocket';
+import { useWebRTC } from '../hooks/useWebRTC';
+import { RTCView } from '@livekit/react-native-webrtc';
 import GiftVaultSheet from '../components/GiftVaultSheet';
 import LottieGiftOverlay from '../components/LottieGiftOverlay';
 
 const { width: W, height: H } = Dimensions.get('window');
 
-/* ────────────────────────────────────────────────
-   SİMÜLASYON VERİSİ (LiveKit yokken önizleme)
-   ──────────────────────────────────────────────── */
-const MOCK_USERS = [
-  { id: 'host', nick: 'DJ_Soprano', role: 'host', speaking: true, mic: true },
-  { id: 'sp1', nick: 'AylaVIP', role: 'speaker', speaking: true, mic: true },
-  { id: 'sp2', nick: 'Melek', role: 'speaker', speaking: false, mic: true },
-  { id: 'sp3', nick: 'Emir', role: 'speaker', speaking: false, mic: true },
-  { id: 'sp4', nick: 'Rana', role: 'speaker', speaking: false, mic: false },
-];
-
-const MOCK_AUDIENCE = Array.from({ length: 25 }, (_, i) => ({
-  id: `au${i}`, nick: ['Lina', 'Kaan', 'Naz', 'Bora', 'Dilara', 'Yiğit', 'İpek', 'Ozan',
-    'Ceren', 'Alper', 'Deniz', 'Merve', 'Tolga', 'Sude', 'Onur', 'Zeynep', 'Arda',
-    'Pelin', 'Serkan', 'Gizem', 'Ege', 'Burcu', 'Mert', 'Aslı', 'Volkan'][i],
-  role: 'listener', speaking: false, mic: false,
-}));
-
-const MOCK_CHAT = [
-  { sender: 'Lina', text: 'Selam herkese! 🙌' },
-  { sender: 'Kaan', text: 'Bu oda çok iyi ya' },
-  { sender: 'AylaVIP', text: 'Teşekkürler 💎' },
-  { sender: 'Deniz', text: 'Müzik harika 🎵' },
-  { sender: 'Merve', text: 'DJ açsana şarkıyı!' },
-  { sender: 'Bora', text: 'Selam millet 👋' },
-  { sender: 'Dilara', text: 'Bu gece eğlenceli olacak' },
-  { sender: 'Yiğit', text: 'Kameralar ne zaman açılıyor?' },
-  { sender: 'İpek', text: 'Harika oda ❤️' },
-  { sender: 'Ozan', text: 'Ses kalitesi çok iyi' },
-  { sender: 'Ceren', text: 'Hediye gelsin 💫' },
-  { sender: 'Alper', text: 'O şarkıyı tekrar çal!' },
-  { sender: 'Naz', text: 'Ben de sahnedeyim mi?' },
-];
 
 /* ────────────────────────────────────────────────
    KONUŞMA ANİMASYONU — SpeakingRipple
@@ -103,9 +73,9 @@ function SpeakingRipple({ diameter }: { diameter: number }) {
 /* ────────────────────────────────────────────────
    KOLTUK KARTI — glassmorphism + iç gölge
    ──────────────────────────────────────────────── */
-function SeatCard({ nick, role, speaking, mic, size, onPress }: {
+const SeatCard = React.memo(function SeatCard({ nick, role, speaking, mic, size, onPress, onLongPress }: {
   nick: string; role: string; speaking: boolean; mic: boolean;
-  size: number; onPress?: () => void;
+  size: number; onPress?: () => void; onLongPress?: () => void;
 }) {
   const initials = nick.slice(0, 2).toUpperCase();
   const isHost = role === 'host';
@@ -114,6 +84,7 @@ function SeatCard({ nick, role, speaking, mic, size, onPress }: {
     <TouchableOpacity
       activeOpacity={0.75}
       onPress={onPress}
+      onLongPress={onLongPress}
       style={{ alignItems: 'center', marginHorizontal: 6, marginBottom: 8 }}
     >
       {/* Avatar container */}
@@ -152,12 +123,17 @@ function SeatCard({ nick, role, speaking, mic, size, onPress }: {
       </View>
     </TouchableOpacity>
   );
-}
+}, (prev, next) => {
+  return prev.nick === next.nick && 
+         prev.role === next.role && 
+         prev.speaking === next.speaking && 
+         prev.mic === next.mic;
+});
 
 /* ────────────────────────────────────────────────
    SOHBET MESAJI BALONCUĞU — saydam koyu zemin
    ──────────────────────────────────────────────── */
-function ChatBubble({ sender, text, isEntry }: { sender: string; text: string; isEntry?: boolean }) {
+const ChatBubble = React.memo(function ChatBubble({ sender, text, isEntry }: { sender: string; text: string; isEntry?: boolean }) {
   return (
     <View style={sty.chatBubble}>
       {isEntry ? (
@@ -173,7 +149,9 @@ function ChatBubble({ sender, text, isEntry }: { sender: string; text: string; i
       )}
     </View>
   );
-}
+}, (prev, next) => {
+  return prev.sender === next.sender && prev.text === next.text;
+});
 
 /* ────────────────────────────────────────────────
    VIP GİRİŞ BANT EFEKTİ
@@ -208,9 +186,14 @@ function VIPEntryBanner({ name, onDone }: { name: string; onDone: () => void }) 
 /* ────────────────────────────────────────────────
    PROFİL KARTI — Host moderasyon paneli
    ──────────────────────────────────────────────── */
-function ProfileCard({ nick, role, onClose, onMute, onKick, onRemoveFromStage }: {
-  nick: string; role: string;
-  onClose: () => void; onMute?: () => void; onKick?: () => void; onRemoveFromStage?: () => void;
+function ProfileCard({ 
+  nick, role, isMuted, isStageUser, 
+  onClose, onMute, onUnmute, onKick, onBan, onRemoveFromStage, onForceStage, onReport, onBlock 
+}: {
+  nick: string; role: string; isMuted?: boolean; isStageUser?: boolean;
+  onClose: () => void; onMute?: () => void; onUnmute?: () => void; 
+  onKick?: () => void; onBan?: () => void; onRemoveFromStage?: () => void; onForceStage?: () => void;
+  onReport?: () => void; onBlock?: () => void;
 }) {
   return (
     <View style={sty.profileOverlay}>
@@ -229,22 +212,52 @@ function ProfileCard({ nick, role, onClose, onMute, onKick, onRemoveFromStage }:
           </TouchableOpacity>
         </View>
         <View style={sty.profileActions}>
-          {onMute && (
+          {onMute && !isMuted && (
             <TouchableOpacity style={sty.profileBtn} onPress={onMute}>
               <Ionicons name="volume-mute" size={16} color={COLORS.error} />
               <Text style={sty.profileBtnText}>Sustur</Text>
             </TouchableOpacity>
           )}
-          {onRemoveFromStage && (
+          {onUnmute && isMuted && (
+            <TouchableOpacity style={sty.profileBtn} onPress={onUnmute}>
+              <Ionicons name="volume-high" size={16} color={COLORS.primary} />
+              <Text style={sty.profileBtnText}>Sesini Aç</Text>
+            </TouchableOpacity>
+          )}
+          {onForceStage && !isStageUser && (
+            <TouchableOpacity style={sty.profileBtn} onPress={onForceStage}>
+              <Ionicons name="arrow-up-circle" size={16} color={COLORS.success} />
+              <Text style={sty.profileBtnText}>Sahneye Al</Text>
+            </TouchableOpacity>
+          )}
+          {onRemoveFromStage && isStageUser && (
             <TouchableOpacity style={sty.profileBtn} onPress={onRemoveFromStage}>
               <Ionicons name="arrow-down-circle" size={16} color="#FBBF24" />
-              <Text style={sty.profileBtnText}>İndir</Text>
+              <Text style={sty.profileBtnText}>Sahn. İndir</Text>
             </TouchableOpacity>
           )}
           {onKick && (
             <TouchableOpacity style={[sty.profileBtn, { borderColor: 'rgba(239,68,68,0.2)' }]} onPress={onKick}>
               <Ionicons name="exit" size={16} color={COLORS.error} />
-              <Text style={[sty.profileBtnText, { color: COLORS.error }]}>Çıkar</Text>
+              <Text style={[sty.profileBtnText, { color: COLORS.error }]}>O. Çıkar</Text>
+            </TouchableOpacity>
+          )}
+          {onBan && (
+            <TouchableOpacity style={[sty.profileBtn, { borderColor: 'rgba(239,68,68,0.2)', backgroundColor: 'rgba(239,68,68,0.1)' }]} onPress={onBan}>
+              <Ionicons name="ban" size={16} color={COLORS.error} />
+              <Text style={[sty.profileBtnText, { color: COLORS.error }]}>Banla</Text>
+            </TouchableOpacity>
+          )}
+          {onReport && (
+            <TouchableOpacity style={[sty.profileBtn, { borderColor: 'rgba(255,165,0,0.2)', backgroundColor: 'rgba(255,165,0,0.1)' }]} onPress={onReport}>
+              <Ionicons name="warning" size={16} color="orange" />
+              <Text style={[sty.profileBtnText, { color: 'orange' }]}>Şikayet Et</Text>
+            </TouchableOpacity>
+          )}
+          {onBlock && (
+            <TouchableOpacity style={[sty.profileBtn, { borderColor: 'rgba(128,128,128,0.3)', backgroundColor: 'rgba(128,128,128,0.1)' }]} onPress={onBlock}>
+              <Ionicons name="close-circle" size={16} color="gray" />
+              <Text style={[sty.profileBtnText, { color: 'gray' }]}>Engelle</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -259,18 +272,26 @@ function ProfileCard({ nick, role, onClose, onMute, onKick, onRemoveFromStage }:
 export default function RoomScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user } = useUser();
+  const { user, token } = useUser();
   const { id, title } = useLocalSearchParams<{ id: string; title?: string }>();
   const roomName = title || 'Loca';
 
-  // LiveKit
-  const lk = useLiveKit({
+  // Socket.IO
+  const room = useRoomSocket({
     roomSlug: id || 'default-room',
-    enabled: true,
-    userId: user?.id || user?.username,
+    token,
     displayName: user?.displayName,
-    role: 'owner',
+    avatar: user?.avatarUrl,
+    gender: user?.gender,
+    enabled: true,
   });
+
+  // ─── WebRTC Sinyalleşme ve RTC Bağlantısı ───
+  const { localStream, remoteStreams, toggleMic, joinWebRTC } = useWebRTC(
+    room.socket,
+    id || null,
+    user?.id || null
+  );
 
   // Durum
   const [chatInput, setChatInput] = useState('');
@@ -280,26 +301,61 @@ export default function RoomScreen() {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [vipEntry, setVipEntry] = useState<string | null>(null);
 
-  // Simülasyon mu gerçek mi?
-  const isLive = lk.participants.length > 1;
-  const stageUsers = isLive
-    ? lk.participants.filter(p => p.audioEnabled || p.isSpeaking).map(p => ({
-      id: p.identity, nick: p.name, role: p.isLocal ? 'host' : 'speaker',
-      speaking: p.isSpeaking, mic: p.audioEnabled,
-    }))
-    : MOCK_USERS;
+  // Gerçek Socket.IO Verileri — Tüm katılımcılar
+  const STAFF_ROLES = ['owner', 'admin', 'super_admin', 'superadmin', 'moderator', 'operator', 'godmaster'];
 
-  const audienceUsers = isLive
-    ? lk.participants.filter(p => !p.audioEnabled && !p.isSpeaking).map(p => ({
-      id: p.identity, nick: p.name, role: 'listener', speaking: false, mic: false,
-    }))
-    : MOCK_AUDIENCE;
+  // Debug & WebRTC Initial Join
+  useEffect(() => {
+    if (room.connectionState === 'connected' && room.participants.length > 0) {
+      const allMapped = room.participants.map(p => ({
+        id: p.userId,
+        isStaff: STAFF_ROLES.includes(p.role?.toLowerCase() || ''),
+      }));
+      const sorted = [...allMapped].sort((a, b) => (b.isStaff ? 1 : 0) - (a.isStaff ? 1 : 0));
+      const initStage = sorted.slice(0, 8);
+      // Odaya girince stage kullanıcılarıyla bağlantı kur
+      joinWebRTC(initStage);
+    }
+  }, [room.connectionState, joinWebRTC]);
 
-  const chatList = isLive
-    ? lk.chatMessages.map(m => ({ sender: m.senderName, text: m.text }))
-    : MOCK_CHAT;
+  // Mikrofon state takibi (kendimiz için)
+  useEffect(() => {
+    const myEntry = room.participants.find(p => p.userId === user?.id);
+    if (myEntry) {
+      // isMuted true ise mikrofonu sustur
+      toggleMic(!!myEntry.isMuted);
+    }
+  }, [room.participants, toggleMic, user?.id]);
 
-  const viewerCount = stageUsers.length + audienceUsers.length;
+  // Sahneye: önce yetkililer, sonra üyeler (ilk 8 kişi)
+  const myEntry = room.participants.find(p => p.userId === user?.id);
+  const myRole = myEntry?.role?.toLowerCase() || 'member';
+  const isAdmin = ['owner', 'admin', 'super_admin', 'superadmin', 'godmaster'].includes(myRole);
+  const isMod = ['moderator', 'operator'].includes(myRole) || isAdmin;
+
+  const allMapped = room.participants.map(p => ({
+    id: p.userId,
+    nick: p.displayName || 'Misafir',
+    role: STAFF_ROLES.includes(p.role?.toLowerCase() || '') 
+      ? (p.role?.toLowerCase() === 'owner' ? 'host' : 'speaker')
+      : (p.role || 'listener'),
+    speaking: p.isSpeaking || false,
+    mic: !p.isMuted,
+    isStaff: STAFF_ROLES.includes(p.role?.toLowerCase() || ''),
+  }));
+
+  // Yetkilileri önce, sonra geri kalanı sırala
+  const sorted = [...allMapped].sort((a, b) => (b.isStaff ? 1 : 0) - (a.isStaff ? 1 : 0));
+
+  const stageUsers = sorted.slice(0, 8);
+  const audienceUsers = sorted.slice(8);
+
+  const chatList = room.chatMessages.map(m => ({
+    sender: m.displayName || 'Bilinmeyen',
+    text: m.text,
+  }));
+
+  const viewerCount = room.participants.length;
 
   // Dinamik mesaj limiti — oda büyüklüğüne göre
   const getMessageLimit = (count: number) => {
@@ -321,11 +377,11 @@ export default function RoomScreen() {
     Animated.timing(fadeIn, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => router.back());
   }, []);
 
-  const handleSend = useCallback(async () => {
+  const handleSend = useCallback(() => {
     if (!chatInput.trim()) return;
-    await lk.sendMessage(chatInput.trim());
+    room.sendMessage(chatInput.trim());
     setChatInput('');
-  }, [chatInput, lk]);
+  }, [chatInput, room]);
 
   return (
     <Animated.View style={[sty.root, { opacity: fadeIn }]}>
@@ -344,7 +400,7 @@ export default function RoomScreen() {
           <View>
             <Text style={sty.headerRoom} numberOfLines={1}>{roomName}</Text>
             <Text style={sty.headerStatus}>
-              {lk.connectionState === 'connected' ? '🟢 Canlı' : lk.connectionState === 'connecting' ? '🟡 Bağlanıyor' : '🔴 Çevrimdışı'}
+              {room.connectionState === 'connected' ? '🟢 Canlı' : room.connectionState === 'connecting' ? '🟡 Bağlanıyor' : '🔴 Çevrimdışı'}
             </Text>
           </View>
         </View>
@@ -366,19 +422,41 @@ export default function RoomScreen() {
 
       {/* ═══ SAHNE (Speakers) — glassmorphism koltuklar ═══ */}
       <View style={sty.stage}>
-        <View style={sty.stageGrid}>
-          {stageUsers.map(u => (
-            <SeatCard
-              key={u.id}
-              nick={u.nick}
-              role={u.role}
-              speaking={u.speaking}
-              mic={u.mic}
-              size={62}
-              onPress={() => setSelectedUser(u)}
-            />
-          ))}
-        </View>
+        {room.connectionState === 'connecting' ? (
+          <View style={{ alignItems: 'center', paddingVertical: 32 }}>
+            <Text style={{ color: COLORS.primary, fontSize: 14, fontFamily: FONTS.medium }}>🟡 Odaya bağlanılıyor...</Text>
+          </View>
+        ) : stageUsers.length === 0 ? (
+          <View style={{ alignItems: 'center', paddingVertical: 32 }}>
+            <Text style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, fontFamily: FONTS.regular }}>
+              {room.connectionState === 'connected' ? '🎙️ Sahne boş — ilk konuşan sen ol!' : '🔴 Bağlantı kurulamadı'}
+            </Text>
+            {room.error && (
+              <Text style={{ color: 'rgba(255,80,80,0.7)', fontSize: 11, marginTop: 6, fontFamily: FONTS.regular }}>{room.error}</Text>
+            )}
+          </View>
+        ) : (
+          <View style={sty.stageGrid}>
+            {stageUsers.map(u => (
+              <React.Fragment key={u.id}>
+                {remoteStreams[u.id] && (
+                  <RTCView
+                    streamURL={remoteStreams[u.id].toURL()}
+                    style={{ width: 0, height: 0, position: 'absolute' }}
+                  />
+                )}
+                <SeatCard
+                  nick={u.nick}
+                  role={u.role}
+                  speaking={u.speaking}
+                  mic={u.mic}
+                  size={62}
+                  onPress={() => setSelectedUser(u)}
+                />
+              </React.Fragment>
+            ))}
+          </View>
+        )}
       </View>
 
       {/* ═══ DİNLEYİCİLER ═══ */}
@@ -493,31 +571,26 @@ export default function RoomScreen() {
           <TouchableOpacity
             activeOpacity={0.85}
             style={sty.micPill}
-            onPress={async () => {
-              if (lk.isPublishing) await lk.unpublishAudio();
-              else await lk.publishAudio();
+            onPress={() => {
+              room.requestMic();
             }}
           >
             <LinearGradient
-              colors={lk.isPublishing
-                ? ['rgba(92,225,230,0.25)', 'rgba(56,189,248,0.15)']
-                : ['rgba(255,255,255,0.04)', 'rgba(255,255,255,0.02)']}
+              colors={['rgba(255,255,255,0.04)', 'rgba(255,255,255,0.02)']}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
               style={sty.micPillGrad}
             >
               <Ionicons
-                name={lk.isPublishing ? 'mic' : 'mic-off'}
+                name={'mic-off'}
                 size={17}
-                color={lk.isPublishing ? COLORS.primary : 'rgba(255,255,255,0.3)'}
+                color={'rgba(255,255,255,0.3)'}
               />
               <Text style={[
                 sty.micPillLabel,
-                lk.isPublishing && { color: COLORS.primary }
               ]}>
-                {lk.isPublishing ? 'Canlı' : 'Sessiz'}
+                {'Mikrofon İste'}
               </Text>
             </LinearGradient>
-            {lk.isPublishing && <View style={sty.micPillGlow} />}
           </TouchableOpacity>
 
           {/* Right actions */}
@@ -538,15 +611,39 @@ export default function RoomScreen() {
         <ProfileCard
           nick={selectedUser.nick}
           role={selectedUser.role}
+          isMuted={!selectedUser.mic}
+          isStageUser={selectedUser.role === 'speaker' || selectedUser.role === 'host'}
           onClose={() => setSelectedUser(null)}
-          onMute={() => { setSelectedUser(null); }}
-          onRemoveFromStage={selectedUser.role === 'speaker' ? () => { setSelectedUser(null); } : undefined}
-          onKick={selectedUser.role !== 'host' ? () => { setSelectedUser(null); } : undefined}
+          onMute={isMod && selectedUser.id !== user?.id ? () => { room.muteUser(selectedUser.id); setSelectedUser(null); } : undefined}
+          onUnmute={isMod && selectedUser.id !== user?.id ? () => { room.unmuteUser(selectedUser.id); setSelectedUser(null); } : undefined}
+          onRemoveFromStage={isMod && selectedUser.id !== user?.id && (selectedUser.role === 'speaker' || selectedUser.role === 'host') ? () => { room.denyMic(selectedUser.id); setSelectedUser(null); } : undefined}
+          onForceStage={isMod && selectedUser.id !== user?.id && selectedUser.role !== 'speaker' && selectedUser.role !== 'host' ? () => { room.forceStage(selectedUser.id); setSelectedUser(null); } : undefined}
+          onKick={isMod && selectedUser.id !== user?.id ? () => { room.kickUser(selectedUser.id); setSelectedUser(null); } : undefined}
+          onBan={isAdmin && selectedUser.id !== user?.id ? () => { room.banUser(selectedUser.id); setSelectedUser(null); } : undefined}
+          onReport={selectedUser.id !== user?.id ? () => {
+            Alert.alert('Şikayet Et', 'Bu kullanıcıyı şikayet etmek istediğinize emin misiniz?', [
+              { text: 'İptal', style: 'cancel' },
+              { text: 'Şikayet Et', style: 'destructive', onPress: () => { room.reportUser(selectedUser.id); setSelectedUser(null); Alert.alert('Rapor Gönderildi', 'Şikayetiniz incelemeye alınmıştır.'); } }
+            ]);
+          } : undefined}
+          onBlock={selectedUser.id !== user?.id ? () => {
+            Alert.alert('Engelle', 'Bu kullanıcıyı engellemek istediğinize emin misiniz? (Artık onu göremeyeceksiniz)', [
+              { text: 'İptal', style: 'cancel' },
+              { text: 'Engelle', style: 'destructive', onPress: () => { room.blockUser(selectedUser.id); setSelectedUser(null); Alert.alert('Engellendi', 'Kullanıcı başarıyla engellendi.'); } }
+            ]);
+          } : undefined}
         />
       )}
 
       {/* ═══ HEDİYE ÖRTÜLERİ ═══ */}
-      <GiftVaultSheet visible={vaultOpen} onClose={() => setVaultOpen(false)} onPlayAnimation={id => setGiftAnim(id)} />
+      <GiftVaultSheet 
+        visible={vaultOpen} 
+        onClose={() => setVaultOpen(false)} 
+        onPlayAnimation={id => setGiftAnim(id)}
+        onSendGift={(giftId) => room.sendGift(giftId, selectedUser?.id || '')} 
+        roomId={id}
+        userId={user?.id}
+      />
       <LottieGiftOverlay giftId={giftAnim} onFinish={() => setGiftAnim(null)} />
     </Animated.View>
   );
@@ -683,6 +780,8 @@ const sty = StyleSheet.create({
     overflow: 'hidden',
     borderTopWidth: 0.5,
     borderTopColor: 'rgba(92,225,230,0.06)',
+    zIndex: 100,
+    elevation: 10,
   },
   inputStrip: {
     flexDirection: 'row',

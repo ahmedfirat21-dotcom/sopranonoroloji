@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -16,7 +16,7 @@ import {
   Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
+// BlurView kaldırıldı — GPU yükü azaltıldı
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -32,48 +32,25 @@ import { EmptyState } from '../../components/UXHelpers';
 const { width } = Dimensions.get('window');
 const RADAR_SIZE = width * 0.68;
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ────────────────────────────────────────────────────â”€
 // Neon Category Chips
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ────────────────────────────────────────────────────â”€
 const CATEGORIES = [
-  { id: 'all', label: '#TÃ¼mÃ¼', icon: 'apps' as const },
-  { id: 'MÃ¼zik', label: '#CanlÄ±MÃ¼zik', icon: 'musical-notes' as const },
-  { id: 'YatÄ±rÄ±m', label: '#YatÄ±rÄ±m', icon: 'trending-up' as const },
+  { id: 'all', label: '#Tümü', icon: 'apps' as const },
+  { id: 'Müzik', label: '#CanlıMüzik', icon: 'musical-notes' as const },
+  { id: 'Yatırım', label: '#Yatırım', icon: 'trending-up' as const },
   { id: 'Sohbet', label: '#VIPSohbet', icon: 'chatbubble-ellipses' as const },
   { id: 'Oyun', label: '#Oyun', icon: 'game-controller' as const },
   { id: 'Podcast', label: '#Podcast', icon: 'mic' as const },
 ];
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ────────────────────────────────────────────────────â”€
 // Sonar Pulse â€” merkezde nefes alan halka
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ────────────────────────────────────────────────────â”€
+// SonarPulse kaldırıldı — 2 sonsuz loop animasyonu GPU'yu yoruyordu
 function SonarPulse() {
-  const pulse1 = useRef(new Animated.Value(0)).current;
-  const pulse2 = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.timing(pulse1, { toValue: 1, duration: 3000, easing: Easing.out(Easing.ease), useNativeDriver: true })
-    ).start();
-    setTimeout(() => {
-      Animated.loop(
-        Animated.timing(pulse2, { toValue: 1, duration: 3000, easing: Easing.out(Easing.ease), useNativeDriver: true })
-      ).start();
-    }, 1500);
-  }, []);
-
-  const ring = (anim: Animated.Value) => ({
-    position: 'absolute' as const,
-    width: 50, height: 50, borderRadius: 25,
-    borderWidth: 1.5, borderColor: COLORS.primary,
-    opacity: anim.interpolate({ inputRange: [0, 1], outputRange: [0.6, 0] }),
-    transform: [{ scale: anim.interpolate({ inputRange: [0, 1], outputRange: [1, 3.5] }) }],
-  });
-
   return (
     <View style={{ alignItems: 'center', justifyContent: 'center', height: 50, marginBottom: 4 }}>
-      <Animated.View style={ring(pulse1)} />
-      <Animated.View style={ring(pulse2)} />
       <View style={{
         width: 44, height: 44, borderRadius: 22,
         backgroundColor: 'rgba(92,225,230,0.08)',
@@ -86,82 +63,87 @@ function SonarPulse() {
   );
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Nearby User Card â€” yatay scroll premium kart
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function NearbyUserCard({ user, onPress }: { user: RadarUserData; onPress?: () => void }) {
+// ────────────────────────────────────────────────────â”€
+// ─────────────────────────────────────────────────────
+// VIP Spotlight Card — premium büyük vitrin kartı
+// ─────────────────────────────────────────────────────
+// VipSpotlightCard — pulse loop kaldırıldı, statik kart
+function VipSpotlightCard({ user, onPress }: { user: RadarUserData; onPress?: () => void }) {
   const accent = user.tier === 'gold' ? COLORS.goldMetallic
     : user.tier === 'silver' ? COLORS.silverMetallic : COLORS.primary;
-  const tierLabel = user.tier === 'gold' ? 'VIP' : user.tier === 'silver' ? 'Elite' : '';
+  const tierLabel = user.tier === 'gold' ? 'VIP' : user.tier === 'silver' ? 'Elite' : 'Premium';
 
   return (
-    <TouchableOpacity activeOpacity={0.75} onPress={onPress} style={{ width: 80, alignItems: 'center', marginRight: 14 }}>
+    <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={{ width: 140, height: 190, marginRight: 16 }}>
       <View style={{
-        width: 52, height: 52, borderRadius: 26,
-        backgroundColor: 'rgba(15,20,40,0.9)',
-        borderWidth: 2, borderColor: accent,
-        alignItems: 'center', justifyContent: 'center',
-        shadowColor: accent, shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.4, shadowRadius: 10, elevation: 5,
-        marginBottom: 6,
-      }}>
-        <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>{user.initials}</Text>
+        ...StyleSheet.absoluteFillObject,
+        borderRadius: 24,
+        backgroundColor: 'rgba(12,18,36,0.85)',
+        borderWidth: 1.5, borderColor: `${accent}44`,
+        overflow: 'hidden',
+      }} />
+
+      {/* Content */}
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 12 }}>
+        {/* Large Avatar */}
         <View style={{
-          position: 'absolute', bottom: 0, right: 0,
-          width: 12, height: 12, borderRadius: 6,
-          backgroundColor: '#4ADE80', borderWidth: 2, borderColor: COLORS.deepNavy,
-        }} />
-      </View>
-      <Text style={{ color: '#E2E8F0', fontSize: 11, fontWeight: '600', textAlign: 'center' }} numberOfLines={1}>{user.name}</Text>
-      {tierLabel ? (
-        <View style={{ marginTop: 2, paddingHorizontal: 6, paddingVertical: 1, borderRadius: 6, backgroundColor: `${accent}22`, borderWidth: 0.5, borderColor: `${accent}66` }}>
-          <Text style={{ color: accent, fontSize: 8, fontWeight: '800' }}>{tierLabel}</Text>
+          width: 64, height: 64, borderRadius: 32,
+          backgroundColor: 'rgba(5,8,20,0.9)',
+          borderWidth: 2, borderColor: accent,
+          alignItems: 'center', justifyContent: 'center',
+          marginBottom: 12,
+        }}>
+          <Text style={{ color: '#fff', fontSize: 24, fontWeight: '800' }}>{user.initials}</Text>
+          <View style={{
+            position: 'absolute', bottom: 2, right: 2,
+            width: 14, height: 14, borderRadius: 7,
+            backgroundColor: '#FF3B30',
+            borderWidth: 2, borderColor: '#050814',
+          }} />
         </View>
-      ) : null}
+
+        <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700', textAlign: 'center', marginBottom: 6 }} numberOfLines={1}>
+          {user.name}
+        </Text>
+
+        <View style={{
+          paddingHorizontal: 10, paddingVertical: 4,
+          borderRadius: 12,
+          backgroundColor: `${accent}15`,
+          borderWidth: 1, borderColor: `${accent}55`,
+        }}>
+          <Text style={{ color: accent, fontSize: 9, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase' }}>
+            {tierLabel}
+          </Text>
+        </View>
+      </View>
     </TouchableOpacity>
   );
 }
 
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ────────────────────────────────────────────────────â”€
 // Trending Card (Premium)
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function TrendingCard({ room, onPress }: { room: DiscoverRoom; onPress?: () => void }) {
-  const badgeConfig: Record<string, { label: string; colors: [string, string] }> = {
-    trend: { label: 'ğŸ”¥ Trend', colors: [COLORS.goldMetallic, COLORS.goldLight] },
-    hot: { label: 'âš¡ Hot', colors: ['#E05252', '#FF7070'] },
-    new: { label: 'âœ¨ Yeni', colors: [COLORS.primary, COLORS.primaryDark] },
-    standard: { label: 'â—† Aktif', colors: ['rgba(255,255,255,0.15)', 'rgba(255,255,255,0.05)'] },
+// ────────────────────────────────────────────────────â”€
+// TrendingCard — gradient sadeleştirildi
+const TrendingCard = React.memo(function TrendingCard({ room, onPress }: { room: DiscoverRoom; onPress?: () => void }) {
+  const badgeConfig: Record<string, { label: string; color: string }> = {
+    trend: { label: '🔥 Trend', color: COLORS.goldMetallic },
+    hot: { label: '⚡ Hot', color: '#E05252' },
+    new: { label: '✨ Yeni', color: COLORS.primary },
+    standard: { label: '◆ Aktif', color: 'rgba(255,255,255,0.15)' },
   };
 
   const badge = badgeConfig[room.badge || 'standard'];
-  const initials = (room.ownerDisplayName || 'A').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  const initials = (room.ownerDisplayName || 'A').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
 
   return (
     <TouchableOpacity style={styles.trendCard} activeOpacity={0.8} onPress={onPress} delayPressIn={100}>
-      <LinearGradient
-        colors={['rgba(12,18,36,0.80)', 'rgba(8,14,28,0.92)']}
-        style={[StyleSheet.absoluteFill, { borderRadius: 16 }]}
-        pointerEvents="none"
-      />
-
-      {/* Glassmorphism border highlight */}
-      <LinearGradient
-        colors={['rgba(255,255,255,0.08)', 'transparent']}
-        style={[StyleSheet.absoluteFill, { borderRadius: 16 }]}
-        pointerEvents="none"
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      />
+      {/* Tek opaque arka plan — 2 gradient yerine */}
+      <View style={[StyleSheet.absoluteFill, { borderRadius: 16, backgroundColor: 'rgba(10,16,32,0.92)' }]} />
 
       {/* Badge */}
-      <View style={styles.trendBadge}>
-        <LinearGradient
-          colors={badge.colors}
-          style={[StyleSheet.absoluteFill, { borderRadius: 8 }]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        />
+      <View style={[styles.trendBadge, { backgroundColor: badge.color }]}>
         <Text style={styles.trendBadgeText}>{badge.label}</Text>
       </View>
 
@@ -191,18 +173,18 @@ function TrendingCard({ room, onPress }: { room: DiscoverRoom; onPress?: () => v
       </View>
     </TouchableOpacity>
   );
-}
+});
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ────────────────────────────────────────────────────â”€
 // Dummy Fallback Data
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ────────────────────────────────────────────────────â”€
 const DUMMY_DISCOVER_ROOMS: DiscoverRoom[] = [
-  { id: 'dr1', name: "Gece MÃ¼ziÄŸi LocasÄ±", ownerDisplayName: 'Ahmet Kaan', maxCapacity: 8, currentParticipants: 5, isPrivate: false, tags: ['MÃ¼zik'], badge: 'trend' },
-  { id: 'dr2', name: "VIP Sohbet KulÃ¼bÃ¼", ownerDisplayName: 'Elif Deniz', maxCapacity: 6, currentParticipants: 3, isPrivate: true, tags: ['Sohbet'], badge: 'hot' },
-  { id: 'dr3', name: "YatÄ±rÄ±m Akademisi", ownerDisplayName: 'Can Demir', maxCapacity: 12, currentParticipants: 8, isPrivate: false, tags: ['YatÄ±rÄ±m'], badge: 'new' },
-  { id: 'dr4', name: "Gaming Arena", ownerDisplayName: 'Burak YÄ±lmaz', maxCapacity: 10, currentParticipants: 7, isPrivate: false, tags: ['Oyun'], badge: 'trend' },
-  { id: 'dr5', name: "Podcast Sahnesi", ownerDisplayName: 'Zeynep Aras', maxCapacity: 4, currentParticipants: 2, isPrivate: false, tags: ['Podcast'], badge: 'standard' },
-  { id: 'dr6', name: "CanlÄ± Akustik", ownerDisplayName: 'Selin Kaya', maxCapacity: 8, currentParticipants: 6, isPrivate: false, tags: ['MÃ¼zik'], badge: 'hot' },
+  { roomId: 'dr1', name: "Gece Müziği Locası", onlineCount: 5, isLive: true, coverImage: null, badge: 'trend' },
+  { roomId: 'dr2', name: "VIP Sohbet Kulübü", onlineCount: 3, isLive: true, coverImage: null, badge: 'hot' },
+  { roomId: 'dr3', name: "Yatırım Akademisi", onlineCount: 8, isLive: true, coverImage: null, badge: 'new' },
+  { roomId: 'dr4', name: "Gaming Arena", onlineCount: 7, isLive: true, coverImage: null, badge: 'trend' },
+  { roomId: 'dr5', name: "Podcast Sahnesi", onlineCount: 2, isLive: true, coverImage: null, badge: 'standard' },
+  { roomId: 'dr6', name: "Canlı Akustik", onlineCount: 6, isLive: true, coverImage: null, badge: 'hot' },
 ];
 
 const DUMMY_RADAR_USERS: RadarUserData[] = [
@@ -233,7 +215,7 @@ export default function DiscoverScreen() {
       setRooms(data.rooms.length > 0 ? data.rooms : DUMMY_DISCOVER_ROOMS);
       setRadarUsers(data.radarUsers.length > 0 ? data.radarUsers : DUMMY_RADAR_USERS);
     } catch {
-      // API eriÅŸilemezse dummy veriden devam
+      // API erişilemezse dummy veriden devam
       setRooms(DUMMY_DISCOVER_ROOMS);
       setRadarUsers(DUMMY_RADAR_USERS);
     } finally {
@@ -279,9 +261,9 @@ export default function DiscoverScreen() {
 
       {/* â•â•â• PREMIUM SEARCH BAR â•â•â• */}
       <View style={[styles.searchPillWrapper, { paddingTop: insets.top + 8 }]}>
-        <Animated.View style={[styles.searchBlurBg, { opacity: searchBlurOpacity }]}>
-          <BlurView intensity={isDark ? 50 : 70} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-        </Animated.View>
+        <View style={[styles.searchBlurBg, { opacity: searchBlurOpacity }]}>
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(8,14,28,0.95)' }]} />
+        </View>
         <View style={styles.searchPill}>
           <LinearGradient
             colors={['rgba(12,18,36,0.92)', 'rgba(8,14,28,0.96)']}
@@ -297,7 +279,7 @@ export default function DiscoverScreen() {
           <Ionicons name="search-outline" size={17} color={COLORS.primary} />
           <TextInput
             style={styles.searchInput}
-            placeholder="LocalarÄ± veya KullanÄ±cÄ±larÄ± ara..."
+            placeholder="Locaları veya Kullanıcıları ara..."
             placeholderTextColor={'rgba(148,163,184,0.5)'}
             selectionColor={COLORS.primary}
             value={searchQuery}
@@ -332,35 +314,37 @@ export default function DiscoverScreen() {
           />
         }
       >
-        {/* ═══ NEARBY USERS ═══ */}
-        <View style={{ paddingTop: 8, marginBottom: SPACING.lg }}>
-          {/* Sonar + Başlık */}
-          <SonarPulse />
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 14 }}>
-            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.primary }} />
-            <Text style={{ color: COLORS.silverLight, fontSize: 11, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase' }}>
-              Canlı Keşifler
-            </Text>
-            {radarUsers.length > 0 && (
-              <Text style={{ color: COLORS.primary, fontSize: 11, fontWeight: '700' }}>· {radarUsers.length} çevrimiçi</Text>
-            )}
+        {/* ═══ VIP SHOWCASE ═══ */}
+        <View style={{ paddingTop: 8, marginBottom: SPACING.xl }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: SPACING.md, marginBottom: 16 }}>
+            <View>
+              <Text style={{ color: COLORS.silverLight, fontSize: 13, fontWeight: '800', letterSpacing: 1.5, textTransform: 'uppercase' }}>
+                VIP Spotlight
+              </Text>
+              <Text style={{ color: COLORS.primary, fontSize: 11, fontWeight: '600', marginTop: 2 }}>
+                Şu an canlı yayında elit üyeler
+              </Text>
+            </View>
+            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#FF3B30', shadowColor: '#FF3B30', shadowOpacity: 0.8, shadowRadius: 6, elevation: 4 }} />
           </View>
-          {/* Yatay scroll kullanıcı kartları */}
+          
           <FlatList
             data={radarUsers}
             keyExtractor={item => item.id}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ paddingHorizontal: SPACING.md }}
+            snapToInterval={156}
+            decelerationRate="fast"
             renderItem={({ item }) => (
-              <NearbyUserCard
+              <VipSpotlightCard
                 user={item}
                 onPress={() => router.push({ pathname: '/room', params: { id: item.id, name: item.name } })}
               />
             )}
             ListEmptyComponent={
-              <Text style={{ color: COLORS.silverDark, fontSize: 12, textAlign: 'center', flex: 1 }}>
-                Yakında çevrimiçi kullanıcı yok
+              <Text style={{ color: COLORS.silverDark, fontSize: 12, textAlign: 'center', flex: 1, paddingVertical: 40 }}>
+                Şu an yayında VIP bulunmuyor
               </Text>
             }
           />
@@ -398,31 +382,31 @@ export default function DiscoverScreen() {
             />
             <Text style={styles.sectionTitle}>Trend Localar</Text>
           </View>
-          <Text style={styles.sectionSub}>En popÃ¼ler mekanlar</Text>
+          <Text style={styles.sectionSub}>En popüler mekanlar</Text>
         </View>
 
         {/* â•â•â• CONTENT â•â•â• */}
         {loading ? (
           <View style={{ alignItems: 'center', paddingVertical: 40 }}>
             <ActivityIndicator size="large" color={COLORS.primary} />
-            <Text style={{ color: COLORS.silverDark, marginTop: 12, fontSize: 13 }}>Localar yÃ¼kleniyor...</Text>
+            <Text style={{ color: COLORS.silverDark, marginTop: 12, fontSize: 13 }}>Localar yükleniyor...</Text>
           </View>
         ) : filteredRooms.length === 0 ? (
           <EmptyState
             icon="compass-outline"
-            title="SonuÃ§ bulunamadÄ±"
-            subtitle={searchQuery ? 'FarklÄ± bir arama deneyin' : 'HenÃ¼z trend loca yok'}
+            title="Sonuç bulunamadı"
+            subtitle={searchQuery ? 'Farklı bir arama deneyin' : 'Henüz trend loca yok'}
           />
         ) : (
           <View style={styles.gridContainer}>
             <View style={styles.gridColumn}>
               {leftCards.map(room => (
-                <TrendingCard key={room.id} room={room} onPress={() => router.push({ pathname: '/room', params: { id: room.id } })} />
+                <TrendingCard key={room.roomId} room={room} onPress={() => router.push({ pathname: '/room', params: { id: room.roomId } })} />
               ))}
             </View>
             <View style={[styles.gridColumn, { marginTop: SPACING.xl }]}>
               {rightCards.map(room => (
-                <TrendingCard key={room.id} room={room} onPress={() => router.push({ pathname: '/room', params: { id: room.id } })} />
+                <TrendingCard key={room.roomId} room={room} onPress={() => router.push({ pathname: '/room', params: { id: room.roomId } })} />
               ))}
             </View>
           </View>
@@ -440,7 +424,7 @@ export default function DiscoverScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.deepNavy },
 
-  /* â”€â”€ Search Pill (Premium Glassmorphism) â”€â”€ */
+  /* ── Search Pill (Premium Glassmorphism) ── */
   searchPillWrapper: {
     position: 'absolute',
     top: 0,
@@ -472,13 +456,13 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.regular as any,
   },
 
-  /* â”€â”€ Scroll Content â”€â”€ */
+  /* ── Scroll Content ── */
   scrollContent: {
     paddingTop: 100,
     paddingBottom: 120,
   },
 
-  /* â”€â”€ Radar â”€â”€ */
+  /* ── Radar ── */
   radarArea: {
     width: RADAR_SIZE,
     height: RADAR_SIZE,
@@ -551,7 +535,7 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.semibold as any,
   },
 
-  /* â”€â”€ Orbit Avatar â”€â”€ */
+  /* ── Orbit Avatar ── */
   orbitAvatar: {
     position: 'absolute',
     borderWidth: 2,
@@ -565,7 +549,7 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.bold as any,
   },
 
-  /* â”€â”€ Chips â”€â”€ */
+  /* ── Chips ── */
   chipList: {
     paddingHorizontal: SPACING.md,
     gap: 8,
@@ -612,7 +596,7 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.semibold as any,
   },
 
-  /* â”€â”€ Section â”€â”€ */
+  /* ── Section ── */
   sectionHeader: {
     paddingHorizontal: SPACING.md,
     marginBottom: SPACING.sm,
@@ -629,7 +613,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  /* â”€â”€ Grid â”€â”€ */
+  /* ── Grid ── */
   gridContainer: {
     flexDirection: 'row',
     paddingHorizontal: SPACING.md,
@@ -640,7 +624,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
 
-  /* â”€â”€ Trending Card â”€â”€ */
+  /* ── Trending Card ── */
   trendCard: {
     borderRadius: 16,
     borderWidth: 1,

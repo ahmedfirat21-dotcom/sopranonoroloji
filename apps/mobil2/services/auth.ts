@@ -3,7 +3,7 @@
 // Backend: POST /auth/guest, POST /auth/update-profile
 // ═══════════════════════════════════════════════════════
 
-const BASE_URL = 'https://sopranochat.com';
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.sopranochat.com';
 const TIMEOUT = 15000;
 
 export interface UserData {
@@ -74,6 +74,7 @@ export async function updateProfile(
     displayName?: string;
     avatar?: string;
     gender?: string;
+    assets?: any;
   },
 ): Promise<UserData> {
   return fetchJSON<UserData>(`${BASE_URL}/auth/update-profile`, {

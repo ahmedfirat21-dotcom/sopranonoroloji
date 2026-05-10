@@ -12,7 +12,7 @@ import {
   Modal,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
+// BlurView kaldırıldı — GPU yükü azaltıldı
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, RADIUS, SPACING, FONTS } from '../constants/theme';
 import { useTheme } from '../constants/ThemeContext';
@@ -20,26 +20,6 @@ import { getOfferings, purchasePackage, fetchBalance, CoinPackageOffering } from
 import AlertBanner from './AlertBanner';
 
 const { width, height } = Dimensions.get('window');
-
-// ─────────────────────────────────────────────────────
-// Coin Packages
-// ─────────────────────────────────────────────────────
-interface CoinPackage {
-  id: string;
-  coins: number;
-  price: string;
-  popular?: boolean;
-  bonusPercent?: number;
-}
-
-const COIN_PACKAGES: CoinPackage[] = [
-  { id: 'c1', coins: 100, price: '₺29.99' },
-  { id: 'c2', coins: 500, price: '₺99.99', popular: true, bonusPercent: 10 },
-  { id: 'c3', coins: 1000, price: '₺179.99', bonusPercent: 15 },
-  { id: 'c4', coins: 2500, price: '₺399.99', bonusPercent: 20 },
-  { id: 'c5', coins: 5000, price: '₺699.99', bonusPercent: 25 },
-  { id: 'c6', coins: 10000, price: '₺1,199.99', bonusPercent: 35 },
-];
 
 // ─────────────────────────────────────────────────────
 // 3D Diamond Icon (Jeton)
@@ -349,9 +329,7 @@ export default function WalletVIPSheet({ visible, onClose }: WalletVIPSheetProps
     },
   }), [closeSheet]);
 
-  const selectedPkg = offerings.length > 0
-    ? offerings.find(p => p.id === selectedPackage)
-    : COIN_PACKAGES.find(p => p.id === selectedPackage);
+  const selectedPkg = offerings.find(p => p.id === selectedPackage);
 
   // ─── Satın Alma Aksiyonu ───
   const handlePurchase = useCallback(async () => {
@@ -437,7 +415,7 @@ export default function WalletVIPSheet({ visible, onClose }: WalletVIPSheetProps
       {/* Overlay */}
       <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]}>
         <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={closeSheet} />
-        <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.7)' }]} />
         <View style={styles.overlayDark} />
       </Animated.View>
 
@@ -517,12 +495,7 @@ export default function WalletVIPSheet({ visible, onClose }: WalletVIPSheetProps
               {/* ═══ COIN PACKAGES GRID ═══ */}
               <Text style={styles.sectionLabel}>Jeton Paketleri</Text>
               <View style={styles.coinGrid}>
-                {(offerings.length > 0 ? offerings : COIN_PACKAGES.map(p => ({
-                  ...p,
-                  priceAmount: 0,
-                  currencyCode: 'TRY',
-                  bonusPercent: p.bonusPercent || 0,
-                })) as CoinPackageOffering[]).map((pkg) => {
+                {offerings.map((pkg) => {
                   const isSelected = selectedPackage === pkg.id;
                   const scaleVal = isSelected ? 1.03 : 1;
                   return (
@@ -582,7 +555,7 @@ export default function WalletVIPSheet({ visible, onClose }: WalletVIPSheetProps
               !(activeTab === 'coins' ? selectedPackage : true) && styles.checkoutDisabled,
             ]}
             activeOpacity={0.8}
-            onPress={activeTab === 'coins' && !selectedPackage ? undefined : closeSheet}
+            onPress={activeTab === 'coins' && !selectedPackage ? undefined : handlePurchase}
           >
             <LinearGradient
               colors={

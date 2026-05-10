@@ -7,7 +7,7 @@
 
 import { Platform, PermissionsAndroid } from 'react-native';
 
-const BASE_URL = 'https://sopranochat.com';
+const BASE_URL = 'https://api.sopranochat.com';
 
 // ─── Types ──────────────────────────────────────────────────
 export type LiveKitConnectionState = 'idle' | 'connecting' | 'connected' | 'reconnecting' | 'disconnected' | 'error';
@@ -58,7 +58,7 @@ function getLK(): any {
     _available = true;
     log('livekit-client yüklendi');
     return _lk;
-  } catch {
+  } catch (err) {
     _available = false;
     warn('livekit-client bulunamadı — ses odası devre dışı');
     return null;
@@ -306,15 +306,17 @@ class LiveKitAudioService {
 
   private async fetchToken(room: string, username: string, role: 'owner' | 'speaker' | 'listener' = 'listener'): Promise<string | null> {
     try {
-      const url = `${BASE_URL}/api/livekit/get-token?roomName=${encodeURIComponent(room)}&participantName=${encodeURIComponent(username)}&role=${role}`;
+      const url = `${BASE_URL}/livekit/token?room=${encodeURIComponent(room)}&username=${encodeURIComponent(username)}`;
       log('Token alınıyor:', url);
       const res = await fetch(url);
       if (!res.ok) {
-        warn('Token hatası:', res.status);
+        const errBody = await res.text().catch(() => '');
+        warn('Token hatası:', res.status, errBody);
+        this.callbacks.onError?.(`Token hatası: ${res.status}`);
         return null;
       }
       const data = await res.json();
-      log('Token alındı, uzunluk:', data.token?.length);
+      log('Token alındı ✅, uzunluk:', data.token?.length);
       return data.token;
     } catch (err: any) {
       warn('Token fetch hatası:', err.message);

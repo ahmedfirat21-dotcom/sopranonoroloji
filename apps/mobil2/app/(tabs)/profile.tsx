@@ -16,12 +16,13 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { COLORS, RADIUS, SPACING, FONTS } from '../../constants/theme';
 import { useTheme } from '../../constants/ThemeContext';
 import { useUser } from '../../contexts/UserContext';
 import WalletVIPSheet from '../../components/WalletVIPSheet';
+import FollowersModal from '../../components/FollowersModal';
 
 const { width } = Dimensions.get('window');
 
@@ -107,8 +108,10 @@ function ShowcaseCard({ asset, equipped, onToggle }: { asset: AssetItem; equippe
 export default function ProfileScreen() {
   const router = useRouter();
   const { colors: C, isDark } = useTheme();
-  const { user, profileExtra, logout, update } = useUser();
+  const { user, token, profileExtra, logout, update, deleteAccount, refreshProfile } = useUser();
   const [walletVisible, setWalletVisible] = useState(false);
+  const [followersModalVisible, setFollowersModalVisible] = useState(false);
+  const [followersModalTitle, setFollowersModalTitle] = useState('Takipçiler');
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(user?.displayName || '');
   const [editAvatar, setEditAvatar] = useState(user?.avatarUrl || '');
@@ -126,10 +129,23 @@ export default function ProfileScreen() {
           '@soprano_equipped_assets',
         ]);
         if (savedCover[1]) setCoverImage(savedCover[1]);
-        if (savedEquipped[1]) setEquippedAssets(new Set(JSON.parse(savedEquipped[1])));
+        
+        // Önce API'deki güncel varlıkları, yoksa AsyncStorage kullan
+        if (profileExtra?.assets?.equipped) {
+          setEquippedAssets(new Set(profileExtra.assets.equipped));
+        } else if (savedEquipped[1]) {
+          setEquippedAssets(new Set(JSON.parse(savedEquipped[1])));
+        }
       } catch (e) { /* sessiz hata */ }
     })();
   }, []);
+
+  // Sayfa odağa geldiğinde profili güncelle
+  useFocusEffect(
+    useCallback(() => {
+      refreshProfile();
+    }, [refreshProfile])
+  );
 
   // coverImage değiştiğinde kaydet
   const updateCoverImage = useCallback(async (uri: string) => {
@@ -137,16 +153,26 @@ export default function ProfileScreen() {
     await AsyncStorage.setItem('@soprano_cover_image', uri);
   }, []);
 
-  // equippedAssets değiştiğinde kaydet
+  // Seçilen asset'i tak/çıkar ve API'ye bildir
   const toggleEquipped = useCallback(async (assetId: string) => {
-    setEquippedAssets(prev => {
-      const next = new Set(prev);
-      if (next.has(assetId)) { next.delete(assetId); }
-      else { next.add(assetId); }
-      AsyncStorage.setItem('@soprano_equipped_assets', JSON.stringify([...next]));
-      return next;
+    const next = new Set(equippedAssets);
+    if (next.has(assetId)) next.delete(assetId);
+    else next.add(assetId);
+    
+    setEquippedAssets(next);
+    const equippedArray = [...next];
+    await AsyncStorage.setItem('@soprano_equipped_assets', JSON.stringify(equippedArray));
+    
+    // Kullanıcının sahip olduğu tüm asset id'lerini fallback olarak gönder (demo mock)
+    const unlockedArray = profileExtra?.assets?.unlocked || ['a1', 'a2', 'a3', 'a4', 'a5'];
+    
+    await update({ 
+      assets: { 
+        unlocked: unlockedArray,
+        equipped: equippedArray 
+      } 
     });
-  }, []);
+  }, [equippedAssets, profileExtra, update]);
 
   // Avatar glow animation
   const avatarGlow = useRef(new Animated.Value(0.4)).current;
@@ -372,17 +398,17 @@ export default function ProfileScreen() {
 
         {/* ═══ STATS BAR ═══ */}
         <View style={styles.statsBar}>
-          <TouchableOpacity style={styles.statItem} activeOpacity={0.7} onPress={() => Alert.alert('Takipçiler', `${profileExtra?.followersCount || 0} kişi seni takip ediyor`)}>
+          <TouchableOpacity style={styles.statItem} activeOpacity={0.7} onPress={() => { setFollowersModalTitle('Takipçiler'); setFollowersModalVisible(true); }}>
             <Text style={styles.statNum}>{profileExtra?.followersCount?.toLocaleString() || '0'}</Text>
             <Text style={styles.statLabel}>Takipçi</Text>
           </TouchableOpacity>
           <View style={styles.statDivider} />
-          <TouchableOpacity style={styles.statItem} activeOpacity={0.7} onPress={() => Alert.alert('Takip Edilen', `${profileExtra?.followingCount || 0} kişiyi takip ediyorsun`)}>
+          <TouchableOpacity style={styles.statItem} activeOpacity={0.7} onPress={() => { setFollowersModalTitle('Takip Edilen'); setFollowersModalVisible(true); }}>
             <Text style={styles.statNum}>{profileExtra?.followingCount?.toLocaleString() || '0'}</Text>
             <Text style={styles.statLabel}>Takip Edilen</Text>
           </TouchableOpacity>
           <View style={styles.statDivider} />
-          <TouchableOpacity style={styles.statItem} activeOpacity={0.7} onPress={() => Alert.alert('İttifaklar', `${profileExtra?.alliancesCount || 0} ittifakın var`)}>
+          <TouchableOpacity style={styles.statItem} activeOpacity={0.7} onPress={() => { setFollowersModalTitle('İttifaklar'); setFollowersModalVisible(true); }}>
             <Text style={styles.statNum}>{profileExtra?.alliancesCount?.toLocaleString() || '0'}</Text>
             <Text style={styles.statLabel}>İttifaklar</Text>
           </TouchableOpacity>
@@ -472,6 +498,32 @@ export default function ProfileScreen() {
           <Text style={styles.logoutText}>Oturumu Kapat</Text>
         </TouchableOpacity>
 
+        {/* ═══ DELETE ACCOUNT ═══ */}
+        <TouchableOpacity
+          style={[styles.logoutBtn, { marginTop: 12 }]}
+          activeOpacity={0.8}
+          onPress={() => {
+            Alert.alert('Hesabı Kalıcı Olarak Sil', 'Hesabınızı ve tüm verilerinizi kalıcı olarak silmek istediğinize emin misiniz? Bu işlem geri alınamaz!', [
+              { text: 'İptal', style: 'cancel' },
+              {
+                text: 'Hesabımı Sil',
+                style: 'destructive',
+                onPress: async () => {
+                  await deleteAccount();
+                  router.replace('/login');
+                },
+              },
+            ]);
+          }}
+        >
+          <LinearGradient
+            colors={['rgba(200,20,20,0.25)', 'rgba(255,10,10,0.15)']}
+            style={[StyleSheet.absoluteFill, { borderRadius: 16 }]}
+          />
+          <Ionicons name="trash-outline" size={20} color="#FF4444" />
+          <Text style={[styles.logoutText, { color: '#FF4444' }]}>Hesabımı Sil</Text>
+        </TouchableOpacity>
+
         <Text style={styles.versionText}>SopranoChat v2.0 Elite</Text>
         <View style={{ height: 40 }} />
       </Animated.ScrollView>
@@ -491,6 +543,13 @@ export default function ProfileScreen() {
       <WalletVIPSheet
         visible={walletVisible}
         onClose={() => setWalletVisible(false)}
+      />
+
+      {/* ═══ Followers Modal ═══ */}
+      <FollowersModal
+        visible={followersModalVisible}
+        onClose={() => setFollowersModalVisible(false)}
+        title={followersModalTitle}
       />
     </View>
   );

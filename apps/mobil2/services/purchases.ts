@@ -61,6 +61,7 @@ let isSDKConfigured = false;
 export async function initializePurchases(apiKey: string): Promise<boolean> {
   try {
     // Dinamik import — build kırmadan SDK kontrolü
+    // @ts-ignore
     const rc = await import('react-native-purchases').catch(() => null);
     if (!rc) {
       console.warn('[Purchases] react-native-purchases yüklü değil, fallback modu aktif');

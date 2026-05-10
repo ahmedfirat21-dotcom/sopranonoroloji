@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const GIPHY_API_KEY = 'GlVGYHkr3WSBnllca54iNt0yFbjz7L65';
+// ★ 2026-05-10 SECURITY: Hardcoded API key kaldırıldı, env'den okunuyor.
+//   Eski key: 'GlVGYHkr3WSBnllca54iNt0yFbjz7L65' — kullanıcının ROTATE etmesi gerekir.
+const GIPHY_API_KEY = process.env.GIPHY_API_KEY;
 const GIPHY_BASE = 'https://api.giphy.com/v1/gifs';
 
 export async function GET(req: NextRequest) {
+    if (!GIPHY_API_KEY) {
+        return NextResponse.json({ data: [], error: 'GIPHY_API_KEY env not set' }, { status: 500 });
+    }
     const { searchParams } = new URL(req.url);
     const q = searchParams.get('q') || '';
     const limit = searchParams.get('limit') || '30';

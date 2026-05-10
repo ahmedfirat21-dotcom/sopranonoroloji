@@ -49,45 +49,83 @@ async function resolveUserId(input: string): Promise<string | null> {
   return null;
 }
 
+/**
+ * ★ 2026-05-10 BACKWARD COMPAT: V78 migration push_tokens'a transfer etti ama eski
+ *   kullanıcılarda profiles.push_token'da hâlâ veri olabilir. Önce push_tokens'ı dene,
+ *   token bulunamazsa profiles.push_token'a fallback. Sonuç: hem yeni hem eski user'a push gider.
+ */
+async function fetchTokensWithFallback(userIds: string[]): Promise<string[]> {
+  if (userIds.length === 0) return [];
+  const tokens: string[] = [];
+  const foundUserIds = new Set<string>();
+  const CHUNK = 500;
+
+  // Primary: push_tokens table
+  for (let i = 0; i < userIds.length; i += CHUNK) {
+    const slice = userIds.slice(i, i + CHUNK);
+    const { data } = await supabaseAdmin
+      .from('push_tokens')
+      .select('token, user_id')
+      .in('user_id', slice);
+    if (data) {
+      for (const row of data) {
+        tokens.push(row.token);
+        foundUserIds.add(row.user_id);
+      }
+    }
+  }
+
+  // Fallback: profiles.push_token (V78 öncesi user'lar için)
+  const missingIds = userIds.filter(id => !foundUserIds.has(id));
+  if (missingIds.length > 0) {
+    for (let i = 0; i < missingIds.length; i += CHUNK) {
+      const slice = missingIds.slice(i, i + CHUNK);
+      const { data } = await supabaseAdmin
+        .from('profiles')
+        .select('push_token')
+        .in('id', slice)
+        .not('push_token', 'is', null);
+      if (data) tokens.push(...data.map(d => d.push_token).filter(Boolean) as string[]);
+    }
+  }
+
+  return tokens;
+}
+
 async function loadTokens(audience: string, tier: string | null, userId: string | null): Promise<string[]> {
   if (audience === 'user' && userId) {
     const resolvedUid = await resolveUserId(userId);
     if (!resolvedUid) return [];
-    const { data } = await supabaseAdmin
-      .from('push_tokens')
-      .select('token')
-      .eq('user_id', resolvedUid);
-    return (data || []).map(d => d.token);
+    return fetchTokensWithFallback([resolvedUid]);
   }
 
   if (audience === 'tier' && tier) {
-    // tier'a göre user_id'leri çek, sonra token'ları
     const { data: users } = await supabaseAdmin
       .from('profiles')
       .select('id')
       .eq('subscription_tier', tier);
     const userIds = (users || []).map(u => u.id);
-    if (userIds.length === 0) return [];
-
-    // Supabase 'in' filter limit ~1000; gerekirse parçala
-    const tokens: string[] = [];
-    const CHUNK = 500;
-    for (let i = 0; i < userIds.length; i += CHUNK) {
-      const slice = userIds.slice(i, i + CHUNK);
-      const { data } = await supabaseAdmin
-        .from('push_tokens')
-        .select('token')
-        .in('user_id', slice);
-      if (data) tokens.push(...data.map(d => d.token));
-    }
-    return tokens;
+    return fetchTokensWithFallback(userIds);
   }
 
-  // 'all' broadcast — tüm token'lar
-  const { data } = await supabaseAdmin
+  // 'all' broadcast — push_tokens + profiles.push_token (eski user fallback)
+  const { data: pushTokensData } = await supabaseAdmin
     .from('push_tokens')
-    .select('token');
-  return (data || []).map(d => d.token);
+    .select('token, user_id');
+  const tokens = (pushTokensData || []).map(d => d.token);
+  const userIdsWithToken = new Set((pushTokensData || []).map(d => d.user_id));
+
+  const { data: legacyData } = await supabaseAdmin
+    .from('profiles')
+    .select('id, push_token')
+    .not('push_token', 'is', null);
+  for (const row of legacyData || []) {
+    if (row.push_token && !userIdsWithToken.has(row.id)) {
+      tokens.push(row.push_token);
+    }
+  }
+
+  return tokens;
 }
 
 type SendResult = {
