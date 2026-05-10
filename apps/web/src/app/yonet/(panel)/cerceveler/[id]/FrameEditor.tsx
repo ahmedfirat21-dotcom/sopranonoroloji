@@ -46,6 +46,19 @@ interface FrameConfig {
   // ★ Renk döngüsü — frame/glow/particle rengi sürekli HSL hue ile döner (rainbow)
   color_cycle: boolean;
   color_cycle_speed: number;    // saniye / 1 tam tur (5-30)
+  // ★ 2026-05-11: Kullanıcı adı stilleme — avatar etrafında nereye, hangi şekilde
+  name_enabled: boolean;
+  name_position: 'top' | 'bottom' | 'left' | 'right'; // ana yön
+  name_offset: number;          // 0-40 px ek mesafe avatar kenarından
+  name_rotation: number;        // -45 → 45 derece eğim
+  name_curve_style: 'flat' | 'arc-top' | 'arc-bottom' | 'circle';
+  name_color: string;
+  name_size: number;            // px (10-22)
+  name_bold: boolean;
+  // ★ Tier etiketi (Plus/Pro/Free badge)
+  tier_badge_enabled: boolean;
+  tier_badge_position: 'tl' | 'tc' | 'tr' | 'ml' | 'mr' | 'bl' | 'bc' | 'br'; // 8 nokta
+  tier_badge_style: 'chip' | 'capsule' | 'star' | 'ribbon';
 }
 
 const DEFAULT_CONFIG: FrameConfig = {
@@ -74,6 +87,30 @@ const DEFAULT_CONFIG: FrameConfig = {
   particle_color: '#fbbf24',
   color_cycle: false,
   color_cycle_speed: 12,
+  // Kimlik & etiket — default kapalı (opsiyonel, frame'in ana işine müdahale etmez)
+  name_enabled: false,
+  name_position: 'bottom',
+  name_offset: 12,
+  name_rotation: 0,
+  name_curve_style: 'flat',
+  name_color: '#f8fafc',
+  name_size: 14,
+  name_bold: true,
+  tier_badge_enabled: false,
+  tier_badge_position: 'tr',
+  tier_badge_style: 'chip',
+};
+
+// Tier badge konum koordinatları — avatar merkezine göre yüzdelik (-1...1)
+const BADGE_POSITIONS: Record<string, { x: number; y: number; label: string }> = {
+  tl: { x: -0.5, y: -0.5, label: '↖ Sol-Üst' },
+  tc: { x: 0,    y: -0.55, label: '↑ Üst' },
+  tr: { x: 0.5,  y: -0.5, label: '↗ Sağ-Üst' },
+  ml: { x: -0.55, y: 0,   label: '← Sol' },
+  mr: { x: 0.55, y: 0,    label: '→ Sağ' },
+  bl: { x: -0.5, y: 0.5,  label: '↙ Sol-Alt' },
+  bc: { x: 0,    y: 0.55, label: '↓ Alt' },
+  br: { x: 0.5,  y: 0.5,  label: '↘ Sağ-Alt' },
 };
 
 const SAMPLE_AVATAR = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&h=400&fit=crop';
@@ -341,6 +378,67 @@ export default function FrameEditor({ item }: { item: any }) {
               <span style={{ color: '#fbbf24' }}>Mağaza → Düzenle</span>'den dosya yükle.
             </div>
           )}
+
+          {/* ★ Kullanıcı Adı — SVG textPath ile düz/yay/dairesel render */}
+          {cfg.name_enabled && (
+            <NamePreviewSvg
+              cfg={cfg}
+              avatarSize={avatarSize}
+              stageCenter={stageCenter}
+            />
+          )}
+
+          {/* ★ Tier Badge — 8 noktada konumlanan rozet */}
+          {cfg.tier_badge_enabled && (() => {
+            const pos = BADGE_POSITIONS[cfg.tier_badge_position];
+            const badgeX = stageCenter + pos.x * avatarSize;
+            const badgeY = stageCenter + pos.y * avatarSize;
+            const styleClass = cfg.tier_badge_style;
+            const radius = styleClass === 'capsule' ? 999 : styleClass === 'chip' ? 6 : 0;
+            const isStar = styleClass === 'star';
+            const isRibbon = styleClass === 'ribbon';
+            return (
+              <div
+                style={{
+                  position: 'absolute',
+                  left: badgeX,
+                  top: badgeY,
+                  transform: 'translate(-50%, -50%)',
+                  zIndex: 5,
+                  pointerEvents: 'none',
+                }}
+              >
+                {isStar ? (
+                  <div style={{
+                    width: 32, height: 32,
+                    background: 'linear-gradient(135deg, #fbbf24, #d97706)',
+                    clipPath: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: '#000', fontWeight: 900, fontSize: 9,
+                    boxShadow: '0 0 12px rgba(251,191,36,0.6)',
+                  }}>PRO</div>
+                ) : isRibbon ? (
+                  <div style={{
+                    background: 'linear-gradient(135deg, #fbbf24, #d97706)',
+                    color: '#0a0f1a', padding: '3px 14px',
+                    fontSize: 10, fontWeight: 800, letterSpacing: 0.5,
+                    clipPath: 'polygon(0 0, 100% 0, 95% 50%, 100% 100%, 0 100%, 5% 50%)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+                  }}>PRO</div>
+                ) : (
+                  <div style={{
+                    background: 'linear-gradient(135deg, #fbbf24, #d97706)',
+                    color: '#0a0f1a',
+                    padding: '3px 10px',
+                    fontSize: 10, fontWeight: 800, letterSpacing: 0.5,
+                    borderRadius: radius,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+                    border: '1px solid rgba(251,191,36,0.6)',
+                  }}>PRO</div>
+                )}
+              </div>
+            );
+          })()}
         </div>
         <p className="text-xs text-slate-500">
           Avatar görsel sabit. Frame ölçeği avatara göre büyür/küçülür.
@@ -452,6 +550,114 @@ export default function FrameEditor({ item }: { item: any }) {
           </p>
         </Section>
 
+        {/* ★ 2026-05-11: Kimlik & Etiket — kullanıcı adı ve tier rozeti
+            ile çerçevenin etrafında premium kimlik sunumu. */}
+        <Section title="Kimlik & Etiket" icon={<Award className="w-4 h-4 text-cyan-400" />}>
+          <SubBlock title="Kullanıcı Adı">
+            <Toggle label="Adı çerçeve etrafında göster" checked={cfg.name_enabled} onChange={v => update('name_enabled', v)} />
+            {cfg.name_enabled && (
+              <>
+                <label className="block">
+                  <div className="text-xs text-slate-400 mb-1">Konum</div>
+                  <select
+                    value={cfg.name_position}
+                    onChange={e => update('name_position', e.target.value as FrameConfig['name_position'])}
+                    aria-label="İsim konumu"
+                    className="w-full px-2 py-1.5 rounded bg-slate-800 border border-slate-700 text-xs"
+                  >
+                    <option value="top">↑ Üst</option>
+                    <option value="bottom">↓ Alt</option>
+                    <option value="left">← Sol</option>
+                    <option value="right">→ Sağ</option>
+                  </select>
+                </label>
+                <label className="block">
+                  <div className="text-xs text-slate-400 mb-1">Şekil</div>
+                  <select
+                    value={cfg.name_curve_style}
+                    onChange={e => update('name_curve_style', e.target.value as FrameConfig['name_curve_style'])}
+                    aria-label="İsim şekli"
+                    className="w-full px-2 py-1.5 rounded bg-slate-800 border border-slate-700 text-xs"
+                  >
+                    <option value="flat">— Düz</option>
+                    <option value="arc-top">⌒ Yay (gülen)</option>
+                    <option value="arc-bottom">⌣ Yay (kaşıyan)</option>
+                    <option value="circle">○ Dairesel (avatar etrafında)</option>
+                  </select>
+                </label>
+                <Slider label="Mesafe" min={0} max={40} step={2} value={cfg.name_offset} onChange={v => update('name_offset', v)} display={`${cfg.name_offset}px`} />
+                <Slider label="Eğim" min={-45} max={45} step={5} value={cfg.name_rotation} onChange={v => update('name_rotation', v)} display={`${cfg.name_rotation}°`} />
+                <Slider label="Boyut" min={10} max={22} step={1} value={cfg.name_size} onChange={v => update('name_size', v)} display={`${cfg.name_size}px`} />
+                <ColorInput label="Renk" value={cfg.name_color} onChange={v => update('name_color', v)} />
+                <Toggle label="Kalın yazı" checked={cfg.name_bold} onChange={v => update('name_bold', v)} />
+              </>
+            )}
+          </SubBlock>
+          <SubBlock title="Tier Etiketi (Plus / Pro)">
+            <Toggle label="Tier rozetini göster" checked={cfg.tier_badge_enabled} onChange={v => update('tier_badge_enabled', v)} />
+            {cfg.tier_badge_enabled && (
+              <>
+                <label className="block">
+                  <div className="text-xs text-slate-400 mb-1">Konum</div>
+                  <div className="grid grid-cols-3 gap-1">
+                    {(['tl','tc','tr','ml','mr','bl','bc','br'] as const).map(p => {
+                      // ortadaki center kutucuğu boş — sadece avatar
+                      if (p === 'mr') {
+                        return (
+                          <React.Fragment key={p}>
+                            <button
+                              type="button"
+                              onClick={() => update('tier_badge_position', 'ml')}
+                              className={`px-2 py-1.5 text-[10px] rounded border ${cfg.tier_badge_position === 'ml' ? 'bg-cyan-500/20 border-cyan-500/60 text-cyan-200' : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'}`}
+                              title={BADGE_POSITIONS.ml.label}
+                            >{BADGE_POSITIONS.ml.label}</button>
+                            <div className="px-2 py-1.5 text-[10px] rounded border border-dashed border-slate-700 text-slate-600 text-center">●</div>
+                            <button
+                              type="button"
+                              onClick={() => update('tier_badge_position', 'mr')}
+                              className={`px-2 py-1.5 text-[10px] rounded border ${cfg.tier_badge_position === 'mr' ? 'bg-cyan-500/20 border-cyan-500/60 text-cyan-200' : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'}`}
+                              title={BADGE_POSITIONS.mr.label}
+                            >{BADGE_POSITIONS.mr.label}</button>
+                          </React.Fragment>
+                        );
+                      }
+                      if (p === 'ml') return null; // ml zaten yukarıdaki Fragment'te render edildi
+                      return (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => update('tier_badge_position', p)}
+                          className={`px-2 py-1.5 text-[10px] rounded border ${cfg.tier_badge_position === p ? 'bg-cyan-500/20 border-cyan-500/60 text-cyan-200' : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'}`}
+                          title={BADGE_POSITIONS[p].label}
+                        >
+                          {BADGE_POSITIONS[p].label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </label>
+                <label className="block">
+                  <div className="text-xs text-slate-400 mb-1">Stil</div>
+                  <select
+                    value={cfg.tier_badge_style}
+                    onChange={e => update('tier_badge_style', e.target.value as FrameConfig['tier_badge_style'])}
+                    aria-label="Tier rozeti stili"
+                    className="w-full px-2 py-1.5 rounded bg-slate-800 border border-slate-700 text-xs"
+                  >
+                    <option value="chip">Chip (yuvarlak köşeli)</option>
+                    <option value="capsule">Kapsül (full-rounded)</option>
+                    <option value="star">Yıldız (5 köşeli)</option>
+                    <option value="ribbon">Şerit (askılı)</option>
+                  </select>
+                </label>
+              </>
+            )}
+          </SubBlock>
+          <p className="text-[10px] text-cyan-300/70 leading-relaxed">
+            💡 Önizleme örnek isim ve örnek tier ile gösterir. Mobilde gerçek kullanıcı adı + gerçek tier yansır.
+          </p>
+        </Section>
+
         <details className="text-xs">
           <summary className="cursor-pointer text-slate-400 select-none">JSON çıktı</summary>
           <pre className="mt-2 bg-slate-900 border border-slate-700 rounded p-3 overflow-auto max-h-64 text-[11px]">
@@ -502,6 +708,95 @@ export default function FrameEditor({ item }: { item: any }) {
         }
       `}</style>
     </div>
+  );
+}
+
+/**
+ * NamePreviewSvg — Avatar etrafında SVG textPath ile kullanıcı adı.
+ * 4 şekil: flat (düz) / arc-top (yay yukarı) / arc-bottom (yay aşağı) / circle (dairesel).
+ * Mobile karşılığı react-native-svg ile yapılır (post-launch).
+ */
+function NamePreviewSvg({ cfg, avatarSize, stageCenter }: {
+  cfg: FrameConfig;
+  avatarSize: number;
+  stageCenter: number;
+}) {
+  const sampleName = 'Murat Berxo'; // önizleme örneği — mobilde gerçek user.display_name
+  const r = avatarSize / 2 + cfg.name_offset;
+  const svgSize = (r + cfg.name_size) * 2.4; // SVG canvas; rotation ve text overflow için bolca pay
+  const cx = svgSize / 2;
+  const cy = svgSize / 2;
+  const fontWeight = cfg.name_bold ? 700 : 400;
+
+  // Hangi konum baz alınacak (top/bottom/left/right) — circle hariç hepsinde tek nokta
+  let pathD = '';
+  let textAnchor: 'start' | 'middle' | 'end' = 'middle';
+  switch (cfg.name_curve_style) {
+    case 'arc-top':
+      // Yay yukarı (gülen ağız): sol-üstten sağ-üste 180° yay
+      pathD = `M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`;
+      break;
+    case 'arc-bottom':
+      // Yay aşağı (kaşıyan): sol-alttan sağ-alta 180° yay
+      pathD = `M ${cx - r} ${cy} A ${r} ${r} 0 0 0 ${cx + r} ${cy}`;
+      break;
+    case 'circle':
+      // Tam daire — saat 9 yönünden başla, saat yönünde
+      pathD = `M ${cx - r} ${cy} A ${r} ${r} 0 1 1 ${cx + r} ${cy} A ${r} ${r} 0 1 1 ${cx - r} ${cy}`;
+      break;
+    case 'flat':
+    default: {
+      // Konuma göre düz çizgi
+      const len = avatarSize + 80;
+      switch (cfg.name_position) {
+        case 'top':    pathD = `M ${cx - len / 2} ${cy - r} L ${cx + len / 2} ${cy - r}`; break;
+        case 'bottom': pathD = `M ${cx - len / 2} ${cy + r + cfg.name_size} L ${cx + len / 2} ${cy + r + cfg.name_size}`; break;
+        case 'left':   pathD = `M ${cx - r - 60} ${cy} L ${cx - r + 60} ${cy}`; textAnchor = 'end'; break;
+        case 'right':  pathD = `M ${cx + r - 60} ${cy} L ${cx + r + 60} ${cy}`; textAnchor = 'start'; break;
+      }
+      break;
+    }
+  }
+
+  // SVG'yi avatar merkezine konumla (translate -%50)
+  const left = stageCenter - svgSize / 2;
+  const top = stageCenter - svgSize / 2;
+  const pathId = `name-path-${cfg.name_curve_style}-${cfg.name_position}`;
+
+  return (
+    <svg
+      width={svgSize}
+      height={svgSize}
+      style={{
+        position: 'absolute',
+        left, top,
+        zIndex: 6,
+        pointerEvents: 'none',
+        transform: cfg.name_rotation !== 0 ? `rotate(${cfg.name_rotation}deg)` : undefined,
+        transformOrigin: 'center',
+        overflow: 'visible',
+      }}
+    >
+      <defs>
+        <path id={pathId} d={pathD} fill="none" />
+      </defs>
+      <text
+        fill={cfg.name_color}
+        fontSize={cfg.name_size}
+        fontWeight={fontWeight}
+        fontFamily="Inter, system-ui, sans-serif"
+        style={{
+          textShadow: '0 1px 3px rgba(0,0,0,0.7)',
+          paintOrder: 'stroke',
+          stroke: 'rgba(0,0,0,0.4)',
+          strokeWidth: 1,
+        }}
+      >
+        <textPath href={`#${pathId}`} startOffset="50%" textAnchor={textAnchor}>
+          {sampleName}
+        </textPath>
+      </text>
+    </svg>
   );
 }
 
