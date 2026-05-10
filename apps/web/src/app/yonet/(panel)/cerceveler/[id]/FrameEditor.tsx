@@ -94,11 +94,25 @@ export default function FrameEditor({ item }: { item: any }) {
   // ★ Mobile boyut: önizleme bu boyutta (gerçek emülatör pixel), oran kalır
   const [mobileSize, setMobileSize] = useState(160);
 
-  const lottieUrl = (item.editor_config as any)?.lottie_url || FRAME_LOTTIE_MAP[item.id] || null;
+  // ★ 2026-05-11: asset_url (DB'deki yeni kolon) öncelikli — web admin'den yüklenen
+  //   yeni ürünlerin id'si hardcoded FRAME_LOTTIE_MAP'te olmaz, ama asset_url'de var.
+  //   Eski editor_config.lottie_url ve FRAME_LOTTIE_MAP backward-compat için kalıyor.
+  const assetUrl: string | null =
+    (typeof item.asset_url === 'string' && item.asset_url) ||
+    (item.editor_config as any)?.lottie_url ||
+    FRAME_LOTTIE_MAP[item.id] ||
+    null;
+  // Asset Lottie mi (.json) yoksa görsel mi (PNG/JPG/SVG/GIF/WebP)?
+  const isLottie = !!assetUrl && /\.json($|\?)/i.test(assetUrl);
+  const lottieUrl = isLottie ? assetUrl : null;
+  const imageUrl = !isLottie ? assetUrl : null;
 
   useEffect(() => {
-    if (!lottieUrl) return;
-    fetch(lottieUrl).then(r => r.json()).then(setLottieData).catch(() => {});
+    if (!lottieUrl) {
+      setLottieData(null);
+      return;
+    }
+    fetch(lottieUrl).then(r => r.json()).then(setLottieData).catch(() => setLottieData(null));
   }, [lottieUrl]);
 
   function update<K extends keyof FrameConfig>(key: K, value: FrameConfig[K]) {
@@ -203,6 +217,46 @@ export default function FrameEditor({ item }: { item: any }) {
             >
               <Lottie animationData={lottieData} loop autoplay speed={cfg.lottie_speed}
                 style={{ width: '100%', height: '100%' }} />
+            </div>
+          )}
+          {/* ★ PNG/JPG/SVG asset — Lottie değilse direkt Image render
+                Hue/brightness/saturation filtresi PNG'lere de uygulanabilir;
+                speed/rotation animasyonu sadece Lottie spesifik (PNG için rotation yine çalışır). */}
+          {imageUrl && !lottieData && (
+            <div
+              style={{
+                position: 'absolute',
+                left: stageCenter - frameContainerSize / 2 + cfg.frame_offset_x * mobileSize,
+                top: stageCenter - frameContainerSize / 2 + cfg.frame_offset_y * mobileSize,
+                width: frameContainerSize,
+                height: frameContainerSize,
+                opacity: cfg.frame_opacity,
+                filter: `hue-rotate(${cfg.lottie_hue_rotate}deg) brightness(${cfg.lottie_brightness}) saturate(${cfg.lottie_saturation})`,
+                animation: cfg.frame_rotation > 0 ? `frame-spin ${cfg.frame_rotation}s linear infinite` : undefined,
+                zIndex: 3,
+                pointerEvents: 'none',
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            </div>
+          )}
+          {/* Hiç asset yoksa kullanıcıyı bilgilendir */}
+          {!lottieData && !imageUrl && (
+            <div
+              style={{
+                position: 'absolute',
+                left: stageCenter - 120,
+                top: stageCenter + avatarSize / 2 + 20,
+                width: 240,
+                textAlign: 'center',
+                fontSize: 11,
+                color: '#94a3b8',
+                zIndex: 3,
+              }}
+            >
+              ⚠️ Bu ürünün asset dosyası yok.<br />
+              <span style={{ color: '#fbbf24' }}>Mağaza → Düzenle</span>'den dosya yükle.
             </div>
           )}
         </div>

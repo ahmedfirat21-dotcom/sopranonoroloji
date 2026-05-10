@@ -177,11 +177,22 @@ export default function EntryEffectEditor({ item }: { item: any }) {
     'belle-epoque': '/lotties/Heart characters crying.json',
     'ai-spark': '/lotties/AI_Spark.json',
   };
-  const lottieUrl = (item.editor_config as any)?.lottie_url || LOTTIE_MAP[item.id] || null;
+  // ★ 2026-05-11: asset_url (DB'deki yeni kolon) öncelikli — web admin'den yüklenen
+  //   yeni ürünler hardcoded LOTTIE_MAP'te yok, asset_url'de var.
+  const assetUrl: string | null =
+    (typeof item.asset_url === 'string' && item.asset_url) ||
+    (item.editor_config as any)?.lottie_url ||
+    LOTTIE_MAP[item.id] ||
+    null;
+  const isLottie = !!assetUrl && /\.json($|\?)/i.test(assetUrl);
+  const lottieUrl = isLottie ? assetUrl : null;
 
   useEffect(() => {
-    if (!lottieUrl) return;
-    fetch(lottieUrl).then(r => r.json()).then(setLottieData).catch(() => {});
+    if (!lottieUrl) {
+      setLottieData(null);
+      return;
+    }
+    fetch(lottieUrl).then(r => r.json()).then(setLottieData).catch(() => setLottieData(null));
   }, [lottieUrl]);
 
   // ★ v213c: Lottie içinde animated rotation içeren hedef layer'ı bul (memo).
