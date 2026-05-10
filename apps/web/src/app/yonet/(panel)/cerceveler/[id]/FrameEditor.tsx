@@ -13,7 +13,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Lottie from 'lottie-react';
-import { Save, RotateCcw, Award, Move, Sparkles, Settings as SettingsIcon } from 'lucide-react';
+import { Save, RotateCcw, Award, Move, Sparkles, Settings as SettingsIcon, Wind, Heart } from 'lucide-react';
 
 interface FrameConfig {
   // Frame Lottie ayarları
@@ -33,6 +33,19 @@ interface FrameConfig {
   lottie_brightness: number;
   lottie_saturation: number;
   lottie_speed: number;
+  // ★ 2026-05-11: Hareket & efekt animasyonları (mobilde Animated.loop ile render)
+  avatar_pulse: boolean;        // büyüyüp küçülme
+  avatar_pulse_speed: number;   // saniye / 1 nabız (1-5)
+  avatar_float: boolean;        // yavaş yukarı/aşağı süzülme
+  avatar_float_speed: number;   // saniye / 1 tur (2-8)
+  glow_pulse: boolean;          // glow'un yoğunluğu nefes alır
+  frame_breathe: boolean;       // frame'in kendisi büyüyüp küçülür
+  particle_type: 'none' | 'sparkle' | 'stars' | 'hearts' | 'bubbles';
+  particle_count: number;       // 4-12 arası — kaç tane parçacık
+  particle_color: string;       // parçacık rengi (auto = glow_color)
+  // ★ Renk döngüsü — frame/glow/particle rengi sürekli HSL hue ile döner (rainbow)
+  color_cycle: boolean;
+  color_cycle_speed: number;    // saniye / 1 tam tur (5-30)
 }
 
 const DEFAULT_CONFIG: FrameConfig = {
@@ -49,6 +62,18 @@ const DEFAULT_CONFIG: FrameConfig = {
   lottie_brightness: 1,
   lottie_saturation: 1,
   lottie_speed: 1,
+  // Hareket & efekt — default kapalı (zorunlu özellik değil, opsiyonel zenginlik)
+  avatar_pulse: false,
+  avatar_pulse_speed: 2,
+  avatar_float: false,
+  avatar_float_speed: 4,
+  glow_pulse: false,
+  frame_breathe: false,
+  particle_type: 'none',
+  particle_count: 6,
+  particle_color: '#fbbf24',
+  color_cycle: false,
+  color_cycle_speed: 12,
 };
 
 const SAMPLE_AVATAR = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&h=400&fit=crop';
@@ -180,7 +205,8 @@ export default function FrameEditor({ item }: { item: any }) {
             Sahnede avatar — frame avatarın etrafında render olur
           </div>
 
-          {/* Avatar — merkezi, sabit boyutta */}
+          {/* Avatar — merkezi, sabit boyutta. Pulse/float animation transform üzerinden,
+              glow_pulse keyframes ile boxShadow yoğunluğunu dalgalandırır. */}
           <div
             style={{
               position: 'absolute',
@@ -194,12 +220,61 @@ export default function FrameEditor({ item }: { item: any }) {
               boxShadow: cfg.glow_enabled
                 ? `0 0 ${20 * cfg.glow_intensity}px ${cfg.glow_color}, 0 0 ${40 * cfg.glow_intensity}px ${cfg.glow_color}80`
                 : undefined,
+              animation: [
+                cfg.avatar_pulse && `avatar-pulse ${cfg.avatar_pulse_speed}s ease-in-out infinite`,
+                cfg.avatar_float && `avatar-float ${cfg.avatar_float_speed}s ease-in-out infinite`,
+                cfg.glow_enabled && cfg.glow_pulse && `glow-pulse ${cfg.avatar_pulse_speed * 1.5}s ease-in-out infinite`,
+                cfg.glow_enabled && cfg.color_cycle && `glow-color-cycle ${cfg.color_cycle_speed}s linear infinite`,
+              ].filter(Boolean).join(', ') || undefined,
             }}
           >
             <img src={SAMPLE_AVATAR} alt="" className="w-full h-full object-cover" />
           </div>
 
-          {/* Frame Lottie — avatar etrafında, scale'a göre büyüyebilir */}
+          {/* Particle efekti — avatar etrafında dönen parçacıklar */}
+          {cfg.particle_type !== 'none' && (
+            <div
+              style={{
+                position: 'absolute',
+                left: stageCenter - avatarSize * 0.9,
+                top: stageCenter - avatarSize * 0.9,
+                width: avatarSize * 1.8,
+                height: avatarSize * 1.8,
+                pointerEvents: 'none',
+                zIndex: 4,
+              }}
+            >
+              {Array.from({ length: cfg.particle_count }).map((_, i) => {
+                const angle = (360 / cfg.particle_count) * i;
+                const symbol = cfg.particle_type === 'sparkle' ? '✦'
+                  : cfg.particle_type === 'stars' ? '★'
+                  : cfg.particle_type === 'hearts' ? '♥'
+                  : '○';
+                const delay = (i * 0.3) % 2;
+                return (
+                  <span
+                    key={i}
+                    style={{
+                      position: 'absolute',
+                      left: '50%',
+                      top: '50%',
+                      transformOrigin: '0 0',
+                      transform: `rotate(${angle}deg) translate(${avatarSize * 0.65}px, 0)`,
+                      color: cfg.particle_color,
+                      fontSize: Math.max(10, avatarSize * 0.12),
+                      animation: `particle-twinkle 2s ease-in-out ${delay}s infinite, particle-orbit 12s linear infinite`,
+                      textShadow: `0 0 6px ${cfg.particle_color}`,
+                    }}
+                  >
+                    {symbol}
+                  </span>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Frame Lottie — avatar etrafında, scale'a göre büyüyebilir.
+              frame_breathe ile yavaş büyüyüp küçülür (rotation ile birlikte çalışabilir). */}
           {lottieData && (
             <div
               style={{
@@ -210,7 +285,11 @@ export default function FrameEditor({ item }: { item: any }) {
                 height: frameContainerSize,
                 opacity: cfg.frame_opacity,
                 filter: `hue-rotate(${cfg.lottie_hue_rotate}deg) brightness(${cfg.lottie_brightness}) saturate(${cfg.lottie_saturation})`,
-                animation: cfg.frame_rotation > 0 ? `frame-spin ${cfg.frame_rotation}s linear infinite` : undefined,
+                animation: [
+                  cfg.frame_rotation > 0 && `frame-spin ${cfg.frame_rotation}s linear infinite`,
+                  cfg.frame_breathe && `frame-breathe 4s ease-in-out infinite`,
+                  cfg.color_cycle && `color-cycle ${cfg.color_cycle_speed}s linear infinite`,
+                ].filter(Boolean).join(', ') || undefined,
                 zIndex: 3,
                 pointerEvents: 'none',
               }}
@@ -220,8 +299,7 @@ export default function FrameEditor({ item }: { item: any }) {
             </div>
           )}
           {/* ★ PNG/JPG/SVG asset — Lottie değilse direkt Image render
-                Hue/brightness/saturation filtresi PNG'lere de uygulanabilir;
-                speed/rotation animasyonu sadece Lottie spesifik (PNG için rotation yine çalışır). */}
+                Hue/brightness/saturation/breathe/rotation animasyonları PNG'lere de uygulanır. */}
           {imageUrl && !lottieData && (
             <div
               style={{
@@ -232,7 +310,11 @@ export default function FrameEditor({ item }: { item: any }) {
                 height: frameContainerSize,
                 opacity: cfg.frame_opacity,
                 filter: `hue-rotate(${cfg.lottie_hue_rotate}deg) brightness(${cfg.lottie_brightness}) saturate(${cfg.lottie_saturation})`,
-                animation: cfg.frame_rotation > 0 ? `frame-spin ${cfg.frame_rotation}s linear infinite` : undefined,
+                animation: [
+                  cfg.frame_rotation > 0 && `frame-spin ${cfg.frame_rotation}s linear infinite`,
+                  cfg.frame_breathe && `frame-breathe 4s ease-in-out infinite`,
+                  cfg.color_cycle && `color-cycle ${cfg.color_cycle_speed}s linear infinite`,
+                ].filter(Boolean).join(', ') || undefined,
                 zIndex: 3,
                 pointerEvents: 'none',
               }}
@@ -316,6 +398,60 @@ export default function FrameEditor({ item }: { item: any }) {
           <Slider label="Animasyon Hızı" min={0.25} max={3} step={0.05} value={cfg.lottie_speed} onChange={v => update('lottie_speed', v)} display={`${cfg.lottie_speed.toFixed(2)}x`} />
         </Section>
 
+        {/* ★ 2026-05-11: Hareket & Efekt — opsiyonel canlandırıcı katmanlar */}
+        <Section title="Hareket & Efekt" icon={<Wind className="w-4 h-4 text-emerald-400" />}>
+          <SubBlock title="Avatar Hareketi">
+            <Toggle label="Nabız (büyür-küçülür)" checked={cfg.avatar_pulse} onChange={v => update('avatar_pulse', v)} />
+            {cfg.avatar_pulse && (
+              <Slider label="Nabız hızı" min={1} max={5} step={0.5} value={cfg.avatar_pulse_speed} onChange={v => update('avatar_pulse_speed', v)} display={`${cfg.avatar_pulse_speed}sn`} />
+            )}
+            <Toggle label="Süzülme (yavaş yukarı/aşağı)" checked={cfg.avatar_float} onChange={v => update('avatar_float', v)} />
+            {cfg.avatar_float && (
+              <Slider label="Süzülme hızı" min={2} max={8} step={0.5} value={cfg.avatar_float_speed} onChange={v => update('avatar_float_speed', v)} display={`${cfg.avatar_float_speed}sn`} />
+            )}
+          </SubBlock>
+          <SubBlock title="Frame Davranışı">
+            <Toggle label="Frame nefes alır (yavaş büyür-küçülür)" checked={cfg.frame_breathe} onChange={v => update('frame_breathe', v)} />
+            <Toggle label="Glow nefes (parlaklık dalgalanır)" checked={cfg.glow_pulse} onChange={v => update('glow_pulse', v)} />
+            <p className="text-[10px] text-slate-500">Glow nefes için yukarıdaki Glow aktif olmalı.</p>
+          </SubBlock>
+          <SubBlock title="Parçacık Efekti (avatar etrafında)">
+            <label className="block">
+              <div className="text-xs text-slate-400 mb-1">Tip</div>
+              <select
+                value={cfg.particle_type}
+                onChange={e => update('particle_type', e.target.value as FrameConfig['particle_type'])}
+                aria-label="Parçacık tipi"
+                className="w-full px-2 py-1.5 rounded bg-slate-800 border border-slate-700 text-xs"
+              >
+                <option value="none">Kapalı</option>
+                <option value="sparkle">✨ Parıltı</option>
+                <option value="stars">⭐ Yıldız</option>
+                <option value="hearts">❤️ Kalp</option>
+                <option value="bubbles">○ Baloncuk</option>
+              </select>
+            </label>
+            {cfg.particle_type !== 'none' && (
+              <>
+                <Slider label="Adet" min={4} max={12} step={1} value={cfg.particle_count} onChange={v => update('particle_count', v)} display={`${cfg.particle_count}`} />
+                <ColorInput label="Renk" value={cfg.particle_color} onChange={v => update('particle_color', v)} />
+              </>
+            )}
+          </SubBlock>
+          <SubBlock title="🌈 Renk Döngüsü (Rainbow)">
+            <Toggle label="Aktif — frame/glow/parçacık rengi sürekli döner" checked={cfg.color_cycle} onChange={v => update('color_cycle', v)} />
+            {cfg.color_cycle && (
+              <>
+                <Slider label="Tur süresi" min={5} max={30} step={1} value={cfg.color_cycle_speed} onChange={v => update('color_cycle_speed', v)} display={`${cfg.color_cycle_speed}sn / tur`} />
+                <p className="text-[10px] text-slate-500">Hızlı = canlı disko · Yavaş = yumuşak geçiş</p>
+              </>
+            )}
+          </SubBlock>
+          <p className="text-[10px] text-emerald-300/70 leading-relaxed">
+            💡 Bu efektler mobilde de çalışır — kayıt sonrası 5 dk içinde otomatik uygulanır.
+          </p>
+        </Section>
+
         <details className="text-xs">
           <summary className="cursor-pointer text-slate-400 select-none">JSON çıktı</summary>
           <pre className="mt-2 bg-slate-900 border border-slate-700 rounded p-3 overflow-auto max-h-64 text-[11px]">
@@ -328,6 +464,41 @@ export default function FrameEditor({ item }: { item: any }) {
         @keyframes frame-spin {
           from { transform: rotate(0deg) }
           to { transform: rotate(360deg) }
+        }
+        @keyframes frame-breathe {
+          0%, 100% { transform: scale(1) }
+          50%      { transform: scale(1.06) }
+        }
+        @keyframes avatar-pulse {
+          0%, 100% { transform: scale(1) }
+          50%      { transform: scale(1.08) }
+        }
+        @keyframes avatar-float {
+          0%, 100% { transform: translateY(0) }
+          50%      { transform: translateY(-8px) }
+        }
+        @keyframes glow-pulse {
+          0%, 100% { filter: brightness(1) }
+          50%      { filter: brightness(1.4) }
+        }
+        @keyframes particle-twinkle {
+          0%, 100% { opacity: 0.3; transform: rotate(var(--angle, 0)) translate(var(--dist, 60px), 0) scale(0.8) }
+          50%      { opacity: 1;   transform: rotate(var(--angle, 0)) translate(var(--dist, 60px), 0) scale(1.2) }
+        }
+        @keyframes particle-orbit {
+          from { transform: rotate(0deg) translate(0, 0) }
+          to   { transform: rotate(360deg) translate(0, 0) }
+        }
+        @keyframes color-cycle {
+          0%   { filter: hue-rotate(0deg) }
+          100% { filter: hue-rotate(360deg) }
+        }
+        @keyframes glow-color-cycle {
+          0%   { box-shadow: 0 0 20px hsl(0,   80%, 60%), 0 0 40px hsl(0,   80%, 60%) }
+          25%  { box-shadow: 0 0 20px hsl(90,  80%, 60%), 0 0 40px hsl(90,  80%, 60%) }
+          50%  { box-shadow: 0 0 20px hsl(180, 80%, 60%), 0 0 40px hsl(180, 80%, 60%) }
+          75%  { box-shadow: 0 0 20px hsl(270, 80%, 60%), 0 0 40px hsl(270, 80%, 60%) }
+          100% { box-shadow: 0 0 20px hsl(360, 80%, 60%), 0 0 40px hsl(360, 80%, 60%) }
         }
       `}</style>
     </div>
