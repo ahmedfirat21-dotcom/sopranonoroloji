@@ -2,12 +2,10 @@
 
 import React, { useState, useTransition, useId, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Plus, Pencil, Trash2, Eye, EyeOff, Loader2, Star, Smartphone, X, Zap, Upload, Sliders, FileJson, Image as ImageIcon } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, EyeOff, Loader2, Star, Smartphone, X, Upload, Sliders, FileJson, Image as ImageIcon } from 'lucide-react';
 import { CATEGORIES, getCategoryDef } from './categories';
 import MobilePreview from './MobilePreview';
-import QuickAddModal from './QuickAddModal';
 import BulkUploadModal from './BulkUploadModal';
-import AssetUploadButton from './AssetUploadButton';
 import { useAdminDialog } from '../../_components/AdminDialog';
 import ItemLottiePreview from '@/components/store/ItemLottiePreview';
 
@@ -64,7 +62,6 @@ export default function StoreClient({
   // ★ 2026-05-11: URL'den ?cat=frames gibi parametre okur — eski cerceveler/giris-efektleri
   //   sayfalarından redirect olunca filter otomatik açılır.
   const [categoryFilter, setCategoryFilter] = useState<string>(() => searchParams.get('cat') || 'all');
-  const [quickAddCategory, setQuickAddCategory] = useState<string | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [, startTransition] = useTransition();
 
@@ -174,31 +171,21 @@ export default function StoreClient({
         <div className="ml-auto flex items-center gap-2">
           {tab === 'items' && (
             <>
-              {/* Hızlı ekleme: aktif kategori varsa onun adıyla */}
-              {categoryFilter !== 'all' && (
-                <button
-                  type="button"
-                  onClick={() => setQuickAddCategory(categoryFilter)}
-                  className="px-4 py-2 rounded-lg bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/25 text-sm font-semibold flex items-center gap-2 transition-colors"
-                >
-                  <Zap className="w-4 h-4" /> Hızlı {getCategoryDef(categoryFilter).label} Ekle
-                </button>
-              )}
               <button
                 type="button"
                 onClick={() => setBulkOpen(true)}
-                className="px-4 py-2 rounded-lg bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/25 text-sm font-semibold flex items-center gap-2 transition-colors"
-                title="JSON dosyası ile toplu yükle / mevcut kataloğu yedekle"
+                className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 text-xs font-medium flex items-center gap-1.5 transition-colors"
+                title="JSON dosyası ile toplu yedekle / aktar"
               >
-                <Upload className="w-4 h-4" /> JSON Yükle
+                <Upload className="w-3.5 h-3.5" /> Toplu İçe Aktar
               </button>
               <button
                 type="button"
                 onClick={() => setCreating(true)}
-                className="px-4 py-2 rounded-lg bg-amber-500/15 border border-amber-500/40 text-amber-300 hover:bg-amber-500/25 text-sm font-semibold flex items-center gap-2 transition-colors"
-                title="Detaylı form (tüm alanlar)"
+                className="px-5 py-2 rounded-lg bg-amber-500/20 border border-amber-500/50 text-amber-200 hover:bg-amber-500/30 text-sm font-bold flex items-center gap-2 transition-colors shadow-lg shadow-amber-500/10"
+                title="Yeni ürün ekle (kategori seç + dosya yükle + ayarla)"
               >
-                <Plus className="w-4 h-4" /> Detaylı Ekle
+                <Plus className="w-4 h-4" /> Yeni Ürün
               </button>
             </>
           )}
@@ -261,27 +248,6 @@ export default function StoreClient({
               ))}
             </div>
 
-            {/* Hızlı ekle CTA paneli — boş kategoriler veya kullanıcı yönlendirme */}
-            <div className="mb-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-3 flex items-center gap-3 flex-wrap">
-              <Zap className="w-5 h-5 text-emerald-400 shrink-0" />
-              <span className="text-sm text-slate-300">
-                <strong className="text-emerald-300">Hızlı ekle:</strong> Kategori seç, sadece isim + renk + fiyat gir.
-              </span>
-              <div className="ml-auto flex items-center gap-1.5 flex-wrap">
-                {CATEGORIES.filter(c => ['frames', 'gift', 'entry_effect', 'glow_message'].includes(c.slug)).map(c => (
-                  <button
-                    type="button"
-                    key={c.slug}
-                    onClick={() => setQuickAddCategory(c.slug)}
-                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white/5 border border-white/10 hover:bg-white/10 text-slate-200 flex items-center gap-1.5 transition-colors"
-                  >
-                    <span>{c.emoji}</span>
-                    + {c.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
         {/* Mobile: kart grid */}
         <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-3">
           {filteredItems.map(it => {
@@ -324,29 +290,6 @@ export default function StoreClient({
                     {rarityLabel(it.rarity)}
                   </span>
                   <span className="text-amber-300 font-mono">{it.price_sp.toLocaleString('tr-TR')} SP</span>
-                </div>
-                <div className="mb-2 flex items-center gap-2 flex-wrap">
-                  <AssetUploadButton
-                    itemId={it.id}
-                    category={it.category}
-                    currentUrl={it.asset_url}
-                    size="md"
-                    onUploaded={(url) => setItems(prev => prev.map(i => i.id === it.id ? { ...i, asset_url: url || null } : i))}
-                  />
-                  {(it.category === 'frames' || it.category === 'atelier') && (
-                    <a href={`/yonet/cerceveler/${it.id}`}
-                      className="px-3 py-2 inline-flex items-center gap-1 rounded-lg text-sm font-semibold bg-fuchsia-500/10 border border-fuchsia-500/30 text-fuchsia-300 hover:bg-fuchsia-500/20"
-                      title="Konfig">
-                      <Sliders className="w-3 h-3" /> Konfig
-                    </a>
-                  )}
-                  {it.category === 'entry_effect' && (
-                    <a href={`/yonet/giris-efektleri/${it.id}`}
-                      className="px-3 py-2 inline-flex items-center gap-1 rounded-lg text-sm font-semibold bg-fuchsia-500/10 border border-fuchsia-500/30 text-fuchsia-300 hover:bg-fuchsia-500/20"
-                      title="Konfig">
-                      <Sliders className="w-3 h-3" /> Konfig
-                    </a>
-                  )}
                 </div>
                 <div className="grid grid-cols-4 gap-1">
                   <button
@@ -455,12 +398,6 @@ export default function StoreClient({
                       </td>
                       <td className="px-5 py-3">
                         <div className="flex items-center justify-end gap-1.5">
-                          <AssetUploadButton
-                            itemId={it.id}
-                            category={it.category}
-                            currentUrl={it.asset_url}
-                            onUploaded={(url) => setItems(prev => prev.map(i => i.id === it.id ? { ...i, asset_url: url || null } : i))}
-                          />
                           <button
                             type="button"
                             onClick={() => setPreviewItem(it)}
@@ -483,29 +420,10 @@ export default function StoreClient({
                             onClick={() => setEditing(it)}
                             disabled={isBusy}
                             className="px-2 py-1.5 rounded-md text-[10px] font-semibold border bg-cyan-500/10 border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/20 transition-colors"
-                            title="Düzenle"
+                            title="Düzenle (tüm ayarlar tek yerde)"
                           >
                             <Pencil className="w-3 h-3" />
                           </button>
-                          {/* ★ 2026-05-11: Frame/Entry Effect spesifik konfig deeplink (eski editor sayfaları) */}
-                          {(it.category === 'frames' || it.category === 'atelier') && (
-                            <a
-                              href={`/yonet/cerceveler/${it.id}`}
-                              className="px-2 py-1.5 rounded-md text-[10px] font-semibold border bg-fuchsia-500/10 border-fuchsia-500/30 text-fuchsia-300 hover:bg-fuchsia-500/20 transition-colors"
-                              title="Konfig (scale/speed/filter)"
-                            >
-                              <Sliders className="w-3 h-3" />
-                            </a>
-                          )}
-                          {it.category === 'entry_effect' && (
-                            <a
-                              href={`/yonet/giris-efektleri/${it.id}`}
-                              className="px-2 py-1.5 rounded-md text-[10px] font-semibold border bg-fuchsia-500/10 border-fuchsia-500/30 text-fuchsia-300 hover:bg-fuchsia-500/20 transition-colors"
-                              title="Konfig (avatar/pozisyon/animasyon)"
-                            >
-                              <Sliders className="w-3 h-3" />
-                            </a>
-                          )}
                           <button
                             type="button"
                             onClick={() => confirmAndDelete(it)}
@@ -526,16 +444,16 @@ export default function StoreClient({
                       <div className="text-slate-500 mb-3">
                         {categoryFilter === 'all' ? 'Henüz ürün yok.' : 'Bu kategoride ürün yok.'}
                       </div>
-                      {categoryFilter !== 'all' && (
-                        <button
-                          type="button"
-                          onClick={() => setQuickAddCategory(categoryFilter)}
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-sm font-bold hover:bg-emerald-500/25 transition-colors"
-                        >
-                          <Zap className="w-4 h-4" />
-                          {getCategoryDef(categoryFilter).emoji} İlk {getCategoryDef(categoryFilter).label} ürününü ekle
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => setCreating(true)}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500/20 border border-amber-500/50 text-amber-200 text-sm font-bold hover:bg-amber-500/30 transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                        {categoryFilter === 'all'
+                          ? 'İlk ürünü ekle'
+                          : `${getCategoryDef(categoryFilter).emoji} İlk ${getCategoryDef(categoryFilter).label} ürününü ekle`}
+                      </button>
                     </td>
                   </tr>
                 )}
@@ -612,25 +530,14 @@ export default function StoreClient({
       {(editing || creating) && (
         <ItemEditModal
           item={editing}
+          /* Yeni ürün modu için aktif kategori filtresini ön-doldur */
+          defaultCategory={creating && categoryFilter !== 'all' ? categoryFilter : undefined}
           onClose={() => { setEditing(null); setCreating(false); }}
           onSaved={(saved, isNew) => {
             if (isNew) setItems(prev => [saved, ...prev]);
             else setItems(prev => prev.map(i => i.id === saved.id ? saved : i));
             setEditing(null);
             setCreating(false);
-            startTransition(() => router.refresh());
-          }}
-        />
-      )}
-
-      {quickAddCategory && (
-        <QuickAddModal
-          category={quickAddCategory}
-          onClose={() => setQuickAddCategory(null)}
-          onCreated={(saved) => {
-            setItems(prev => [saved, ...prev]);
-            setCategoryFilter(quickAddCategory);
-            setQuickAddCategory(null);
             startTransition(() => router.refresh());
           }}
         />
@@ -709,10 +616,12 @@ const ASSET_FORMAT_HINTS: Record<string, { recommended: string; tip: string }> =
 
 function ItemEditModal({
   item,
+  defaultCategory,
   onClose,
   onSaved,
 }: {
   item: Item | null;
+  defaultCategory?: string;
   onClose: () => void;
   onSaved: (saved: Item, isNew: boolean) => void;
 }) {
@@ -721,7 +630,7 @@ function ItemEditModal({
   const [form, setForm] = useState<Partial<Item>>(
     item || {
       id: '',
-      category: 'frame',
+      category: defaultCategory || 'frames',
       rarity: 'common',
       name: '',
       tagline: '',
@@ -737,6 +646,22 @@ function ItemEditModal({
     }
   );
   const [saving, setSaving] = useState(false);
+
+  // Yeni ürün için ID otomatik üret — isim + kategori + zaman damgası
+  useEffect(() => {
+    if (!isNew) return;
+    if (!form.name) return;
+    const slug = form.name
+      .toLowerCase()
+      .replace(/ı/g, 'i').replace(/ş/g, 's').replace(/ğ/g, 'g')
+      .replace(/ü/g, 'u').replace(/ö/g, 'o').replace(/ç/g, 'c')
+      .replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 30);
+    if (!slug) return;
+    const stamp = Date.now().toString(36).slice(-4);
+    const newId = `${form.category}_${slug}_${stamp}`;
+    setForm(prev => prev.id === newId ? prev : { ...prev, id: newId });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.name, form.category]);
 
   // Asset upload state — modal içi yükleme akışı
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -823,238 +748,390 @@ function ItemEditModal({
 
   const update = (k: keyof Item, v: any) => setForm(prev => ({ ...prev, [k]: v }));
 
+  // İnce ayar deeplink — frame ve entry effect için ayrı detaylı sayfaları var
+  const fineConfigUrl =
+    form.category === 'frames' || form.category === 'atelier'
+      ? `/yonet/cerceveler/${form.id}`
+      : form.category === 'entry_effect'
+        ? `/yonet/giris-efektleri/${form.id}`
+        : null;
+
+  // Önizleme objesi — formun anlık halini MobilePreview'a verir
+  const previewItem = {
+    id: form.id || 'preview',
+    category: form.category || 'frames',
+    rarity: form.rarity || null,
+    name: form.name || 'Ürün adı',
+    tagline: form.tagline || null,
+    art_emoji: form.art_emoji || '✨',
+    art_color: form.art_color || '#fbbf24',
+    bg_gradient_start: form.bg_gradient_start || '#1e293b',
+    bg_gradient_end: form.bg_gradient_end || '#0f172a',
+    price_sp: form.price_sp ?? 0,
+    asset_url: form.asset_url || null,
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-auto">
-      <div className="bg-slate-900 border border-white/10 rounded-xl sm:rounded-2xl w-full max-w-2xl my-2 sm:my-8">
-        <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
-          <h2 className="text-lg font-bold">
-            {isNew ? 'Yeni Ürün' : `Düzenle — ${item!.name}`}
-          </h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-200 text-xl">✕</button>
+      <div className="bg-slate-900 border border-white/10 rounded-xl sm:rounded-2xl w-full max-w-5xl my-2 sm:my-8">
+        {/* Başlık */}
+        <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between sticky top-0 bg-slate-900 z-10 rounded-t-2xl">
+          <div>
+            <h2 className="text-lg font-bold flex items-center gap-2">
+              {isNew ? (
+                <><Plus className="w-5 h-5 text-amber-400" /> Yeni Ürün</>
+              ) : (
+                <><Pencil className="w-4 h-4 text-cyan-400" /> Düzenle — {item!.name}</>
+              )}
+            </h2>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              Kategori seç · dosya yükle · ayarları gir · sağda canlı önizle
+            </p>
+          </div>
+          <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-200 text-xl w-8 h-8 flex items-center justify-center" aria-label="Kapat">✕</button>
         </div>
-        <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-          <Field label="ID (slug)" disabled={!isNew}>
-            <input
-              type="text"
-              value={form.id || ''}
-              onChange={e => update('id', e.target.value)}
-              disabled={!isNew}
-              className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 focus:border-amber-500/50 focus:outline-none disabled:opacity-50"
-              placeholder="frame_aurora_001"
-            />
-          </Field>
-          <Field label="İsim">
-            <input
-              type="text"
-              value={form.name || ''}
-              onChange={e => update('name', e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 focus:border-amber-500/50 focus:outline-none"
-            />
-          </Field>
-          <Field label="Kategori">
-            <select
-              value={form.category || ''}
-              onChange={e => update('category', e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 focus:border-amber-500/50 focus:outline-none"
-            >
-              {CATEGORIES.map(c => (
-                <option key={c.slug} value={c.slug}>{c.emoji} {c.label}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Nadirlik">
-            <select
-              value={form.rarity || ''}
-              onChange={e => update('rarity', e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 focus:border-amber-500/50 focus:outline-none"
-            >
-              <option value="common">Sıradan</option>
-              <option value="rare">Nadir</option>
-              <option value="epic">Destansı</option>
-              <option value="legendary">Efsane</option>
-              <option value="mythic">Efsanevi</option>
-            </select>
-          </Field>
-          <Field label="Slogan" full>
-            <input
-              type="text"
-              value={form.tagline || ''}
-              onChange={e => update('tagline', e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 focus:border-amber-500/50 focus:outline-none"
-            />
-          </Field>
-          <Field label="Emoji / İkon">
-            <input
-              type="text"
-              value={form.art_emoji || ''}
-              onChange={e => update('art_emoji', e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 focus:border-amber-500/50 focus:outline-none"
-              maxLength={4}
-            />
-          </Field>
-          <Field label="Fiyat (SP)">
-            <input
-              type="number"
-              value={form.price_sp ?? 0}
-              onChange={e => update('price_sp', parseInt(e.target.value, 10) || 0)}
-              className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 focus:border-amber-500/50 focus:outline-none"
-            />
-          </Field>
-          <Field label="Gradient Başlangıç">
-            <input
-              type="text"
-              value={form.bg_gradient_start || ''}
-              onChange={e => update('bg_gradient_start', e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 focus:border-amber-500/50 focus:outline-none font-mono text-xs"
-              placeholder="#1e293b"
-            />
-          </Field>
-          <Field label="Gradient Bitiş">
-            <input
-              type="text"
-              value={form.bg_gradient_end || ''}
-              onChange={e => update('bg_gradient_end', e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 focus:border-amber-500/50 focus:outline-none font-mono text-xs"
-              placeholder="#0f172a"
-            />
-          </Field>
-          <Field label="Sıra">
-            <input
-              type="number"
-              value={form.display_order ?? 0}
-              onChange={e => update('display_order', parseInt(e.target.value, 10) || 0)}
-              className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 focus:border-amber-500/50 focus:outline-none"
-            />
-          </Field>
-          <Field label="Koleksiyon ID">
-            <input
-              type="text"
-              value={form.collection_id || ''}
-              onChange={e => update('collection_id', e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 focus:border-amber-500/50 focus:outline-none"
-            />
-          </Field>
-          {/* ★ Asset upload — kategoriye göre format ipuçlu drag-drop alanı.
-                Yeni ürün ise Storage'a yükler, asset_url form'a yazılır, save ile DB'ye gider.
-                Mevcut ürün ise upload anında DB'ye de yazılır (item_id form-data ile gider). */}
-          <div className="col-span-2 pt-1">
-            <label className="block text-[10px] font-bold tracking-wider text-slate-400 mb-2 flex items-center justify-between">
-              <span>
-                ANİMASYON / GÖRSEL DOSYASI
-                <span className="text-slate-500 font-normal text-[9px] ml-1">(opsiyonel)</span>
-              </span>
-              <span className="text-[9px] font-normal normal-case text-amber-300/80">
-                💡 {formatHint.recommended}
-              </span>
-            </label>
-            {!form.asset_url ? (
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                onDragOver={e => e.preventDefault()}
-                onDrop={e => {
-                  e.preventDefault();
-                  const file = e.dataTransfer.files?.[0];
-                  if (file) handleFileUpload(file);
-                }}
-                className="border-2 border-dashed border-white/15 rounded-xl p-4 text-center cursor-pointer hover:border-cyan-500/50 hover:bg-cyan-500/5 transition-colors"
-              >
-                {uploading ? (
-                  <div className="flex flex-col items-center gap-2 py-2">
-                    <Loader2 className="w-5 h-5 animate-spin text-cyan-400" />
-                    <span className="text-xs text-slate-400">Yükleniyor...</span>
-                  </div>
-                ) : (
-                  <>
-                    <Upload className="w-6 h-6 text-slate-500 mx-auto mb-1.5" />
-                    <div className="text-xs text-slate-300 font-semibold">Dosya seç veya sürükle</div>
-                    <div className="text-[10px] text-slate-500 mt-0.5">
-                      {formatHint.tip} · max 10 MB
-                    </div>
-                  </>
-                )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".json,application/json,image/png,image/jpeg,image/svg+xml,image/gif,image/webp"
-                  aria-label="Asset dosyası"
-                  onChange={e => {
-                    const file = e.target.files?.[0];
-                    if (file) handleFileUpload(file);
-                  }}
-                  className="hidden"
-                />
+
+        {/* Gövde — sol form, sağ önizleme */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-0">
+          {/* SOL — form */}
+          <div className="p-5 space-y-5 max-h-[75vh] overflow-y-auto">
+            {/* 1) Kategori chip seçici — en üstte, vurgulu */}
+            <div>
+              <label className="block text-[10px] font-bold tracking-wider text-amber-300 mb-2">
+                1. KATEGORİ <span className="text-red-400">*</span>
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {CATEGORIES.map(c => {
+                  const active = form.category === c.slug;
+                  return (
+                    <button
+                      key={c.slug}
+                      type="button"
+                      onClick={() => update('category', c.slug)}
+                      disabled={!isNew}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors flex items-center gap-1.5 ${
+                        active
+                          ? 'bg-amber-500/25 border-amber-500/60 text-amber-200'
+                          : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                      title={isNew ? c.description : 'Mevcut ürünün kategorisi değiştirilemez'}
+                    >
+                      <span>{c.emoji}</span> {c.label}
+                    </button>
+                  );
+                })}
               </div>
-            ) : (
-              <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/5 p-3 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
-                  {uploadedType === 'lottie' ? (
-                    <FileJson className="w-5 h-5 text-emerald-300" />
-                  ) : (
-                    <ImageIcon className="w-5 h-5 text-emerald-300" />
-                  )}
+              {!isNew && (
+                <div className="text-[10px] text-slate-500 mt-1.5">
+                  Mevcut ürünün kategorisi değiştirilemez (envanter bütünlüğü için).
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-bold text-emerald-200">
-                    {uploadedType === 'lottie' ? 'Lottie animasyon' : 'Görsel'} bağlı ✓
-                  </div>
-                  <a
-                    href={form.asset_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[10px] text-cyan-300 underline truncate block"
-                  >
-                    {form.asset_url.split('/').pop()}
-                  </a>
-                </div>
-                <button
-                  type="button"
+              )}
+            </div>
+
+            {/* 2) Asset upload — kategoriye özel format ipucu */}
+            <div>
+              <label className="block text-[10px] font-bold tracking-wider text-amber-300 mb-2 flex items-center justify-between">
+                <span>2. DOSYA <span className="text-slate-500 font-normal text-[9px] ml-1">(opsiyonel)</span></span>
+                <span className="text-[9px] font-normal normal-case text-amber-300/80">
+                  💡 {formatHint.recommended}
+                </span>
+              </label>
+              {!form.asset_url ? (
+                <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-2 py-1 rounded-md text-[10px] font-semibold bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/25 flex items-center gap-1"
-                  title="Yenisini yükle"
-                  disabled={uploading}
-                >
-                  {uploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
-                  Değiştir
-                </button>
-                <button
-                  type="button"
-                  onClick={handleClearAsset}
-                  className="w-7 h-7 rounded-md bg-red-500/15 border border-red-500/40 text-red-300 flex items-center justify-center hover:bg-red-500/25"
-                  title="Kaldır"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".json,application/json,image/png,image/jpeg,image/svg+xml,image/gif,image/webp"
-                  aria-label="Asset dosyası"
-                  onChange={e => {
-                    const file = e.target.files?.[0];
+                  onDragOver={e => e.preventDefault()}
+                  onDrop={e => {
+                    e.preventDefault();
+                    const file = e.dataTransfer.files?.[0];
                     if (file) handleFileUpload(file);
                   }}
-                  className="hidden"
-                />
+                  className="border-2 border-dashed border-white/15 rounded-xl p-5 text-center cursor-pointer hover:border-cyan-500/50 hover:bg-cyan-500/5 transition-colors"
+                >
+                  {uploading ? (
+                    <div className="flex flex-col items-center gap-2 py-2">
+                      <Loader2 className="w-5 h-5 animate-spin text-cyan-400" />
+                      <span className="text-xs text-slate-400">Yükleniyor...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <Upload className="w-7 h-7 text-slate-500 mx-auto mb-2" />
+                      <div className="text-sm text-slate-300 font-semibold">Dosya seç veya sürükle</div>
+                      <div className="text-[10px] text-slate-500 mt-1">
+                        Lottie (.json) · PNG · JPG · SVG · GIF · WebP — max 10 MB
+                      </div>
+                      <div className="text-[10px] text-amber-300/70 mt-1">{formatHint.tip}</div>
+                    </>
+                  )}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".json,application/json,image/png,image/jpeg,image/svg+xml,image/gif,image/webp"
+                    aria-label="Asset dosyası"
+                    onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (file) handleFileUpload(file);
+                    }}
+                    className="hidden"
+                  />
+                </div>
+              ) : (
+                <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/5 p-3 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                    {uploadedType === 'lottie' ? (
+                      <FileJson className="w-5 h-5 text-emerald-300" />
+                    ) : (
+                      <ImageIcon className="w-5 h-5 text-emerald-300" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-bold text-emerald-200">
+                      {uploadedType === 'lottie' ? 'Lottie animasyon' : 'Görsel'} bağlı ✓
+                    </div>
+                    <a
+                      href={form.asset_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] text-cyan-300 underline truncate block"
+                    >
+                      {form.asset_url.split('/').pop()}
+                    </a>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-2 py-1 rounded-md text-[10px] font-semibold bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/25 flex items-center gap-1"
+                    title="Yenisini yükle"
+                    disabled={uploading}
+                  >
+                    {uploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
+                    Değiştir
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleClearAsset}
+                    className="w-7 h-7 rounded-md bg-red-500/15 border border-red-500/40 text-red-300 flex items-center justify-center hover:bg-red-500/25"
+                    title="Kaldır"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".json,application/json,image/png,image/jpeg,image/svg+xml,image/gif,image/webp"
+                    aria-label="Asset dosyası"
+                    onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (file) handleFileUpload(file);
+                    }}
+                    className="hidden"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* 3) Temel bilgiler */}
+            <div>
+              <label className="block text-[10px] font-bold tracking-wider text-amber-300 mb-2">
+                3. TEMEL BİLGİLER
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="İsim">
+                  <input
+                    type="text"
+                    value={form.name || ''}
+                    onChange={e => update('name', e.target.value)}
+                    placeholder="ör. Altın Çerçeve"
+                    className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 focus:border-amber-500/50 focus:outline-none text-sm"
+                  />
+                </Field>
+                <Field label="Nadirlik">
+                  <select
+                    title="Nadirlik"
+                    aria-label="Nadirlik"
+                    value={form.rarity || ''}
+                    onChange={e => update('rarity', e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 focus:border-amber-500/50 focus:outline-none text-sm"
+                  >
+                    <option value="common">Sıradan</option>
+                    <option value="rare">Nadir</option>
+                    <option value="epic">Destansı</option>
+                    <option value="legendary">Efsane</option>
+                    <option value="mythic">Efsanevi</option>
+                  </select>
+                </Field>
+                <Field label="Slogan" full>
+                  <input
+                    type="text"
+                    value={form.tagline || ''}
+                    onChange={e => update('tagline', e.target.value)}
+                    placeholder="Kısa açıklama"
+                    maxLength={60}
+                    className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 focus:border-amber-500/50 focus:outline-none text-sm"
+                  />
+                </Field>
+                <Field label="Fiyat (SP)">
+                  <input
+                    type="number"
+                    title="Fiyat (SP)"
+                    placeholder="100"
+                    value={form.price_sp ?? 0}
+                    onChange={e => update('price_sp', parseInt(e.target.value, 10) || 0)}
+                    className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 focus:border-amber-500/50 focus:outline-none text-sm font-mono"
+                  />
+                </Field>
+                <Field label="Emoji">
+                  <input
+                    type="text"
+                    value={form.art_emoji || ''}
+                    onChange={e => update('art_emoji', e.target.value)}
+                    maxLength={4}
+                    className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 focus:border-amber-500/50 focus:outline-none text-sm text-center text-lg"
+                  />
+                </Field>
               </div>
+            </div>
+
+            {/* 4) Renk / Gradient */}
+            <div>
+              <label className="block text-[10px] font-bold tracking-wider text-amber-300 mb-2">
+                4. RENK / GRADIENT
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Başlangıç">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      title="Başlangıç rengi"
+                      aria-label="Başlangıç rengi"
+                      value={form.bg_gradient_start || '#1e293b'}
+                      onChange={e => update('bg_gradient_start', e.target.value)}
+                      className="w-9 h-9 rounded cursor-pointer bg-transparent border border-white/10"
+                    />
+                    <input
+                      type="text"
+                      title="Başlangıç hex kodu"
+                      value={form.bg_gradient_start || ''}
+                      onChange={e => update('bg_gradient_start', e.target.value)}
+                      placeholder="#1e293b"
+                      className="flex-1 px-2 py-1.5 rounded-lg bg-black/30 border border-white/10 focus:border-amber-500/50 focus:outline-none font-mono text-xs"
+                    />
+                  </div>
+                </Field>
+                <Field label="Bitiş">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      title="Bitiş rengi"
+                      aria-label="Bitiş rengi"
+                      value={form.bg_gradient_end || '#0f172a'}
+                      onChange={e => update('bg_gradient_end', e.target.value)}
+                      className="w-9 h-9 rounded cursor-pointer bg-transparent border border-white/10"
+                    />
+                    <input
+                      type="text"
+                      title="Bitiş hex kodu"
+                      value={form.bg_gradient_end || ''}
+                      onChange={e => update('bg_gradient_end', e.target.value)}
+                      placeholder="#0f172a"
+                      className="flex-1 px-2 py-1.5 rounded-lg bg-black/30 border border-white/10 focus:border-amber-500/50 focus:outline-none font-mono text-xs"
+                    />
+                  </div>
+                </Field>
+              </div>
+            </div>
+
+            {/* 5) Durum + Toggle'lar */}
+            <div>
+              <label className="block text-[10px] font-bold tracking-wider text-amber-300 mb-2">
+                5. DURUM
+              </label>
+              <div className="flex items-center gap-5 flex-wrap">
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input type="checkbox" checked={!!form.active} onChange={e => update('active', e.target.checked)} />
+                  <span className="text-slate-200">Yayında</span>
+                </label>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input type="checkbox" checked={!!form.is_featured} onChange={e => update('is_featured', e.target.checked)} />
+                  <span className="text-slate-200 flex items-center gap-1">
+                    <Star className="w-3 h-3 text-amber-400" /> Öne çıkan
+                  </span>
+                </label>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input type="checkbox" checked={!!form.per_message} onChange={e => update('per_message', e.target.checked)} />
+                  <span className="text-slate-200">Her mesajda kullanılır</span>
+                </label>
+              </div>
+            </div>
+
+            {/* İleri ayarlar — ID + sıra + koleksiyon (collapsible) */}
+            <details className="group">
+              <summary className="cursor-pointer text-[10px] font-bold tracking-wider text-slate-400 hover:text-slate-200 transition-colors select-none">
+                ⚙ İLERİ AYARLAR (ID, sıra, koleksiyon)
+              </summary>
+              <div className="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-white/5">
+                <Field label="ID (slug)" full disabled={!isNew}>
+                  <input
+                    type="text"
+                    value={form.id || ''}
+                    onChange={e => update('id', e.target.value)}
+                    disabled={!isNew}
+                    placeholder="otomatik oluşturulur"
+                    className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 focus:border-amber-500/50 focus:outline-none disabled:opacity-50 font-mono text-xs"
+                  />
+                  {isNew && <div className="text-[10px] text-slate-500 mt-1">İsim yazınca otomatik üretilir; istersen değiştirebilirsin.</div>}
+                </Field>
+                <Field label="Sıra">
+                  <input
+                    type="number"
+                    value={form.display_order ?? 0}
+                    onChange={e => update('display_order', parseInt(e.target.value, 10) || 0)}
+                    className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 focus:border-amber-500/50 focus:outline-none text-sm"
+                  />
+                </Field>
+                <Field label="Koleksiyon ID">
+                  <input
+                    type="text"
+                    value={form.collection_id || ''}
+                    onChange={e => update('collection_id', e.target.value)}
+                    placeholder="opsiyonel"
+                    className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 focus:border-amber-500/50 focus:outline-none text-sm"
+                  />
+                </Field>
+              </div>
+            </details>
+
+            {/* İnce ayar deeplink — sadece kayıtlı ürün ve frame/entry kategorisi */}
+            {!isNew && fineConfigUrl && (
+              <a
+                href={fineConfigUrl}
+                className="flex items-center gap-2 px-4 py-3 rounded-lg bg-fuchsia-500/10 border border-fuchsia-500/30 text-fuchsia-300 hover:bg-fuchsia-500/20 text-sm font-semibold transition-colors"
+                title="Detaylı slider'lı yapılandırma sayfası"
+              >
+                <Sliders className="w-4 h-4" />
+                <div className="flex-1">
+                  <div>İnce Ayar Sayfasına Git</div>
+                  <div className="text-[10px] text-fuchsia-400/70 font-normal">
+                    {form.category === 'entry_effect' ? 'Avatar pozisyonu, animasyon hızı, loop ayarları' : 'Frame ölçek, glow, renk filtreleri'}
+                  </div>
+                </div>
+                <span className="text-lg">→</span>
+              </a>
             )}
           </div>
 
-          <div className="col-span-2 flex items-center gap-5 pt-2">
-            <label className="flex items-center gap-2 text-sm cursor-pointer">
-              <input type="checkbox" checked={!!form.active} onChange={e => update('active', e.target.checked)} />
-              Aktif
-            </label>
-            <label className="flex items-center gap-2 text-sm cursor-pointer">
-              <input type="checkbox" checked={!!form.is_featured} onChange={e => update('is_featured', e.target.checked)} />
-              Öne çıkan
-            </label>
-            <label className="flex items-center gap-2 text-sm cursor-pointer">
-              <input type="checkbox" checked={!!form.per_message} onChange={e => update('per_message', e.target.checked)} />
-              Her mesajda kullanılır
-            </label>
+          {/* SAĞ — canlı mobil önizleme */}
+          <div className="border-t lg:border-t-0 lg:border-l border-white/10 p-4 bg-black/20">
+            <div className="text-[10px] tracking-wider text-slate-400 mb-3 font-bold text-center">
+              📱 CANLI ÖNİZLEME
+            </div>
+            <div className="scale-90 origin-top sticky top-4">
+              <MobilePreview item={previewItem} />
+            </div>
           </div>
         </div>
-        <div className="px-5 py-4 border-t border-white/10 flex justify-end gap-2">
+
+        {/* Aksiyon */}
+        <div className="px-5 py-4 border-t border-white/10 flex justify-end gap-2 sticky bottom-0 bg-slate-900 rounded-b-2xl">
           <button
             type="button"
             onClick={onClose}
@@ -1065,11 +1142,11 @@ function ItemEditModal({
           <button
             type="button"
             onClick={handleSave}
-            disabled={saving}
-            className="px-4 py-2 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-200 text-sm font-semibold hover:bg-amber-500/30 disabled:opacity-50 flex items-center gap-2"
+            disabled={saving || !form.name}
+            className="px-5 py-2 rounded-lg bg-amber-500/20 border border-amber-500/50 text-amber-200 text-sm font-bold hover:bg-amber-500/30 disabled:opacity-50 flex items-center gap-2"
           >
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-            Kaydet
+            {isNew ? 'Mağazaya Ekle' : 'Kaydet'}
           </button>
         </div>
       </div>
