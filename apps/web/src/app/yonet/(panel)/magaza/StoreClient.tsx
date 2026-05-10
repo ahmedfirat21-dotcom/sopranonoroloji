@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useTransition, useId } from 'react';
-import { useRouter } from 'next/navigation';
-import { Plus, Pencil, Trash2, Eye, EyeOff, Loader2, Star, Smartphone, X, Zap, Upload } from 'lucide-react';
+import React, { useState, useTransition, useId, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Plus, Pencil, Trash2, Eye, EyeOff, Loader2, Star, Smartphone, X, Zap, Upload, Sliders } from 'lucide-react';
 import { CATEGORIES, getCategoryDef } from './categories';
 import MobilePreview from './MobilePreview';
 import QuickAddModal from './QuickAddModal';
@@ -52,6 +52,7 @@ export default function StoreClient({
   initialBundles: Bundle[];
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const dialog = useAdminDialog();
   const [tab, setTab] = useState<Tab>('items');
   const [items, setItems] = useState(initialItems);
@@ -60,10 +61,18 @@ export default function StoreClient({
   const [editing, setEditing] = useState<Item | null>(null);
   const [creating, setCreating] = useState(false);
   const [previewItem, setPreviewItem] = useState<Item | null>(null);
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  // ★ 2026-05-11: URL'den ?cat=frames gibi parametre okur — eski cerceveler/giris-efektleri
+  //   sayfalarından redirect olunca filter otomatik açılır.
+  const [categoryFilter, setCategoryFilter] = useState<string>(() => searchParams.get('cat') || 'all');
   const [quickAddCategory, setQuickAddCategory] = useState<string | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [, startTransition] = useTransition();
+
+  // URL değişince filter güncellesin (geri/ileri navigation)
+  useEffect(() => {
+    const cat = searchParams.get('cat');
+    if (cat && cat !== categoryFilter) setCategoryFilter(cat);
+  }, [searchParams, categoryFilter]);
 
   const callItemAction = async (id: string, body: any) => {
     setBusyId(id);
@@ -316,7 +325,7 @@ export default function StoreClient({
                   </span>
                   <span className="text-amber-300 font-mono">{it.price_sp.toLocaleString('tr-TR')} SP</span>
                 </div>
-                <div className="mb-2">
+                <div className="mb-2 flex items-center gap-2 flex-wrap">
                   <AssetUploadButton
                     itemId={it.id}
                     category={it.category}
@@ -324,6 +333,20 @@ export default function StoreClient({
                     size="md"
                     onUploaded={(url) => setItems(prev => prev.map(i => i.id === it.id ? { ...i, asset_url: url || null } : i))}
                   />
+                  {(it.category === 'frames' || it.category === 'atelier') && (
+                    <a href={`/yonet/cerceveler/${it.id}`}
+                      className="px-3 py-2 inline-flex items-center gap-1 rounded-lg text-sm font-semibold bg-fuchsia-500/10 border border-fuchsia-500/30 text-fuchsia-300 hover:bg-fuchsia-500/20"
+                      title="Konfig">
+                      <Sliders className="w-3 h-3" /> Konfig
+                    </a>
+                  )}
+                  {it.category === 'entry_effect' && (
+                    <a href={`/yonet/giris-efektleri/${it.id}`}
+                      className="px-3 py-2 inline-flex items-center gap-1 rounded-lg text-sm font-semibold bg-fuchsia-500/10 border border-fuchsia-500/30 text-fuchsia-300 hover:bg-fuchsia-500/20"
+                      title="Konfig">
+                      <Sliders className="w-3 h-3" /> Konfig
+                    </a>
+                  )}
                 </div>
                 <div className="grid grid-cols-4 gap-1">
                   <button
@@ -464,6 +487,25 @@ export default function StoreClient({
                           >
                             <Pencil className="w-3 h-3" />
                           </button>
+                          {/* ★ 2026-05-11: Frame/Entry Effect spesifik konfig deeplink (eski editor sayfaları) */}
+                          {(it.category === 'frames' || it.category === 'atelier') && (
+                            <a
+                              href={`/yonet/cerceveler/${it.id}`}
+                              className="px-2 py-1.5 rounded-md text-[10px] font-semibold border bg-fuchsia-500/10 border-fuchsia-500/30 text-fuchsia-300 hover:bg-fuchsia-500/20 transition-colors"
+                              title="Konfig (scale/speed/filter)"
+                            >
+                              <Sliders className="w-3 h-3" />
+                            </a>
+                          )}
+                          {it.category === 'entry_effect' && (
+                            <a
+                              href={`/yonet/giris-efektleri/${it.id}`}
+                              className="px-2 py-1.5 rounded-md text-[10px] font-semibold border bg-fuchsia-500/10 border-fuchsia-500/30 text-fuchsia-300 hover:bg-fuchsia-500/20 transition-colors"
+                              title="Konfig (avatar/pozisyon/animasyon)"
+                            >
+                              <Sliders className="w-3 h-3" />
+                            </a>
+                          )}
                           <button
                             type="button"
                             onClick={() => confirmAndDelete(it)}

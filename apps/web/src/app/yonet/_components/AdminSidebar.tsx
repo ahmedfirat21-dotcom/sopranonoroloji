@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, Flag, Users, Store, Home, MessageSquare,
   Coins, Bell, Crown, Settings as SettingsIcon, TrendingUp, Banknote, ScrollText,
-  ShieldAlert, UserPlus, Sparkles, Award,
+  ShieldAlert, UserPlus,
 } from 'lucide-react';
 import SopranoLogoMini, { SopranoLogoStyleTag } from './SopranoLogoMini';
 
@@ -15,8 +15,9 @@ const NAV = [
   { href: '/yonet/sikayetler', label: 'Şikayetler', icon: Flag },
   { href: '/yonet/kullanicilar', label: 'Kullanıcılar', icon: Users },
   { href: '/yonet/magaza', label: 'Mağaza', icon: Store },
-  { href: '/yonet/cerceveler', label: 'Çerçeveler', icon: Award },
-  { href: '/yonet/giris-efektleri', label: 'Giriş Efektleri', icon: Sparkles },
+  // ★ 2026-05-11: 'Çerçeveler' ve 'Giriş Efektleri' linkleri kaldırıldı.
+  //   Hepsi Mağaza içinde kategori filtresi ile yönetiliyor; konfig için
+  //   ürün satırındaki "🎨 Konfig" butonu deeplink yapar.
   { href: '/yonet/uyelik', label: 'Üyelik Planları', icon: Crown },
   { href: '/yonet/odalar', label: 'Odalar', icon: Home },
   { href: '/yonet/mesajlar', label: 'Mesaj İncelemesi', icon: MessageSquare },
