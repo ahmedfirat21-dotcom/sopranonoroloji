@@ -33,6 +33,11 @@ export async function POST(req: Request) {
 
   const file = formData.get('file');
   const category = String(formData.get('category') || 'general');
+  // ★ 2026-05-10: Opsiyonel item_id — verilirse upload sonrası
+  //   cosmetic_items.asset_url field'ı otomatik güncellenir.
+  //   Mobile bu URL'i Lottie source olarak çeker (eko-sistem dinamik senkron).
+  const itemId = formData.get('item_id');
+  const itemIdStr = typeof itemId === 'string' && itemId.trim().length > 0 ? itemId.trim() : null;
 
   if (!file || !(file instanceof File)) {
     return NextResponse.json({ error: 'Dosya bulunamadı' }, { status: 400 });
@@ -72,6 +77,22 @@ export async function POST(req: Request) {
   const { data: urlData } = supabaseAdmin.storage.from(BUCKET).getPublicUrl(filename);
   const publicUrl = urlData.publicUrl;
 
+  // ★ Opsiyonel: item_id verilmişse cosmetic_items.asset_url'i otomatik güncelle.
+  //   Bu sayede admin "yükle" butonuna basınca tek adımda URL DB'ye yazılır.
+  let dbUpdated = false;
+  let dbUpdateError: string | null = null;
+  if (itemIdStr) {
+    const { error: updateError } = await supabaseAdmin
+      .from('cosmetic_items')
+      .update({ asset_url: publicUrl })
+      .eq('id', itemIdStr);
+    if (updateError) {
+      dbUpdateError = updateError.message;
+    } else {
+      dbUpdated = true;
+    }
+  }
+
   return NextResponse.json({
     ok: true,
     url: publicUrl,
@@ -79,6 +100,9 @@ export async function POST(req: Request) {
     type: ext,
     size: file.size,
     asset_type: ext === 'json' ? 'lottie' : 'image',
+    item_id: itemIdStr,
+    db_updated: dbUpdated,
+    db_error: dbUpdateError,
   });
 }
 

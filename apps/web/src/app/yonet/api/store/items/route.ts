@@ -12,6 +12,7 @@ const ITEM_FIELDS = [
   'id', 'category', 'rarity', 'name', 'meta', 'tagline', 'art_emoji', 'art_color',
   'bg_gradient_start', 'bg_gradient_mid', 'bg_gradient_end', 'bg_radial',
   'price_sp', 'per_message', 'is_featured', 'collection_id', 'active', 'display_order',
+  'asset_url', // ★ 2026-05-10 v114: Lottie/PNG URL — mobile direkt buradan render
 ];
 
 export async function POST(req: Request) {

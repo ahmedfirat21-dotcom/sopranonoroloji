@@ -143,7 +143,9 @@ export default function QuickAddModal({
 
     setBusy(true);
     try {
-      // Meta — yüklenen asset varsa URL'yi koy
+      // ★ 2026-05-10 v114: asset_url top-level column'a da yaz (eko-sistem dinamik
+      //   senkron — mobile cache önce buradan okuyor). Meta JSON eski yol, backward
+      //   compat için kalıyor; yeni mobile sürümleri direkt asset_url'i kullanır.
       const meta = uploadedUrl ? JSON.stringify({
         asset_url: uploadedUrl,
         asset_type: uploadedType,
@@ -157,6 +159,7 @@ export default function QuickAddModal({
           name: name.trim(),
           tagline: tagline.trim() || null,
           meta,
+          asset_url: uploadedUrl, // ★ yeni — mobile direkt buradan okur
           art_emoji: showEmoji ? emoji : (catDef.emoji || '✨'),
           art_color: gradStart,
           bg_gradient_start: showGradient ? gradStart : null,
