@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useTransition, useId, useEffect } from 'react';
+import React, { useState, useTransition, useId, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Plus, Pencil, Trash2, Eye, EyeOff, Loader2, Star, Smartphone, X, Zap, Upload, Sliders } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, EyeOff, Loader2, Star, Smartphone, X, Zap, Upload, Sliders, FileJson, Image as ImageIcon } from 'lucide-react';
 import { CATEGORIES, getCategoryDef } from './categories';
 import MobilePreview from './MobilePreview';
 import QuickAddModal from './QuickAddModal';
@@ -694,6 +694,19 @@ function rarityLabel(rarity: string | null): string {
   }
 }
 
+// Kategoriye göre asset format ipucu — neyin yüklenmesi gerektiğini açık söyler
+const ASSET_FORMAT_HINTS: Record<string, { recommended: string; tip: string }> = {
+  frames:        { recommended: 'PNG (şeffaf zemin, kare) veya Lottie JSON',     tip: '512×512 px önerilir' },
+  entry_effect:  { recommended: 'Lottie JSON (animasyonlu)',                      tip: 'Veya GIF/WebP fallback' },
+  gift:          { recommended: 'Lottie JSON veya PNG',                           tip: 'Sohbete gönderildiğinde oynayacak' },
+  glow_message:  { recommended: 'Küçük PNG/SVG',                                  tip: 'Mesaj baloncuğu efekti' },
+  effect:        { recommended: 'Lottie JSON',                                    tip: 'Genel görsel efekt' },
+  theme:         { recommended: 'PNG/JPG arkaplan',                               tip: '1080×1920 önerilir' },
+  background:    { recommended: 'PNG/JPG arkaplan',                               tip: 'Profil/oda arkaplanı' },
+  emoji:         { recommended: 'PNG (şeffaf zemin)',                             tip: '128×128 önerilir' },
+  badge:         { recommended: 'PNG/SVG (şeffaf zemin)',                         tip: '128×128 rozet ikonu' },
+};
+
 function ItemEditModal({
   item,
   onClose,
@@ -724,6 +737,61 @@ function ItemEditModal({
     }
   );
   const [saving, setSaving] = useState(false);
+
+  // Asset upload state — modal içi yükleme akışı
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadedType, setUploadedType] = useState<'lottie' | 'image' | null>(
+    item?.asset_url ? (item.asset_url.endsWith('.json') ? 'lottie' : 'image') : null
+  );
+
+  const formatHint = ASSET_FORMAT_HINTS[form.category || ''] ?? {
+    recommended: 'PNG, Lottie JSON, SVG, GIF veya WebP',
+    tip: 'Maks 10 MB',
+  };
+
+  const handleFileUpload = async (file: File) => {
+    if (file.size > 10 * 1024 * 1024) {
+      await dialog.alert({ title: 'Dosya çok büyük', message: 'Maks 10 MB olabilir.', variant: 'error' });
+      return;
+    }
+    const allowed = ['application/json', 'image/png', 'image/jpeg', 'image/svg+xml', 'image/gif', 'image/webp'];
+    if (!allowed.includes(file.type)) {
+      await dialog.alert({
+        title: 'Geçersiz tip',
+        message: `${file.type} kabul edilmiyor. JSON (Lottie), PNG, JPG, SVG, GIF veya WebP olabilir.`,
+        variant: 'error',
+      });
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('category', form.category || 'other');
+      // ★ Yeni ürün ise henüz id yok — sadece Storage'a yükle, asset_url'i form'a koy
+      //   ve kayıt sırasında DB'ye yazılsın. Mevcut ürün ise item_id ile DB autoupdate.
+      if (!isNew && form.id) fd.append('item_id', form.id);
+
+      const res = await fetch('/yonet/api/store/upload-asset', { method: 'POST', body: fd });
+      const j = await res.json();
+      if (!res.ok || !j.ok) throw new Error(j.error || 'Yükleme başarısız');
+
+      setForm(prev => ({ ...prev, asset_url: j.url }));
+      setUploadedType(j.asset_type);
+    } catch (e: any) {
+      await dialog.alert({ title: 'Yükleme hatası', message: e.message, variant: 'error' });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleClearAsset = () => {
+    setForm(prev => ({ ...prev, asset_url: null }));
+    setUploadedType(null);
+  };
 
   const handleSave = async () => {
     if (!form.id || !form.name) {
@@ -866,6 +934,111 @@ function ItemEditModal({
               className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 focus:border-amber-500/50 focus:outline-none"
             />
           </Field>
+          {/* ★ Asset upload — kategoriye göre format ipuçlu drag-drop alanı.
+                Yeni ürün ise Storage'a yükler, asset_url form'a yazılır, save ile DB'ye gider.
+                Mevcut ürün ise upload anında DB'ye de yazılır (item_id form-data ile gider). */}
+          <div className="col-span-2 pt-1">
+            <label className="block text-[10px] font-bold tracking-wider text-slate-400 mb-2 flex items-center justify-between">
+              <span>
+                ANİMASYON / GÖRSEL DOSYASI
+                <span className="text-slate-500 font-normal text-[9px] ml-1">(opsiyonel)</span>
+              </span>
+              <span className="text-[9px] font-normal normal-case text-amber-300/80">
+                💡 {formatHint.recommended}
+              </span>
+            </label>
+            {!form.asset_url ? (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={e => e.preventDefault()}
+                onDrop={e => {
+                  e.preventDefault();
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) handleFileUpload(file);
+                }}
+                className="border-2 border-dashed border-white/15 rounded-xl p-4 text-center cursor-pointer hover:border-cyan-500/50 hover:bg-cyan-500/5 transition-colors"
+              >
+                {uploading ? (
+                  <div className="flex flex-col items-center gap-2 py-2">
+                    <Loader2 className="w-5 h-5 animate-spin text-cyan-400" />
+                    <span className="text-xs text-slate-400">Yükleniyor...</span>
+                  </div>
+                ) : (
+                  <>
+                    <Upload className="w-6 h-6 text-slate-500 mx-auto mb-1.5" />
+                    <div className="text-xs text-slate-300 font-semibold">Dosya seç veya sürükle</div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">
+                      {formatHint.tip} · max 10 MB
+                    </div>
+                  </>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".json,application/json,image/png,image/jpeg,image/svg+xml,image/gif,image/webp"
+                  aria-label="Asset dosyası"
+                  onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileUpload(file);
+                  }}
+                  className="hidden"
+                />
+              </div>
+            ) : (
+              <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/5 p-3 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                  {uploadedType === 'lottie' ? (
+                    <FileJson className="w-5 h-5 text-emerald-300" />
+                  ) : (
+                    <ImageIcon className="w-5 h-5 text-emerald-300" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-bold text-emerald-200">
+                    {uploadedType === 'lottie' ? 'Lottie animasyon' : 'Görsel'} bağlı ✓
+                  </div>
+                  <a
+                    href={form.asset_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[10px] text-cyan-300 underline truncate block"
+                  >
+                    {form.asset_url.split('/').pop()}
+                  </a>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-2 py-1 rounded-md text-[10px] font-semibold bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/25 flex items-center gap-1"
+                  title="Yenisini yükle"
+                  disabled={uploading}
+                >
+                  {uploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
+                  Değiştir
+                </button>
+                <button
+                  type="button"
+                  onClick={handleClearAsset}
+                  className="w-7 h-7 rounded-md bg-red-500/15 border border-red-500/40 text-red-300 flex items-center justify-center hover:bg-red-500/25"
+                  title="Kaldır"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".json,application/json,image/png,image/jpeg,image/svg+xml,image/gif,image/webp"
+                  aria-label="Asset dosyası"
+                  onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileUpload(file);
+                  }}
+                  className="hidden"
+                />
+              </div>
+            )}
+          </div>
+
           <div className="col-span-2 flex items-center gap-5 pt-2">
             <label className="flex items-center gap-2 text-sm cursor-pointer">
               <input type="checkbox" checked={!!form.active} onChange={e => update('active', e.target.checked)} />
