@@ -661,7 +661,11 @@ function ItemEditModal({
   );
   const [saving, setSaving] = useState(false);
 
-  // Yeni ürün için ID otomatik üret — isim + kategori + zaman damgası
+  // ID stamp'i modal açıldığında bir kez üretilir — her tuşa basışta değişmesin.
+  // (Bug'dı: her render Date.now() yeni → ID sürekli yenileniyordu.)
+  const idStampRef = useRef(Date.now().toString(36).slice(-4));
+
+  // Yeni ürün için ID otomatik üret — isim + kategori + sabit stamp
   useEffect(() => {
     if (!isNew) return;
     if (!form.name) return;
@@ -671,8 +675,7 @@ function ItemEditModal({
       .replace(/ü/g, 'u').replace(/ö/g, 'o').replace(/ç/g, 'c')
       .replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 30);
     if (!slug) return;
-    const stamp = Date.now().toString(36).slice(-4);
-    const newId = `${form.category}_${slug}_${stamp}`;
+    const newId = `${form.category}_${slug}_${idStampRef.current}`;
     setForm(prev => prev.id === newId ? prev : { ...prev, id: newId });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.name, form.category]);
@@ -681,7 +684,7 @@ function ItemEditModal({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadedType, setUploadedType] = useState<'lottie' | 'image' | null>(
-    item?.asset_url ? (item.asset_url.endsWith('.json') ? 'lottie' : 'image') : null
+    item?.asset_url ? (/\.json($|\?)/i.test(item.asset_url) ? 'lottie' : 'image') : null
   );
 
   const formatHint = ASSET_FORMAT_HINTS[form.category || ''] ?? {
@@ -709,10 +712,9 @@ function ItemEditModal({
       const fd = new FormData();
       fd.append('file', file);
       fd.append('category', form.category || 'other');
-      // ★ Yeni ürün ise henüz id yok — sadece Storage'a yükle, asset_url'i form'a koy
-      //   ve kayıt sırasında DB'ye yazılsın. Mevcut ürün ise item_id ile DB autoupdate.
-      if (!isNew && form.id) fd.append('item_id', form.id);
-
+      // Asset SADECE Storage'a yüklenir — DB'ye sadece "Kaydet" basılınca gider.
+      // (Eski davranış mevcut üründe item_id pas edip DB'yi anında güncelliyordu;
+      //  o zaman "İptal" değişikliği geri almıyordu, beklenti kırılıyordu.)
       const res = await fetch('/yonet/api/store/upload-asset', { method: 'POST', body: fd });
       const j = await res.json();
       if (!res.ok || !j.ok) throw new Error(j.error || 'Yükleme başarısız');
@@ -988,8 +990,13 @@ function ItemEditModal({
                     type="number"
                     title="Fiyat (SP)"
                     placeholder="100"
+                    min={0}
+                    step={50}
                     value={form.price_sp ?? 0}
-                    onChange={e => update('price_sp', parseInt(e.target.value, 10) || 0)}
+                    onChange={e => {
+                      const v = parseInt(e.target.value, 10);
+                      update('price_sp', Number.isFinite(v) && v >= 0 ? v : 0);
+                    }}
                     className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 focus:border-amber-500/50 focus:outline-none text-sm font-mono"
                   />
                 </Field>
