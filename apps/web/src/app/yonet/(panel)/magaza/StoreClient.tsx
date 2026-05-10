@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useTransition, useId, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus, Pencil, Trash2, Eye, EyeOff, Loader2, Star, Smartphone, X, Upload, Sliders, FileJson, Image as ImageIcon } from 'lucide-react';
 import { CATEGORIES, getCategoryDef } from './categories';
@@ -8,6 +9,16 @@ import MobilePreview from './MobilePreview';
 import BulkUploadModal from './BulkUploadModal';
 import { useAdminDialog } from '../../_components/AdminDialog';
 import ItemLottiePreview from '@/components/store/ItemLottiePreview';
+
+// İnce ayar editörleri — sadece tab açılınca yüklensin (kod-bölme, ilk açılış hızı için)
+const FrameEditor = dynamic(() => import('../cerceveler/[id]/FrameEditor'), {
+  ssr: false,
+  loading: () => <div className="p-12 text-center text-slate-400 text-sm"><Loader2 className="w-5 h-5 animate-spin inline mr-2" />İnce ayar paneli yükleniyor...</div>,
+});
+const EntryEffectEditor = dynamic(() => import('../giris-efektleri/[id]/EntryEffectEditor'), {
+  ssr: false,
+  loading: () => <div className="p-12 text-center text-slate-400 text-sm"><Loader2 className="w-5 h-5 animate-spin inline mr-2" />İnce ayar paneli yükleniyor...</div>,
+});
 
 type Item = {
   id: string;
@@ -26,6 +37,7 @@ type Item = {
   active: boolean | null;
   display_order: number | null;
   asset_url?: string | null; // ★ v114 — Lottie/PNG URL (mobile dinamik render)
+  editor_config?: any;       // ★ JSONB — frame_config / entry_config (ince ayar slider'ları)
 };
 
 type Bundle = {
@@ -764,13 +776,21 @@ function ItemEditModal({
 
   const update = (k: keyof Item, v: any) => setForm(prev => ({ ...prev, [k]: v }));
 
-  // İnce ayar deeplink — frame ve entry effect için ayrı detaylı sayfaları var
-  const fineConfigUrl =
+  // İnce ayar paneli — frame ve entry effect için modal-içi tab.
+  // (Eski: /yonet/cerceveler/[id] sayfasına yönlendirme yapıyordu — tek modaldan
+  //  ayrılmamak için artık FrameEditor/EntryEffectEditor doğrudan tab içinde embed.)
+  const fineEditorType: 'frame' | 'entry' | null =
     form.category === 'frames' || form.category === 'atelier'
-      ? `/yonet/cerceveler/${form.id}`
+      ? 'frame'
       : form.category === 'entry_effect'
-        ? `/yonet/giris-efektleri/${form.id}`
+        ? 'entry'
         : null;
+  const showFineTab = !isNew && !!fineEditorType;
+  const [activeTab, setActiveTab] = useState<'general' | 'fine'>('general');
+  // Yeni ürüne dönülünce veya kategori değişince tab'ı sıfırla
+  useEffect(() => {
+    if (!showFineTab && activeTab === 'fine') setActiveTab('general');
+  }, [showFineTab, activeTab]);
 
   // Önizleme objesi — formun anlık halini MobilePreview'a verir
   const previewItem = {
@@ -789,7 +809,7 @@ function ItemEditModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-auto">
-      <div className="bg-slate-900 border border-white/10 rounded-xl sm:rounded-2xl w-full max-w-5xl my-2 sm:my-8">
+      <div className={`bg-slate-900 border border-white/10 rounded-xl sm:rounded-2xl w-full my-2 sm:my-8 ${activeTab === 'fine' ? 'max-w-7xl' : 'max-w-5xl'}`}>
         {/* Başlık */}
         <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between sticky top-0 bg-slate-900 z-10 rounded-t-2xl">
           <div>
@@ -801,13 +821,59 @@ function ItemEditModal({
               )}
             </h2>
             <p className="text-[11px] text-slate-500 mt-0.5">
-              Kategori seç · dosya yükle · ayarları gir · sağda canlı önizle
+              {activeTab === 'general'
+                ? 'Kategori seç · dosya yükle · ayarları gir · sağda canlı önizle'
+                : 'Slider\'larla ölçek/glow/renk filtresi/animasyon — değişiklikler ayrı kaydedilir'}
             </p>
           </div>
           <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-200 text-xl w-8 h-8 flex items-center justify-center" aria-label="Kapat">✕</button>
         </div>
 
-        {/* Gövde — sol form, sağ önizleme */}
+        {/* Tab bar — sadece kayıtlı + frame/entry için İnce Ayar görünür */}
+        {showFineTab && (
+          <div className="flex border-b border-white/10 bg-slate-900 sticky top-[73px] z-10">
+            <button
+              type="button"
+              onClick={() => setActiveTab('general')}
+              className={`px-5 py-3 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 ${
+                activeTab === 'general'
+                  ? 'border-amber-400 text-amber-200'
+                  : 'border-transparent text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              <Pencil className="w-3.5 h-3.5" /> Genel
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('fine')}
+              className={`px-5 py-3 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 ${
+                activeTab === 'fine'
+                  ? 'border-fuchsia-400 text-fuchsia-200'
+                  : 'border-transparent text-slate-500 hover:text-slate-300'
+              }`}
+              title={fineEditorType === 'frame' ? 'Ölçek, glow, renk filtresi, animasyon' : 'Avatar pozisyonu, animasyon, loop'}
+            >
+              <Sliders className="w-3.5 h-3.5" /> İnce Ayar
+              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-fuchsia-500/20 text-fuchsia-300 font-bold">
+                {fineEditorType === 'frame' ? '14 ayar' : 'detaylı'}
+              </span>
+            </button>
+          </div>
+        )}
+
+        {/* İnce Ayar tab'ı — embed FrameEditor / EntryEffectEditor */}
+        {activeTab === 'fine' && fineEditorType && item && (
+          <div className="p-5 max-h-[80vh] overflow-y-auto">
+            {fineEditorType === 'frame' ? (
+              <FrameEditor item={item} />
+            ) : (
+              <EntryEffectEditor item={item} />
+            )}
+          </div>
+        )}
+
+        {/* Gövde — sol form, sağ önizleme (sadece Genel tab'ında) */}
+        {activeTab === 'general' && (
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-0">
           {/* SOL — form */}
           <div className="p-5 space-y-5 max-h-[75vh] overflow-y-auto">
@@ -1121,22 +1187,23 @@ function ItemEditModal({
               </div>
             </details>
 
-            {/* İnce ayar deeplink — sadece kayıtlı ürün ve frame/entry kategorisi */}
-            {!isNew && fineConfigUrl && (
-              <a
-                href={fineConfigUrl}
-                className="flex items-center gap-2 px-4 py-3 rounded-lg bg-fuchsia-500/10 border border-fuchsia-500/30 text-fuchsia-300 hover:bg-fuchsia-500/20 text-sm font-semibold transition-colors"
-                title="Detaylı slider'lı yapılandırma sayfası"
+            {/* İnce Ayar tab'ına geçiş ipucu (link yerine, eski deeplink kaldırıldı) */}
+            {showFineTab && (
+              <button
+                type="button"
+                onClick={() => setActiveTab('fine')}
+                className="w-full flex items-center gap-2 px-4 py-3 rounded-lg bg-fuchsia-500/10 border border-fuchsia-500/30 text-fuchsia-300 hover:bg-fuchsia-500/20 text-sm font-semibold transition-colors"
+                title="Slider'lı detaylı yapılandırma — modal içinde açılır"
               >
                 <Sliders className="w-4 h-4" />
-                <div className="flex-1">
-                  <div>İnce Ayar Sayfasına Git</div>
+                <div className="flex-1 text-left">
+                  <div>İnce Ayar Sekmesine Geç</div>
                   <div className="text-[10px] text-fuchsia-400/70 font-normal">
-                    {form.category === 'entry_effect' ? 'Avatar pozisyonu, animasyon hızı, loop ayarları' : 'Frame ölçek, glow, renk filtreleri'}
+                    {fineEditorType === 'entry' ? 'Avatar pozisyonu, animasyon hızı, loop' : 'Ölçek, glow, hue/parlaklık/doygunluk, animasyon hızı (14 ayar)'}
                   </div>
                 </div>
                 <span className="text-lg">→</span>
-              </a>
+              </button>
             )}
           </div>
 
@@ -1150,25 +1217,34 @@ function ItemEditModal({
             </div>
           </div>
         </div>
+        )}
 
-        {/* Aksiyon */}
-        <div className="px-5 py-4 border-t border-white/10 flex justify-end gap-2 sticky bottom-0 bg-slate-900 rounded-b-2xl">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-sm hover:bg-white/10"
-          >
-            İptal
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving || !form.name}
-            className="px-5 py-2 rounded-lg bg-amber-500/20 border border-amber-500/50 text-amber-200 text-sm font-bold hover:bg-amber-500/30 disabled:opacity-50 flex items-center gap-2"
-          >
-            {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-            {isNew ? 'Mağazaya Ekle' : 'Kaydet'}
-          </button>
+        {/* Aksiyon — Genel tab: İptal/Kaydet · İnce Ayar tab: Kapat
+            (FrameEditor/EntryEffectEditor kendi 'Kaydet' butonunu içerir, çift kaydetme olmaz) */}
+        <div className="px-5 py-4 border-t border-white/10 flex justify-between items-center gap-2 sticky bottom-0 bg-slate-900 rounded-b-2xl">
+          <div className="text-[10px] text-slate-500">
+            {activeTab === 'fine' && '↑ Ayarları yukarıdaki Kaydet butonuyla işle. Mobilde 5 dk içinde uygulanır.'}
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-sm hover:bg-white/10"
+            >
+              {activeTab === 'fine' ? 'Kapat' : 'İptal'}
+            </button>
+            {activeTab === 'general' && (
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving || !form.name}
+                className="px-5 py-2 rounded-lg bg-amber-500/20 border border-amber-500/50 text-amber-200 text-sm font-bold hover:bg-amber-500/30 disabled:opacity-50 flex items-center gap-2"
+              >
+                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                {isNew ? 'Mağazaya Ekle' : 'Kaydet'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
