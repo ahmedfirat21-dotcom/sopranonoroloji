@@ -65,11 +65,25 @@ export default function StoreClient({
   const [bulkOpen, setBulkOpen] = useState(false);
   const [, startTransition] = useTransition();
 
-  // URL değişince filter güncellesin (geri/ileri navigation)
+  // URL → state (sadece tarayıcı geri/ileri için). Aşağıdaki selectCategory
+  // çift yön sync ettiği için tıklamada loop oluşmaz; ama yine de değer
+  // gerçekten farklıysa (browser nav) güncellesin.
   useEffect(() => {
-    const cat = searchParams.get('cat');
-    if (cat && cat !== categoryFilter) setCategoryFilter(cat);
-  }, [searchParams, categoryFilter]);
+    const cat = searchParams.get('cat') || 'all';
+    if (cat !== categoryFilter) setCategoryFilter(cat);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  // Kategori chip tıklaması — state + URL birlikte güncellenir, böylece useEffect
+  // bizi eski değere geri zorlamaz (önceki bug: chip tıklayınca filtre değişmiyordu).
+  const selectCategory = (slug: string) => {
+    setCategoryFilter(slug);
+    const params = new URLSearchParams(searchParams.toString());
+    if (slug === 'all') params.delete('cat');
+    else params.set('cat', slug);
+    const qs = params.toString();
+    router.replace(qs ? `?${qs}` : '?', { scroll: false });
+  };
 
   const callItemAction = async (id: string, body: any) => {
     setBusyId(id);
@@ -207,7 +221,7 @@ export default function StoreClient({
             <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
               <button
                 type="button"
-                onClick={() => setCategoryFilter('all')}
+                onClick={() => selectCategory('all')}
                 className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
                   categoryFilter === 'all'
                     ? 'bg-amber-500/20 border-amber-500/40 text-amber-200'
@@ -220,7 +234,7 @@ export default function StoreClient({
                 <button
                   type="button"
                   key={c.slug}
-                  onClick={() => setCategoryFilter(c.slug)}
+                  onClick={() => selectCategory(c.slug)}
                   className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors flex items-center gap-1.5 ${
                     categoryFilter === c.slug
                       ? 'bg-amber-500/20 border-amber-500/40 text-amber-200'
@@ -236,7 +250,7 @@ export default function StoreClient({
                 <button
                   type="button"
                   key={slug}
-                  onClick={() => setCategoryFilter(slug)}
+                  onClick={() => selectCategory(slug)}
                   className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
                     categoryFilter === slug
                       ? 'bg-amber-500/20 border-amber-500/40 text-amber-200'
