@@ -1,7 +1,14 @@
 /**
  * SopranoChat Admin — Çerçeve Editörü
  * Avatar frame Lottie'leri için drag-drop ayarları (avatarRatio, offset, glow vs.)
+ *
+ * ★ 2026-05-10: dynamic='force-dynamic' — Next.js 14 default fetch cache yeni
+ *   eklenen çerçeveleri göstermiyordu (stale liste). Her sayfa yüklemesinde DB'den
+ *   taze çek.
  */
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { Award, Settings, Plus } from 'lucide-react';
 import Link from 'next/link';

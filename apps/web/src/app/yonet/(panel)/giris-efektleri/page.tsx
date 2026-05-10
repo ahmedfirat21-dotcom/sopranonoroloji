@@ -1,7 +1,13 @@
 /**
  * SopranoChat Admin — Giriş Efektleri Editörü
  * Lottie + avatar entegrasyonu için sürükle-bırak çalışma alanı.
+ *
+ * ★ 2026-05-10: dynamic='force-dynamic' — Next.js 14 default fetch cache yeni
+ *   eklenen efektleri göstermiyordu (stale liste). Her sayfa yüklemesinde DB'den taze çek.
  */
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { Sparkles, Settings } from 'lucide-react';
 import Link from 'next/link';
