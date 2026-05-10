@@ -7,6 +7,7 @@ import { CATEGORIES, getCategoryDef } from './categories';
 import MobilePreview from './MobilePreview';
 import QuickAddModal from './QuickAddModal';
 import BulkUploadModal from './BulkUploadModal';
+import AssetUploadButton from './AssetUploadButton';
 import { useAdminDialog } from '../../_components/AdminDialog';
 import ItemLottiePreview from '@/components/store/ItemLottiePreview';
 
@@ -26,6 +27,7 @@ type Item = {
   collection_id: string | null;
   active: boolean | null;
   display_order: number | null;
+  asset_url?: string | null; // ★ v114 — Lottie/PNG URL (mobile dinamik render)
 };
 
 type Bundle = {
@@ -314,6 +316,15 @@ export default function StoreClient({
                   </span>
                   <span className="text-amber-300 font-mono">{it.price_sp.toLocaleString('tr-TR')} SP</span>
                 </div>
+                <div className="mb-2">
+                  <AssetUploadButton
+                    itemId={it.id}
+                    category={it.category}
+                    currentUrl={it.asset_url}
+                    size="md"
+                    onUploaded={(url) => setItems(prev => prev.map(i => i.id === it.id ? { ...i, asset_url: url || null } : i))}
+                  />
+                </div>
                 <div className="grid grid-cols-4 gap-1">
                   <button
                     type="button"
@@ -421,6 +432,12 @@ export default function StoreClient({
                       </td>
                       <td className="px-5 py-3">
                         <div className="flex items-center justify-end gap-1.5">
+                          <AssetUploadButton
+                            itemId={it.id}
+                            category={it.category}
+                            currentUrl={it.asset_url}
+                            onUploaded={(url) => setItems(prev => prev.map(i => i.id === it.id ? { ...i, asset_url: url || null } : i))}
+                          />
                           <button
                             type="button"
                             onClick={() => setPreviewItem(it)}
