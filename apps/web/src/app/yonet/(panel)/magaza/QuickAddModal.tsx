@@ -28,6 +28,7 @@ type Item = {
   collection_id: string | null;
   active: boolean | null;
   display_order: number | null;
+  asset_url?: string | null;
 };
 
 const RARITY_OPTIONS = [
@@ -190,7 +191,7 @@ export default function QuickAddModal({
     }
   };
 
-  // Önizleme item objesi
+  // Önizleme item objesi — yüklenen asset varsa canlı önizlemede de görünsün
   const previewItem: Item = {
     id: generatedId || 'preview',
     category,
@@ -207,6 +208,7 @@ export default function QuickAddModal({
     collection_id: null,
     active,
     display_order: 0,
+    asset_url: uploadedUrl,
   };
 
   return (

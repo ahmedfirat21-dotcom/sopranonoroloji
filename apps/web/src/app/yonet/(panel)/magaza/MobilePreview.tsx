@@ -19,6 +19,8 @@ type Item = {
   bg_gradient_mid?: string | null;
   bg_gradient_end: string | null;
   price_sp: number;
+  /** DB'den gelen asset URL — yüklenen frame/animasyon önizlemede gösterilir */
+  asset_url?: string | null;
 };
 
 export default function MobilePreview({ item }: { item: Item }) {
@@ -70,24 +72,48 @@ export default function MobilePreview({ item }: { item: Item }) {
 /* ==================== KATEGORI BAZLI PREVIEW ==================== */
 
 function FramePreview({ item, grad, accent }: { item: Item; grad: string; accent: string }) {
+  // Yüklenen frame asset'i avatarın üstüne overlay olarak çizilir.
+  // Lottie ve PNG/SVG ikisini de ItemLottiePreview render eder.
+  const hasAsset = !!item.asset_url;
   return (
     <div className="flex flex-col items-center justify-center h-full px-4">
       <div className="text-[10px] text-slate-400 mb-3">Profil Sayfası</div>
-      {/* Avatar + frame */}
-      <div className="relative">
+      {/* Avatar + frame overlay */}
+      <div className="relative w-32 h-32 flex items-center justify-center">
+        {/* Avatar (her zaman görünür) */}
         <div
-          className="w-28 h-28 rounded-full p-1"
+          className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br from-pink-400 to-purple-600 flex items-center justify-center text-3xl"
           style={{
-            background: grad,
-            boxShadow: `0 0 30px ${accent}66`,
+            boxShadow: hasAsset ? 'none' : `0 0 30px ${accent}66`,
           }}
         >
-          <div className="w-full h-full rounded-full bg-gradient-to-br from-pink-400 to-purple-600 flex items-center justify-center text-3xl">
-            👤
-          </div>
+          👤
         </div>
-        {/* Sparkle */}
-        <div className="absolute -top-1 -right-1 text-2xl">{item.art_emoji || '✨'}</div>
+        {/* Yüklenen çerçeve overlay (varsa) — avatarın üstünde, biraz daha büyük */}
+        {hasAsset && (
+          <div className="absolute inset-0 pointer-events-none">
+            <ItemLottiePreview
+              itemId={item.id}
+              assetUrl={item.asset_url}
+              fallbackEmoji={item.art_emoji}
+              size={128}
+            />
+          </div>
+        )}
+        {/* Asset yoksa: gradient ring + emoji köşe işareti (eski davranış) */}
+        {!hasAsset && (
+          <>
+            <div
+              className="absolute inset-0 rounded-full pointer-events-none"
+              style={{
+                background: grad,
+                WebkitMask: 'radial-gradient(circle, transparent 38%, black 42%)',
+                mask: 'radial-gradient(circle, transparent 38%, black 42%)',
+              }}
+            />
+            <div className="absolute -top-1 -right-1 text-2xl">{item.art_emoji || '✨'}</div>
+          </>
+        )}
       </div>
       <div className="mt-4 text-white font-bold text-sm">Murat Berxo</div>
       <div className="text-[10px] text-slate-400">@muratb</div>
@@ -113,7 +139,7 @@ function EntryEffectPreview({ item, grad, accent }: { item: Item; grad: string; 
         style={{ background: grad, borderColor: accent, boxShadow: `0 0 20px ${accent}88` }}
       >
         <div className="flex justify-center mb-1">
-          <ItemLottiePreview itemId={item.id} fallbackEmoji={item.art_emoji} size={56} />
+          <ItemLottiePreview itemId={item.id} assetUrl={item.asset_url} fallbackEmoji={item.art_emoji} size={56} />
         </div>
         <div className="text-center text-[10px] text-white font-bold">Aranan odaya girdi</div>
         <div className="text-center text-[8px] text-white/70 mt-0.5">{item.name}</div>
@@ -147,7 +173,7 @@ function GiftPreview({ item, grad, accent }: { item: Item; grad: string; accent:
           style={{ background: grad, borderColor: accent, boxShadow: `0 0 20px ${accent}66` }}
         >
           <div className="flex justify-center mb-1">
-            <ItemLottiePreview itemId={item.id} fallbackEmoji={item.art_emoji || '🎁'} size={72} />
+            <ItemLottiePreview itemId={item.id} assetUrl={item.asset_url} fallbackEmoji={item.art_emoji || '🎁'} size={72} />
           </div>
           <div className="text-center text-[10px] text-white font-bold">Aranan → Murat</div>
           <div className="text-center text-[10px] text-white/90">{item.name}</div>
@@ -198,7 +224,7 @@ function DefaultPreview({ item, grad, accent }: { item: Item; grad: string; acce
         className="w-32 h-32 rounded-2xl flex items-center justify-center overflow-hidden"
         style={{ background: grad, boxShadow: `0 0 40px ${accent}66` }}
       >
-        <ItemLottiePreview itemId={item.id} fallbackEmoji={item.art_emoji} size={128} />
+        <ItemLottiePreview itemId={item.id} assetUrl={item.asset_url} fallbackEmoji={item.art_emoji} size={128} />
       </div>
       <div className="mt-4 text-white font-bold text-sm text-center">{item.name}</div>
       {item.tagline && <div className="text-[10px] text-slate-400 text-center mt-1">{item.tagline}</div>}

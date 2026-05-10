@@ -1,13 +1,16 @@
 'use client';
 
 /**
- * Web admin — küçük Lottie önizlemesi (mağaza mini kartları için).
+ * Web admin — kozmetik ürün asset önizlemesi.
  *
- * Cosmetic item id'sine bakıp registry'den Lottie URL'sini alır, varsa
- * canlı animasyon oynatır; yoksa fallback olarak verilen emoji'yi gösterir.
+ * Öncelik sırası:
+ *   1. Prop olarak geçilen `assetUrl` (DB'deki cosmetic_items.asset_url)
+ *      — yönetici az önce yüklediyse bunu görür
+ *   2. Hardcoded registry (eski hediye/çerçeve mapping'i — geri uyumluluk)
+ *   3. Emoji fallback
  *
- * Yöneticinin mini kartta gördüğü ile mobil kullanıcının gerçek hediye/
- * çerçeve animasyonu birebir aynı olsun diye var.
+ * URL `.json` ile bitiyorsa Lottie animasyon, başka her uzantı ise <img>
+ * (PNG/JPG/SVG/GIF/WebP).
  */
 
 import dynamic from 'next/dynamic';
@@ -19,7 +22,9 @@ const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
 
 interface Props {
   itemId: string;
-  /** Lottie yoksa fallback olarak gösterilecek emoji */
+  /** DB'den gelen asset_url — varsa registry'den önce kullanılır */
+  assetUrl?: string | null;
+  /** Asset yoksa fallback olarak gösterilecek emoji */
   fallbackEmoji?: string | null;
   /** Kart boyutu (px) — default 48 (w-12 h-12) */
   size?: number;
@@ -29,17 +34,22 @@ interface Props {
 
 export default function ItemLottiePreview({
   itemId,
+  assetUrl,
   fallbackEmoji,
   size = 48,
   className = '',
 }: Props) {
-  const url = getItemLottieUrl(itemId);
+  // 1) DB asset_url öncelikli, 2) yoksa hardcoded registry
+  const url = assetUrl || getItemLottieUrl(itemId);
+  const isJson = !!url && /\.json($|\?)/i.test(url);
   const [data, setData] = useState<unknown | null>(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    if (!url) return;
+    if (!url || !isJson) return;
     let cancelled = false;
+    setData(null);
+    setFailed(false);
     fetch(url)
       .then(r => (r.ok ? r.json() : Promise.reject(new Error('fetch failed'))))
       .then(json => {
@@ -51,10 +61,10 @@ export default function ItemLottiePreview({
     return () => {
       cancelled = true;
     };
-  }, [url]);
+  }, [url, isJson]);
 
-  // Lottie yoksa veya yüklenemediyse emoji fallback
-  if (!url || failed) {
+  // Hiç URL yoksa veya Lottie yüklenemediyse emoji fallback
+  if (!url || (isJson && failed)) {
     return (
       <div
         className={`flex items-center justify-center text-2xl ${className}`}
@@ -62,6 +72,19 @@ export default function ItemLottiePreview({
       >
         {fallbackEmoji || '📦'}
       </div>
+    );
+  }
+
+  // PNG/JPG/SVG/GIF/WebP — direkt <img>
+  if (!isJson) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={url}
+        alt=""
+        className={className}
+        style={{ width: size, height: size, objectFit: 'contain' }}
+      />
     );
   }
 
