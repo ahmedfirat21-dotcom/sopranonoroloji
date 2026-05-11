@@ -1446,25 +1446,9 @@ function Slider({ label, min, max, step, value, onChange, display }: any) {
 }
 function Toggle({ label, checked, onChange }: any) {
   return (
-    <label className="flex items-center gap-3 cursor-pointer text-sm text-slate-300 select-none py-1">
-      <span
-        className={`relative inline-flex h-5 w-9 rounded-full transition-colors flex-shrink-0 ${
-          checked ? 'bg-amber-500' : 'bg-slate-700'
-        }`}
-      >
-        <span
-          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
-            checked ? 'translate-x-[18px]' : 'translate-x-0.5'
-          }`}
-        />
-      </span>
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={e => onChange(e.target.checked)}
-        className="sr-only"
-      />
-      <span className={checked ? 'text-amber-100' : ''}>{label}</span>
+    <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-300">
+      <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} className="accent-amber-500" />
+      {label}
     </label>
   );
 }
