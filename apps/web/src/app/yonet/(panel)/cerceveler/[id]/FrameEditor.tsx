@@ -11,7 +11,7 @@
  *  - Lottie filter (hue, brightness, saturation)
  */
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import Lottie from 'lottie-react';
 import { Save, RotateCcw, Award, Move, Sparkles, Settings as SettingsIcon, Wind, Heart } from 'lucide-react';
 
@@ -59,6 +59,20 @@ interface FrameConfig {
   tier_badge_enabled: boolean;
   tier_badge_position: 'tl' | 'tc' | 'tr' | 'ml' | 'mr' | 'bl' | 'bc' | 'br'; // 8 nokta
   tier_badge_style: 'chip' | 'capsule' | 'star' | 'ribbon';
+  // ★ 2026-05-11 — EK animasyon paleti
+  // Avatar
+  avatar_shake: boolean;        // hızlı titreşim (bildirim hissi)
+  avatar_swing: boolean;        // sarkaç gibi sallanma (saat-yönü-saat-yönü-tersi)
+  avatar_tilt: boolean;         // yumuşak yan yatma (sağ-sol)
+  // Frame
+  frame_shimmer: boolean;       // üzerinden ışık süpürmesi geçer
+  frame_wobble: boolean;        // titreşim (rotate ±3°)
+  frame_pulse_ring: boolean;    // dışa yayılan radar halkası
+  // İsim
+  name_glow: boolean;           // text-shadow pulse — yazı parlar
+  name_wave: boolean;           // harf-harf yukarı-aşağı dalga (dairesel/yay'da kapalı)
+  name_shimmer: boolean;        // metin üzerinden gradient ışık süpürmesi
+  name_color_cycle: boolean;    // yazı rengi HSL döngüsü (color_cycle_speed paylaşır)
 }
 
 const DEFAULT_CONFIG: FrameConfig = {
@@ -99,6 +113,17 @@ const DEFAULT_CONFIG: FrameConfig = {
   tier_badge_enabled: false,
   tier_badge_position: 'tr',
   tier_badge_style: 'chip',
+  // Ek animasyon paleti — default kapalı (opsiyonel zenginlik)
+  avatar_shake: false,
+  avatar_swing: false,
+  avatar_tilt: false,
+  frame_shimmer: false,
+  frame_wobble: false,
+  frame_pulse_ring: false,
+  name_glow: false,
+  name_wave: false,
+  name_shimmer: false,
+  name_color_cycle: false,
 };
 
 // Tier badge konum koordinatları — avatar merkezine göre yüzdelik (-1...1)
@@ -260,6 +285,9 @@ export default function FrameEditor({ item }: { item: any }) {
               animation: [
                 cfg.avatar_pulse && `avatar-pulse ${cfg.avatar_pulse_speed}s ease-in-out infinite`,
                 cfg.avatar_float && `avatar-float ${cfg.avatar_float_speed}s ease-in-out infinite`,
+                cfg.avatar_shake && `avatar-shake 0.6s linear infinite`,
+                cfg.avatar_swing && `avatar-swing 2.5s ease-in-out infinite`,
+                cfg.avatar_tilt && `avatar-tilt 3s ease-in-out infinite`,
                 cfg.glow_enabled && cfg.glow_pulse && `glow-pulse ${cfg.avatar_pulse_speed * 1.5}s ease-in-out infinite`,
                 cfg.glow_enabled && cfg.color_cycle && `glow-color-cycle ${cfg.color_cycle_speed}s linear infinite`,
               ].filter(Boolean).join(', ') || undefined,
@@ -325,6 +353,7 @@ export default function FrameEditor({ item }: { item: any }) {
                 animation: [
                   cfg.frame_rotation > 0 && `frame-spin ${cfg.frame_rotation}s linear infinite`,
                   cfg.frame_breathe && `frame-breathe 4s ease-in-out infinite`,
+                  cfg.frame_wobble && `frame-wobble 2s ease-in-out infinite`,
                   cfg.color_cycle && `color-cycle ${cfg.color_cycle_speed}s linear infinite`,
                 ].filter(Boolean).join(', ') || undefined,
                 zIndex: 3,
@@ -350,6 +379,7 @@ export default function FrameEditor({ item }: { item: any }) {
                 animation: [
                   cfg.frame_rotation > 0 && `frame-spin ${cfg.frame_rotation}s linear infinite`,
                   cfg.frame_breathe && `frame-breathe 4s ease-in-out infinite`,
+                  cfg.frame_wobble && `frame-wobble 2s ease-in-out infinite`,
                   cfg.color_cycle && `color-cycle ${cfg.color_cycle_speed}s linear infinite`,
                 ].filter(Boolean).join(', ') || undefined,
                 zIndex: 3,
@@ -360,6 +390,51 @@ export default function FrameEditor({ item }: { item: any }) {
               <img src={imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             </div>
           )}
+          {/* ★ Frame shimmer — üzerinden ışık süpürmesi geçer */}
+          {cfg.frame_shimmer && (lottieData || imageUrl) && (
+            <div
+              style={{
+                position: 'absolute',
+                left: stageCenter - frameContainerSize / 2 + cfg.frame_offset_x * mobileSize,
+                top: stageCenter - frameContainerSize / 2 + cfg.frame_offset_y * mobileSize,
+                width: frameContainerSize,
+                height: frameContainerSize,
+                borderRadius: '50%',
+                overflow: 'hidden',
+                pointerEvents: 'none',
+                zIndex: 4,
+                background: 'linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.4) 50%, transparent 70%)',
+                backgroundSize: '200% 100%',
+                animation: 'frame-shimmer 2.5s linear infinite',
+                mixBlendMode: 'overlay',
+              }}
+            />
+          )}
+
+          {/* ★ Pulse Ring — radar dalgası, frame etrafında dışa yayılır */}
+          {cfg.frame_pulse_ring && (
+            <>
+              {[0, 1, 2].map(i => (
+                <div
+                  key={i}
+                  style={{
+                    position: 'absolute',
+                    left: stageCenter - avatarSize / 2,
+                    top: stageCenter - avatarSize / 2,
+                    width: avatarSize,
+                    height: avatarSize,
+                    borderRadius: '50%',
+                    border: `2px solid ${cfg.glow_color}`,
+                    pointerEvents: 'none',
+                    zIndex: 1,
+                    opacity: 0,
+                    animation: `pulse-ring 2.4s ease-out infinite ${i * 0.8}s`,
+                  }}
+                />
+              ))}
+            </>
+          )}
+
           {/* Hiç asset yoksa kullanıcıyı bilgilendir */}
           {!lottieData && !imageUrl && (
             <div
@@ -507,11 +582,17 @@ export default function FrameEditor({ item }: { item: any }) {
             {cfg.avatar_float && (
               <Slider label="Süzülme hızı" min={2} max={8} step={0.5} value={cfg.avatar_float_speed} onChange={v => update('avatar_float_speed', v)} display={`${cfg.avatar_float_speed}sn`} />
             )}
+            <Toggle label="Titreşim (shake — bildirim hissi)" checked={cfg.avatar_shake} onChange={v => update('avatar_shake', v)} />
+            <Toggle label="Sarkaç (swing — sallanma)" checked={cfg.avatar_swing} onChange={v => update('avatar_swing', v)} />
+            <Toggle label="Yan yatma (tilt — sağ-sol)" checked={cfg.avatar_tilt} onChange={v => update('avatar_tilt', v)} />
           </SubBlock>
           <SubBlock title="Frame Davranışı">
             <Toggle label="Frame nefes alır (yavaş büyür-küçülür)" checked={cfg.frame_breathe} onChange={v => update('frame_breathe', v)} />
             <Toggle label="Glow nefes (parlaklık dalgalanır)" checked={cfg.glow_pulse} onChange={v => update('glow_pulse', v)} />
             <p className="text-[10px] text-slate-500">Glow nefes için yukarıdaki Glow aktif olmalı.</p>
+            <Toggle label="Shimmer (üzerinden ışık süpürmesi)" checked={cfg.frame_shimmer} onChange={v => update('frame_shimmer', v)} />
+            <Toggle label="Wobble (titreşim — hafif sallama)" checked={cfg.frame_wobble} onChange={v => update('frame_wobble', v)} />
+            <Toggle label="Pulse Ring (radar dalgası — dışa yayılan halka)" checked={cfg.frame_pulse_ring} onChange={v => update('frame_pulse_ring', v)} />
           </SubBlock>
           <SubBlock title="Parçacık Efekti (avatar etrafında)">
             <label className="block">
@@ -590,6 +671,13 @@ export default function FrameEditor({ item }: { item: any }) {
                 <Slider label="Boyut" min={10} max={22} step={1} value={cfg.name_size} onChange={v => update('name_size', v)} display={`${cfg.name_size}px`} />
                 <ColorInput label="Renk" value={cfg.name_color} onChange={v => update('name_color', v)} />
                 <Toggle label="Kalın yazı" checked={cfg.name_bold} onChange={v => update('name_bold', v)} />
+                <div className="pt-2 border-t border-slate-700/40">
+                  <div className="text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">İsim Animasyonu</div>
+                  <Toggle label="Glow (yazı parlar)" checked={cfg.name_glow} onChange={v => update('name_glow', v)} />
+                  <Toggle label="Wave (harf-harf dalga)" checked={cfg.name_wave} onChange={v => update('name_wave', v)} />
+                  <Toggle label="Shimmer (üstünden ışık geçer)" checked={cfg.name_shimmer} onChange={v => update('name_shimmer', v)} />
+                  <Toggle label="🌈 Renk döngüsü (yazı rengi döner)" checked={cfg.name_color_cycle} onChange={v => update('name_color_cycle', v)} />
+                </div>
               </>
             )}
           </SubBlock>
@@ -706,6 +794,57 @@ export default function FrameEditor({ item }: { item: any }) {
           75%  { box-shadow: 0 0 20px hsl(270, 80%, 60%), 0 0 40px hsl(270, 80%, 60%) }
           100% { box-shadow: 0 0 20px hsl(360, 80%, 60%), 0 0 40px hsl(360, 80%, 60%) }
         }
+        /* ★ Avatar ek hareketler */
+        @keyframes avatar-shake {
+          0%, 100% { transform: translate(0, 0) }
+          20%      { transform: translate(-2px, 1px) }
+          40%      { transform: translate(2px, -1px) }
+          60%      { transform: translate(-1px, 2px) }
+          80%      { transform: translate(1px, -2px) }
+        }
+        @keyframes avatar-swing {
+          0%, 100% { transform: rotate(0deg) }
+          25%      { transform: rotate(-8deg) }
+          75%      { transform: rotate(8deg) }
+        }
+        @keyframes avatar-tilt {
+          0%, 100% { transform: rotate(-3deg) }
+          50%      { transform: rotate(3deg) }
+        }
+        /* ★ Frame ek davranışlar */
+        @keyframes frame-shimmer {
+          0%   { background-position: 200% 0 }
+          100% { background-position: -200% 0 }
+        }
+        @keyframes frame-wobble {
+          0%, 100% { transform: rotate(0deg) }
+          25%      { transform: rotate(2.5deg) }
+          75%      { transform: rotate(-2.5deg) }
+        }
+        @keyframes pulse-ring {
+          0%   { transform: scale(1);   opacity: 0.7 }
+          100% { transform: scale(2.2); opacity: 0 }
+        }
+        /* ★ İsim animasyonları — text-shadow + transform + background-clip */
+        @keyframes name-glow {
+          0%, 100% { filter: drop-shadow(0 0 2px currentColor) }
+          50%      { filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 0 14px currentColor) }
+        }
+        @keyframes name-shimmer-bg {
+          0%   { background-position: -200% 0 }
+          100% { background-position: 200% 0 }
+        }
+        @keyframes name-color-cycle {
+          0%   { fill: hsl(0,   85%, 65%) }
+          25%  { fill: hsl(90,  85%, 65%) }
+          50%  { fill: hsl(180, 85%, 65%) }
+          75%  { fill: hsl(270, 85%, 65%) }
+          100% { fill: hsl(360, 85%, 65%) }
+        }
+        @keyframes name-wave {
+          0%, 100% { transform: translateY(0) }
+          50%      { transform: translateY(-3px) }
+        }
       `}</style>
     </div>
   );
@@ -761,7 +900,9 @@ function NamePreviewSvg({ cfg, avatarSize, stageCenter }: {
   // SVG'yi avatar merkezine konumla (translate -%50)
   const left = stageCenter - svgSize / 2;
   const top = stageCenter - svgSize / 2;
-  const pathId = `name-path-${cfg.name_curve_style}-${cfg.name_position}`;
+  // ID unique olmalı — birden fazla NamePreviewSvg render edilirse çakışmasın
+  const uid = useId();
+  const pathId = `name-path-${uid.replace(/:/g, '_')}`;
 
   return (
     <svg
@@ -779,22 +920,64 @@ function NamePreviewSvg({ cfg, avatarSize, stageCenter }: {
     >
       <defs>
         <path id={pathId} d={pathD} fill="none" />
+        {cfg.name_shimmer && (
+          <linearGradient id={`shimmer-${pathId}`} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor={cfg.name_color} stopOpacity="0.6" />
+            <stop offset="50%" stopColor="#ffffff" stopOpacity="1" />
+            <stop offset="100%" stopColor={cfg.name_color} stopOpacity="0.6" />
+            <animate
+              attributeName="x1"
+              values="-100%;100%"
+              dur="2.5s"
+              repeatCount="indefinite"
+            />
+            <animate
+              attributeName="x2"
+              values="0%;200%"
+              dur="2.5s"
+              repeatCount="indefinite"
+            />
+          </linearGradient>
+        )}
       </defs>
       <text
-        fill={cfg.name_color}
         fontSize={cfg.name_size}
         fontWeight={fontWeight}
         fontFamily="Inter, system-ui, sans-serif"
+        fill={cfg.name_shimmer ? `url(#shimmer-${pathId})` : cfg.name_color}
         style={{
           textShadow: '0 1px 3px rgba(0,0,0,0.7)',
           paintOrder: 'stroke',
           stroke: 'rgba(0,0,0,0.4)',
           strokeWidth: 1,
+          animation: [
+            cfg.name_glow && 'name-glow 2s ease-in-out infinite',
+            cfg.name_color_cycle && `name-color-cycle ${cfg.color_cycle_speed}s linear infinite`,
+          ].filter(Boolean).join(', ') || undefined,
         }}
       >
-        <textPath href={`#${pathId}`} startOffset="50%" textAnchor={textAnchor}>
-          {sampleName}
-        </textPath>
+        {cfg.name_wave && cfg.name_curve_style === 'flat' ? (
+          // Wave: harf-harf animation (sadece düz çizgide; yay/dairesel'de
+          // dy ofseti SVG textPath ile karışıyor, kapatıyoruz)
+          <textPath href={`#${pathId}`} startOffset="50%" textAnchor={textAnchor}>
+            {sampleName.split('').map((ch, i) => (
+              <tspan
+                key={i}
+                style={{
+                  animation: `name-wave 1.2s ease-in-out infinite`,
+                  animationDelay: `${i * 0.08}s`,
+                  display: 'inline-block',
+                }}
+              >
+                {ch}
+              </tspan>
+            ))}
+          </textPath>
+        ) : (
+          <textPath href={`#${pathId}`} startOffset="50%" textAnchor={textAnchor}>
+            {sampleName}
+          </textPath>
+        )}
       </text>
     </svg>
   );
