@@ -656,6 +656,7 @@ function ItemEditModal({
   onSaved: (saved: Item, isNew: boolean) => void;
 }) {
   const dialog = useAdminDialog();
+  const router = useRouter();
   const isNew = !item;
   const [form, setForm] = useState<Partial<Item>>(
     item || {
@@ -833,48 +834,13 @@ function ItemEditModal({
           <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-200 text-xl w-8 h-8 flex items-center justify-center" aria-label="Kapat">✕</button>
         </div>
 
-        {/* Tab bar — sadece kayıtlı + frame/entry için İnce Ayar görünür */}
-        {showFineTab && (
-          <div className="flex border-b border-white/10 bg-slate-900 sticky top-[73px] z-10">
-            <button
-              type="button"
-              onClick={() => setActiveTab('general')}
-              className={`px-5 py-3 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 ${
-                activeTab === 'general'
-                  ? 'border-amber-400 text-amber-200'
-                  : 'border-transparent text-slate-500 hover:text-slate-300'
-              }`}
-            >
-              <Pencil className="w-3.5 h-3.5" /> Genel
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('fine')}
-              className={`px-5 py-3 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 ${
-                activeTab === 'fine'
-                  ? 'border-fuchsia-400 text-fuchsia-200'
-                  : 'border-transparent text-slate-500 hover:text-slate-300'
-              }`}
-              title={fineEditorType === 'frame' ? 'Ölçek, glow, renk filtresi, animasyon' : 'Avatar pozisyonu, animasyon, loop'}
-            >
-              <Sliders className="w-3.5 h-3.5" /> İnce Ayar
-              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-fuchsia-500/20 text-fuchsia-300 font-bold">
-                {fineEditorType === 'frame' ? '14 ayar' : 'detaylı'}
-              </span>
-            </button>
-          </div>
-        )}
+        {/* ★ v1.3.54: Tab bar kaldırıldı — Genel tab tek seçenek (İnce Ayar artık
+             ayrı sayfaya yönlendiren bir CTA, tab değil). Alt kısımda "İnce Ayar
+             Sayfasına Geç" butonu var, çift gösterim gereksizdi. */}
 
-        {/* İnce Ayar tab'ı — embed FrameEditor / EntryEffectEditor */}
-        {activeTab === 'fine' && fineEditorType && item && (
-          <div className="p-5 max-h-[80vh] overflow-y-auto">
-            {fineEditorType === 'frame' ? (
-              <FrameEditor item={item} />
-            ) : (
-              <EntryEffectEditor item={item} />
-            )}
-          </div>
-        )}
+        {/* ★ v1.3.54: İnce Ayar artık modal içinde değil — ayrı sayfaya yönlendiriyor.
+             /yonet/cerceveler/[id] veya /yonet/giris-efektleri/[id]. Modal içinde çift
+             scroll container "yukarıya zıplama" bug yaratıyordu. Ayrı sayfa daha sade UX. */}
 
         {/* Gövde — sol form, sağ önizleme (sadece Genel tab'ında) */}
         {activeTab === 'general' && (
@@ -1191,19 +1157,25 @@ function ItemEditModal({
               </div>
             </details>
 
-            {/* İnce Ayar tab'ına geçiş ipucu (link yerine, eski deeplink kaldırıldı) */}
-            {showFineTab && (
+            {/* ★ v1.3.54: İnce Ayar — ayrı sayfaya yönlendirir (modal değil). */}
+            {showFineTab && item && (
               <button
                 type="button"
-                onClick={() => setActiveTab('fine')}
+                onClick={() => {
+                  if (fineEditorType === 'frame') {
+                    router.push(`/yonet/cerceveler/${item.id}`);
+                  } else if (fineEditorType === 'entry') {
+                    router.push(`/yonet/giris-efektleri/${item.id}`);
+                  }
+                }}
                 className="w-full flex items-center gap-2 px-4 py-3 rounded-lg bg-fuchsia-500/10 border border-fuchsia-500/30 text-fuchsia-300 hover:bg-fuchsia-500/20 text-sm font-semibold transition-colors"
-                title="Slider'lı detaylı yapılandırma — modal içinde açılır"
+                title="Slider'lı detaylı yapılandırma — ayrı sayfada açılır"
               >
                 <Sliders className="w-4 h-4" />
                 <div className="flex-1 text-left">
-                  <div>İnce Ayar Sekmesine Geç</div>
+                  <div>İnce Ayar Sayfasına Geç</div>
                   <div className="text-[10px] text-fuchsia-400/70 font-normal">
-                    {fineEditorType === 'entry' ? 'Avatar pozisyonu, animasyon hızı, loop' : 'Ölçek, glow, hue/parlaklık/doygunluk, animasyon hızı (14 ayar)'}
+                    {fineEditorType === 'entry' ? 'Avatar pozisyonu, animasyon hızı, loop' : 'Boyut bazlı + tüm slider/toggle/renk ayarları'}
                   </div>
                 </div>
                 <span className="text-lg">→</span>

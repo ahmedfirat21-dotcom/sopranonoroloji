@@ -58,9 +58,9 @@ interface FrameConfig {
   name_size: number;            // % avatar boyutuna göre font (6-25)
   name_bold: boolean;
   // ★ Tier etiketi (Plus/Pro/Free badge)
+  // Tier rozet — sade model: sadece aç/kapat + 8 nokta konum
   tier_badge_enabled: boolean;
-  tier_badge_position: 'tl' | 'tc' | 'tr' | 'ml' | 'mr' | 'bl' | 'bc' | 'br'; // 8 nokta
-  tier_badge_style: 'chip' | 'capsule' | 'star' | 'ribbon';
+  tier_badge_position: 'tl' | 'tc' | 'tr' | 'ml' | 'mr' | 'bl' | 'bc' | 'br';
   // ★ 2026-05-11 — EK animasyon paleti
   // Avatar
   avatar_shake: boolean;        // hızlı titreşim (bildirim hissi)
@@ -114,6 +114,9 @@ interface FrameConfig {
   avatar_blur: number;          // 0-5 px (subtle dreamy blur)
   avatar_grayscale: number;     // 0-100%
   avatar_sepia: number;         // 0-100%
+  // ★ v1.3.54: Boyut bazlı override'lar — sadece farklı olanları içerir.
+  //   Mobile pickSizeKey(size) ile avatarın px boyutuna göre key seçilir.
+  size_overrides?: Partial<Record<'mini' | 'listener' | 'speaker' | 'stage_host' | 'profile', Partial<FrameConfig>>>;
 }
 
 const DEFAULT_CONFIG: FrameConfig = {
@@ -152,8 +155,7 @@ const DEFAULT_CONFIG: FrameConfig = {
   name_size: 14,      // % avatar boyutu (60px avatar→8px, 200px avatar→28px)
   name_bold: true,
   tier_badge_enabled: false,
-  tier_badge_position: 'tr',
-  tier_badge_style: 'chip',
+  tier_badge_position: 'br',
   // Ek animasyon paleti — default kapalı (opsiyonel zenginlik)
   avatar_shake: false,
   avatar_swing: false,
@@ -257,7 +259,15 @@ export default function FrameEditor({ item }: { item: any }) {
     return { ...DEFAULT_CONFIG, ...(fromCfg || {}) };
   }, [item.id]);
 
-  const [cfg, setCfg] = useState<FrameConfig>(initialCfg);
+  // ★ v1.3.54: Per-size config — DB'de top-level config + size_overrides[sizeKey].
+  //   rawCfg = ham yapı (size_overrides dahil). cfg = editingSize'a göre merged display.
+  const [rawCfg, setRawCfg] = useState<FrameConfig & { size_overrides?: any }>(initialCfg);
+  const [editingSize, setEditingSize] = useState<'default' | 'mini' | 'listener' | 'speaker' | 'stage_host' | 'profile'>('default');
+  const cfg = useMemo(() => {
+    if (editingSize === 'default') return rawCfg;
+    const overrides = (rawCfg as any).size_overrides?.[editingSize] ?? {};
+    return { ...rawCfg, ...overrides };
+  }, [rawCfg, editingSize]);
   const [lottieData, setLottieData] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [savedNote, setSavedNote] = useState<string | null>(null);
@@ -286,10 +296,32 @@ export default function FrameEditor({ item }: { item: any }) {
   }, [lottieUrl]);
 
   function update<K extends keyof FrameConfig>(key: K, value: FrameConfig[K]) {
-    setCfg(c => ({ ...c, [key]: value }));
+    setRawCfg(c => {
+      if (editingSize === 'default') {
+        return { ...c, [key]: value };
+      }
+      const overrides = (c as any).size_overrides ?? {};
+      return {
+        ...c,
+        size_overrides: {
+          ...overrides,
+          [editingSize]: { ...(overrides[editingSize] ?? {}), [key]: value },
+        },
+      } as any;
+    });
   }
 
-  function reset() { setCfg(DEFAULT_CONFIG); }
+  function reset() { setRawCfg(DEFAULT_CONFIG); setEditingSize('default'); }
+
+  /** ★ Aktif boyut override'unu temizle (default değerlere düşer). */
+  function clearSizeOverride(sizeKey: typeof editingSize) {
+    if (sizeKey === 'default') return;
+    setRawCfg(c => {
+      const overrides = { ...((c as any).size_overrides ?? {}) };
+      delete overrides[sizeKey];
+      return { ...c, size_overrides: overrides } as any;
+    });
+  }
 
   async function save() {
     setSaving(true);
@@ -298,7 +330,7 @@ export default function FrameEditor({ item }: { item: any }) {
       const res = await fetch(`/api/yonet/frames/${item.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ frame_config: cfg }),
+        body: JSON.stringify({ frame_config: rawCfg }),
       });
       if (!res.ok) throw new Error(await res.text());
       setSavedNote('Kaydedildi ✓');
@@ -310,6 +342,19 @@ export default function FrameEditor({ item }: { item: any }) {
     }
   }
 
+  // ★ editingSize değişince önizleme boyutunu o boyuta auto-tune et
+  useEffect(() => {
+    const sizeMap: Record<typeof editingSize, number> = {
+      default: 160,
+      mini: 60,
+      listener: 80,
+      speaker: 120,
+      stage_host: 160,
+      profile: 200,
+    };
+    setMobileSize(sizeMap[editingSize]);
+  }, [editingSize]);
+
   // ★ v213e: Mobile-matching — emülatörde size=mobileSize için aynı pixel hesabı.
   //   StatusAvatar mobile: avatarSize = size * avatar_ratio (centered in size wrapper)
   //   AvatarFrame mobile: lottieSize = size * scale (overlay)
@@ -319,22 +364,17 @@ export default function FrameEditor({ item }: { item: any }) {
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[auto_1fr] gap-6">
-      {/* SOL — preview */}
+      {/* SOL — preview
+          ★ v1.3.54: Üst "Boyut" seçici kaldırıldı. Sağ paneldeki "Hangi boyut için
+          ayarlıyorsun?" seçici hem editingSize hem önizleme boyutunu kontrol ediyor
+          (useEffect otomatik senkron). İki seçici kafa karıştırıyordu. */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold text-slate-300">Çerçeve Önizleme</h2>
-          <div className="flex items-center gap-1 flex-wrap">
-            <span className="text-[11px] text-slate-500 mr-1">Boyut:</span>
-            {MOBILE_SIZES.map(s => (
-              <button key={s.v} type="button" onClick={() => setMobileSize(s.v)}
-                className={`text-[11px] px-2 py-1 rounded border ${mobileSize === s.v
-                  ? 'bg-amber-500/20 border-amber-500/50 text-amber-200'
-                  : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'}`}>
-                {s.l}
-              </button>
-            ))}
-          </div>
-        </div>
+        <h2 className="text-sm font-semibold text-slate-300">
+          Çerçeve Önizleme
+          <span className="ml-2 text-[10px] text-slate-500 font-normal">
+            ({MOBILE_SIZES.find(s => s.v === mobileSize)?.l || `${mobileSize}px`})
+          </span>
+        </h2>
         <div
           className="relative rounded-lg overflow-hidden shadow-2xl"
           style={{ width: STAGE_SIZE, height: STAGE_SIZE, background: 'linear-gradient(180deg, #1e293b 0%, #0a0f1a 100%)' }}
@@ -610,15 +650,12 @@ export default function FrameEditor({ item }: { item: any }) {
             />
           )}
 
-          {/* ★ Tier Badge — 8 noktada konumlanan rozet */}
+          {/* ★ Tier Badge — sade önizleme (PRO mock, sabit görünüm).
+               Web admin sadece aç/kapat + 8 nokta konum kontrolü yapar. */}
           {cfg.tier_badge_enabled && (() => {
             const pos = BADGE_POSITIONS[cfg.tier_badge_position];
             const badgeX = stageCenter + pos.x * avatarSize;
             const badgeY = stageCenter + pos.y * avatarSize;
-            const styleClass = cfg.tier_badge_style;
-            const radius = styleClass === 'capsule' ? 999 : styleClass === 'chip' ? 6 : 0;
-            const isStar = styleClass === 'star';
-            const isRibbon = styleClass === 'ribbon';
             return (
               <div
                 style={{
@@ -630,34 +667,22 @@ export default function FrameEditor({ item }: { item: any }) {
                   pointerEvents: 'none',
                 }}
               >
-                {isStar ? (
-                  <div style={{
-                    width: 32, height: 32,
-                    background: 'linear-gradient(135deg, #fbbf24, #d97706)',
-                    clipPath: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#000', fontWeight: 900, fontSize: 9,
-                    boxShadow: '0 0 12px rgba(251,191,36,0.6)',
-                  }}>PRO</div>
-                ) : isRibbon ? (
-                  <div style={{
-                    background: 'linear-gradient(135deg, #fbbf24, #d97706)',
-                    color: '#0a0f1a', padding: '3px 14px',
-                    fontSize: 10, fontWeight: 800, letterSpacing: 0.5,
-                    clipPath: 'polygon(0 0, 100% 0, 95% 50%, 100% 100%, 0 100%, 5% 50%)',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
-                  }}>PRO</div>
-                ) : (
-                  <div style={{
-                    background: 'linear-gradient(135deg, #fbbf24, #d97706)',
-                    color: '#0a0f1a',
-                    padding: '3px 10px',
-                    fontSize: 10, fontWeight: 800, letterSpacing: 0.5,
-                    borderRadius: radius,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
-                    border: '1px solid rgba(251,191,36,0.6)',
-                  }}>PRO</div>
-                )}
+                <div style={{
+                  background: 'linear-gradient(135deg, #FCD34D, #B45309)',
+                  color: '#7C2D12',
+                  padding: '2px 7px',
+                  fontSize: 10,
+                  fontWeight: 900,
+                  letterSpacing: 0.7,
+                  borderRadius: 8,
+                  boxShadow: '0 0 8px rgba(251,191,36,0.55), 0 2px 4px rgba(0,0,0,0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 3,
+                }}>
+                  <span style={{ fontSize: 10 }}>★</span>
+                  PRO
+                </div>
               </div>
             );
           })()}
@@ -682,6 +707,58 @@ export default function FrameEditor({ item }: { item: any }) {
           </div>
         </div>
         {savedNote && <div className="text-xs text-emerald-300">{savedNote}</div>}
+
+        {/* ★ v1.3.54: Boyut bazlı override seçici. Default seçildiğinde değişiklikler
+            top-level config'e yazılır (TÜM boyutlar için geçerli temel ayar).
+            Belirli bir boyut seçilirse SADECE o boyut için override yazılır. */}
+        <Section title="Hangi boyut için ayarlıyorsun?" icon={<SettingsIcon className="w-4 h-4 text-indigo-400" />}>
+          <div className="grid grid-cols-3 gap-1.5">
+            {([
+              { k: 'default', l: 'Tümü (Temel)', desc: 'Tüm boyutlar' },
+              { k: 'mini', l: 'Mini', desc: '60px' },
+              { k: 'listener', l: 'Dinleyici', desc: '80px' },
+              { k: 'speaker', l: 'Konuşmacı', desc: '120px' },
+              { k: 'stage_host', l: 'Sahne Host', desc: '160px' },
+              { k: 'profile', l: 'Profil', desc: '200px' },
+            ] as const).map(b => {
+              const active = editingSize === b.k;
+              const hasOverride = b.k !== 'default' && !!(rawCfg as any).size_overrides?.[b.k];
+              return (
+                <button
+                  key={b.k}
+                  type="button"
+                  onClick={() => setEditingSize(b.k as typeof editingSize)}
+                  className={`relative px-2 py-2 rounded-md border text-[11px] text-left ${
+                    active
+                      ? 'bg-indigo-500/20 border-indigo-500/60 text-indigo-200'
+                      : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'
+                  }`}
+                >
+                  <div className="font-medium">{b.l}</div>
+                  <div className="text-[9px] text-slate-500">{b.desc}</div>
+                  {hasOverride && (
+                    <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-amber-400" title="Bu boyut için özel ayar var" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          {editingSize !== 'default' && (
+            <div className="mt-2 flex items-center justify-between text-[11px] text-amber-300/90 bg-amber-900/20 border border-amber-700/40 rounded p-2">
+              <div>
+                <strong>{editingSize}</strong> boyutu için özel ayar yapıyorsun.
+                {!(rawCfg as any).size_overrides?.[editingSize] && ' Henüz override yok — değer değiştirince oluşacak.'}
+              </div>
+              {(rawCfg as any).size_overrides?.[editingSize] && (
+                <button
+                  type="button"
+                  onClick={() => clearSizeOverride(editingSize)}
+                  className="ml-2 px-2 py-0.5 rounded bg-red-800 hover:bg-red-700 text-red-100 text-[10px] whitespace-nowrap"
+                >Override sil</button>
+              )}
+            </div>
+          )}
+        </Section>
 
         <Section title="Avatar — İç Doluluk" icon={<Award className="w-4 h-4 text-amber-400" />}>
           <Slider label="Avatar Oranı" min={0.6} max={1.05} step={0.01} value={cfg.avatar_ratio} onChange={v => update('avatar_ratio', v)} display={`${Math.round(cfg.avatar_ratio * 100)}%`} />
@@ -968,20 +1045,10 @@ export default function FrameEditor({ item }: { item: any }) {
                     })}
                   </div>
                 </label>
-                <label className="block">
-                  <div className="text-xs text-slate-400 mb-1">Stil</div>
-                  <select
-                    value={cfg.tier_badge_style}
-                    onChange={e => update('tier_badge_style', e.target.value as FrameConfig['tier_badge_style'])}
-                    aria-label="Tier rozeti stili"
-                    className="w-full px-2 py-1.5 rounded bg-slate-800 border border-slate-700 text-xs"
-                  >
-                    <option value="chip">Chip (yuvarlak köşeli)</option>
-                    <option value="capsule">Kapsül (full-rounded)</option>
-                    <option value="star">Yıldız (5 köşeli)</option>
-                    <option value="ribbon">Şerit (askılı)</option>
-                  </select>
-                </label>
+                <p className="text-[10px] text-slate-500 leading-relaxed mt-1">
+                  Rozetin görünüm tasarımı (PLUS / PRO / GM gradient + glow) sabittir.
+                  Burada sadece <strong>aç/kapat</strong> ve <strong>konum</strong> ayarlanır.
+                </p>
               </>
             )}
           </SubBlock>
@@ -1126,6 +1193,52 @@ export default function FrameEditor({ item }: { item: any }) {
         @keyframes name-anim-spin {
           from { transform: rotate(0deg) }
           to   { transform: rotate(360deg) }
+        }
+        /* ★ v1.3.54: Tier badge animasyonları — mobile TierBadge ile parite */
+        @keyframes tb-pulse {
+          0%, 100% { transform: translate(-50%, -50%) scale(1) }
+          50%      { transform: translate(-50%, -50%) scale(1.15) }
+        }
+        @keyframes tb-breathe {
+          0%, 100% { transform: translate(-50%, -50%) scale(1) }
+          50%      { transform: translate(-50%, -50%) scale(1.06) }
+        }
+        @keyframes tb-float {
+          0%, 100% { transform: translate(-50%, -50%) translateY(0) }
+          50%      { transform: translate(-50%, -50%) translateY(-4px) }
+        }
+        @keyframes tb-shake {
+          0%, 100% { transform: translate(-50%, -50%) }
+          20%      { transform: translate(calc(-50% - 2px), -50%) }
+          40%      { transform: translate(calc(-50% + 2px), -50%) }
+          60%      { transform: translate(calc(-50% - 1px), -50%) }
+          80%      { transform: translate(calc(-50% + 1px), -50%) }
+        }
+        @keyframes tb-swing {
+          0%, 100% { transform: translate(-50%, -50%) rotate(0deg) }
+          25%      { transform: translate(-50%, -50%) rotate(-8deg) }
+          75%      { transform: translate(-50%, -50%) rotate(8deg) }
+        }
+        @keyframes tb-tilt {
+          0%, 100% { transform: translate(-50%, -50%) rotate(-3deg) }
+          50%      { transform: translate(-50%, -50%) rotate(3deg) }
+        }
+        @keyframes tb-wobble {
+          0%, 100% { transform: translate(-50%, -50%) rotate(0deg) }
+          25%      { transform: translate(-50%, -50%) rotate(2.5deg) }
+          75%      { transform: translate(-50%, -50%) rotate(-2.5deg) }
+        }
+        @keyframes tb-spin {
+          from { transform: translate(-50%, -50%) rotate(0deg) }
+          to   { transform: translate(-50%, -50%) rotate(360deg) }
+        }
+        @keyframes tb-glow-pulse {
+          0%, 100% { filter: brightness(1) drop-shadow(0 0 4px currentColor) }
+          50%      { filter: brightness(1.2) drop-shadow(0 0 12px currentColor) }
+        }
+        @keyframes tb-hue {
+          0%   { filter: hue-rotate(0deg) }
+          100% { filter: hue-rotate(360deg) }
         }
         @keyframes name-glow-pulse {
           0%, 100% { filter: brightness(1) drop-shadow(0 0 2px currentColor) }
@@ -1333,9 +1446,25 @@ function Slider({ label, min, max, step, value, onChange, display }: any) {
 }
 function Toggle({ label, checked, onChange }: any) {
   return (
-    <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-300">
-      <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} className="accent-amber-500" />
-      {label}
+    <label className="flex items-center gap-3 cursor-pointer text-sm text-slate-300 select-none py-1">
+      <span
+        className={`relative inline-flex h-5 w-9 rounded-full transition-colors flex-shrink-0 ${
+          checked ? 'bg-amber-500' : 'bg-slate-700'
+        }`}
+      >
+        <span
+          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
+            checked ? 'translate-x-[18px]' : 'translate-x-0.5'
+          }`}
+        />
+      </span>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={e => onChange(e.target.checked)}
+        className="sr-only"
+      />
+      <span className={checked ? 'text-amber-100' : ''}>{label}</span>
     </label>
   );
 }
