@@ -294,7 +294,7 @@ export default function StoreClient({
                         : '#1e293b',
                     }}
                   >
-                    <ItemLottiePreview itemId={it.id} fallbackEmoji={it.art_emoji} size={48} />
+                    <ItemLottiePreview itemId={it.id} assetUrl={it.asset_url} fallbackEmoji={it.art_emoji} size={48} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-sm text-slate-100 truncate flex items-center gap-1.5">
@@ -338,6 +338,8 @@ export default function StoreClient({
                     type="button"
                     onClick={() => setEditing(it)}
                     disabled={isBusy}
+                    title="Düzenle"
+                    aria-label="Düzenle"
                     className="px-1 py-1.5 rounded-md text-[10px] font-semibold border bg-cyan-500/10 border-cyan-500/30 text-cyan-300 flex items-center justify-center"
                   >
                     <Pencil className="w-3 h-3" />
@@ -346,6 +348,8 @@ export default function StoreClient({
                     type="button"
                     onClick={() => confirmAndDelete(it)}
                     disabled={isBusy}
+                    title="Sil"
+                    aria-label="Sil"
                     className="px-1 py-1.5 rounded-md text-[10px] font-semibold border bg-red-500/10 border-red-500/30 text-red-300 flex items-center justify-center"
                   >
                     <Trash2 className="w-3 h-3" />
