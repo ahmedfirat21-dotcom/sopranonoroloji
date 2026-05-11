@@ -73,6 +73,26 @@ interface FrameConfig {
   name_wave: boolean;           // harf-harf yukarı-aşağı dalga (dairesel/yay'da kapalı)
   name_shimmer: boolean;        // metin üzerinden gradient ışık süpürmesi
   name_color_cycle: boolean;    // yazı rengi HSL döngüsü (color_cycle_speed paylaşır)
+  // ★ 2026-05-11: İsim için tam hareket paketi (avatar/frame paritesi)
+  // Hareket
+  name_pulse: boolean;          // yazı büyür-küçülür
+  name_pulse_speed: number;     // sn (1-5)
+  name_float: boolean;          // yazı yukarı-aşağı süzülür
+  name_float_speed: number;     // sn (2-8)
+  name_shake: boolean;          // titreşim
+  name_swing: boolean;          // sarkaç sallanma
+  name_tilt: boolean;           // yan yatma
+  name_breathe: boolean;        // yavaş nefes (subtle scale)
+  name_wobble: boolean;         // titreşim (rotate ±2.5°)
+  // Sürekli dönme
+  name_rotation_continuous: boolean;
+  name_rotation_speed: number;  // sn / 1 tam tur (4-30)
+  // Görünürlük
+  name_opacity: number;         // 0.3-1
+  // Glow / parlama (avatar glow paritesi)
+  name_glow_color: string;
+  name_glow_intensity: number;  // 0.2-1.5
+  name_glow_pulse: boolean;     // glow yoğunluğu dalgalanır
 }
 
 const DEFAULT_CONFIG: FrameConfig = {
@@ -124,6 +144,22 @@ const DEFAULT_CONFIG: FrameConfig = {
   name_wave: false,
   name_shimmer: false,
   name_color_cycle: false,
+  // İsim hareket paketi — default kapalı
+  name_pulse: false,
+  name_pulse_speed: 2,
+  name_float: false,
+  name_float_speed: 4,
+  name_shake: false,
+  name_swing: false,
+  name_tilt: false,
+  name_breathe: false,
+  name_wobble: false,
+  name_rotation_continuous: false,
+  name_rotation_speed: 12,
+  name_opacity: 1,
+  name_glow_color: '#fbbf24',
+  name_glow_intensity: 0.6,
+  name_glow_pulse: false,
 };
 
 // Tier badge konum koordinatları — avatar merkezine göre yüzdelik (-1...1)
@@ -691,10 +727,41 @@ export default function FrameEditor({ item }: { item: any }) {
                 <Slider label="Boyut" min={10} max={22} step={1} value={cfg.name_size} onChange={v => update('name_size', v)} display={`${cfg.name_size}px`} />
                 <ColorInput label="Renk" value={cfg.name_color} onChange={v => update('name_color', v)} />
                 <Toggle label="Kalın yazı" checked={cfg.name_bold} onChange={v => update('name_bold', v)} />
+                <Slider label="Opaklık" min={0.3} max={1} step={0.05} value={cfg.name_opacity} onChange={v => update('name_opacity', v)} display={`${Math.round(cfg.name_opacity * 100)}%`} />
                 <div className="pt-2 border-t border-slate-700/40">
-                  <div className="text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">İsim Animasyonu</div>
+                  <div className="text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">🎚 İsim Hareketi</div>
+                  <Toggle label="Nabız (büyür-küçülür)" checked={cfg.name_pulse} onChange={v => update('name_pulse', v)} />
+                  {cfg.name_pulse && (
+                    <Slider label="Nabız hızı" min={1} max={5} step={0.5} value={cfg.name_pulse_speed} onChange={v => update('name_pulse_speed', v)} display={`${cfg.name_pulse_speed}sn`} />
+                  )}
+                  <Toggle label="Süzülme (yukarı-aşağı)" checked={cfg.name_float} onChange={v => update('name_float', v)} />
+                  {cfg.name_float && (
+                    <Slider label="Süzülme hızı" min={2} max={8} step={0.5} value={cfg.name_float_speed} onChange={v => update('name_float_speed', v)} display={`${cfg.name_float_speed}sn`} />
+                  )}
+                  <Toggle label="Titreşim (shake)" checked={cfg.name_shake} onChange={v => update('name_shake', v)} />
+                  <Toggle label="Sarkaç (swing — ±8°)" checked={cfg.name_swing} onChange={v => update('name_swing', v)} />
+                  <Toggle label="Yan yatma (tilt — ±3°)" checked={cfg.name_tilt} onChange={v => update('name_tilt', v)} />
+                  <Toggle label="Nefes (breathe — yumuşak büyür-küçülür)" checked={cfg.name_breathe} onChange={v => update('name_breathe', v)} />
+                  <Toggle label="Wobble (titreşimli sallanma — ±2.5°)" checked={cfg.name_wobble} onChange={v => update('name_wobble', v)} />
+                  <Toggle label="Sürekli dönme (rotation)" checked={cfg.name_rotation_continuous} onChange={v => update('name_rotation_continuous', v)} />
+                  {cfg.name_rotation_continuous && (
+                    <Slider label="Dönme hızı" min={4} max={30} step={1} value={cfg.name_rotation_speed} onChange={v => update('name_rotation_speed', v)} display={`${cfg.name_rotation_speed}sn / tur`} />
+                  )}
+                </div>
+                <div className="pt-2 border-t border-slate-700/40">
+                  <div className="text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">✨ İsim Parlama (Glow)</div>
                   <Toggle label="Glow (yazı parlar)" checked={cfg.name_glow} onChange={v => update('name_glow', v)} />
-                  <Toggle label="Wave (harf-harf dalga)" checked={cfg.name_wave} onChange={v => update('name_wave', v)} />
+                  {cfg.name_glow && (
+                    <>
+                      <ColorInput label="Glow rengi" value={cfg.name_glow_color} onChange={v => update('name_glow_color', v)} />
+                      <Slider label="Şiddet" min={0.2} max={1.5} step={0.05} value={cfg.name_glow_intensity} onChange={v => update('name_glow_intensity', v)} display={`${cfg.name_glow_intensity.toFixed(2)}x`} />
+                      <Toggle label="Glow nefes (dalgalanır)" checked={cfg.name_glow_pulse} onChange={v => update('name_glow_pulse', v)} />
+                    </>
+                  )}
+                </div>
+                <div className="pt-2 border-t border-slate-700/40">
+                  <div className="text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">🎨 Diğer Efektler</div>
+                  <Toggle label="Wave (harf-harf dalga — sadece düz)" checked={cfg.name_wave} onChange={v => update('name_wave', v)} />
                   <Toggle label="Shimmer (üstünden ışık geçer)" checked={cfg.name_shimmer} onChange={v => update('name_shimmer', v)} />
                   <Toggle label="🌈 Renk döngüsü (yazı rengi döner)" checked={cfg.name_color_cycle} onChange={v => update('name_color_cycle', v)} />
                 </div>
@@ -865,6 +932,48 @@ export default function FrameEditor({ item }: { item: any }) {
           0%, 100% { transform: translateY(0) }
           50%      { transform: translateY(-3px) }
         }
+        /* ★ İsim hareket animasyonları — SVG wrapper'a uygulanır */
+        @keyframes name-anim-pulse {
+          0%, 100% { transform: scale(1) }
+          50%      { transform: scale(1.1) }
+        }
+        @keyframes name-anim-float {
+          0%, 100% { transform: translateY(0) }
+          50%      { transform: translateY(-6px) }
+        }
+        @keyframes name-anim-shake {
+          0%, 100% { transform: translate(0, 0) }
+          20%      { transform: translate(-2px, 1px) }
+          40%      { transform: translate(2px, -1px) }
+          60%      { transform: translate(-1px, 2px) }
+          80%      { transform: translate(1px, -2px) }
+        }
+        @keyframes name-anim-swing {
+          0%, 100% { transform: rotate(0deg) }
+          25%      { transform: rotate(-8deg) }
+          75%      { transform: rotate(8deg) }
+        }
+        @keyframes name-anim-tilt {
+          0%, 100% { transform: rotate(-3deg) }
+          50%      { transform: rotate(3deg) }
+        }
+        @keyframes name-anim-breathe {
+          0%, 100% { transform: scale(1) }
+          50%      { transform: scale(1.04) }
+        }
+        @keyframes name-anim-wobble {
+          0%, 100% { transform: rotate(0deg) }
+          25%      { transform: rotate(2.5deg) }
+          75%      { transform: rotate(-2.5deg) }
+        }
+        @keyframes name-anim-spin {
+          from { transform: rotate(0deg) }
+          to   { transform: rotate(360deg) }
+        }
+        @keyframes name-glow-pulse {
+          0%, 100% { filter: brightness(1) drop-shadow(0 0 2px currentColor) }
+          50%      { filter: brightness(1.3) drop-shadow(0 0 8px currentColor) drop-shadow(0 0 14px currentColor) }
+        }
       `}</style>
     </div>
   );
@@ -924,6 +1033,20 @@ function NamePreviewSvg({ cfg, avatarSize, stageCenter }: {
   const uid = useId();
   const pathId = `name-path-${uid.replace(/:/g, '_')}`;
 
+  // ★ İsim hareket animasyon zinciri — avatar/frame ile aynı palet.
+  // Static rotation (eğim) ve dinamik animasyon transform'ları çakışmasın diye
+  // animation'lar SVG wrapper'a, eğim base transform'a uygulanır.
+  const nameAnimations = [
+    cfg.name_pulse && `name-anim-pulse ${cfg.name_pulse_speed}s ease-in-out infinite`,
+    cfg.name_float && `name-anim-float ${cfg.name_float_speed}s ease-in-out infinite`,
+    cfg.name_shake && 'name-anim-shake 0.6s linear infinite',
+    cfg.name_swing && 'name-anim-swing 2.5s ease-in-out infinite',
+    cfg.name_tilt && 'name-anim-tilt 3s ease-in-out infinite',
+    cfg.name_breathe && 'name-anim-breathe 4s ease-in-out infinite',
+    cfg.name_wobble && 'name-anim-wobble 2s ease-in-out infinite',
+    cfg.name_rotation_continuous && `name-anim-spin ${cfg.name_rotation_speed}s linear infinite`,
+  ].filter(Boolean).join(', ') || undefined;
+
   return (
     <svg
       width={svgSize}
@@ -933,9 +1056,17 @@ function NamePreviewSvg({ cfg, avatarSize, stageCenter }: {
         left, top,
         zIndex: 6,
         pointerEvents: 'none',
-        transform: cfg.name_rotation !== 0 ? `rotate(${cfg.name_rotation}deg)` : undefined,
+        // Eğim ve sürekli dönme aynı transform'a yazılırsa biri diğerini
+        // ezebilir. Burada eğim CSS transform üzerinden, hareket animasyonları
+        // ayrı keyframes'le. CSS animation transform'u override eder, bu yüzden
+        // sürekli dönme açıksa eğim'i animation 0% adımında ekledim.
+        transform: cfg.name_rotation !== 0 && !cfg.name_rotation_continuous && !cfg.name_swing && !cfg.name_tilt && !cfg.name_wobble && !cfg.name_shake
+          ? `rotate(${cfg.name_rotation}deg)`
+          : undefined,
         transformOrigin: 'center',
         overflow: 'visible',
+        opacity: cfg.name_opacity,
+        animation: nameAnimations,
       }}
     >
       <defs>
@@ -966,12 +1097,16 @@ function NamePreviewSvg({ cfg, avatarSize, stageCenter }: {
         fontFamily="Inter, system-ui, sans-serif"
         fill={cfg.name_shimmer ? `url(#shimmer-${pathId})` : cfg.name_color}
         style={{
-          textShadow: '0 1px 3px rgba(0,0,0,0.7)',
+          // Glow yapısı: temel siyah outline + opsiyonel renkli glow halkası.
+          // intensity arttıkça blur artar; pulse aktifse animation ile dalgalanır.
+          textShadow: cfg.name_glow
+            ? `0 1px 3px rgba(0,0,0,0.7), 0 0 ${4 + cfg.name_glow_intensity * 6}px ${cfg.name_glow_color}, 0 0 ${10 + cfg.name_glow_intensity * 12}px ${cfg.name_glow_color}88`
+            : '0 1px 3px rgba(0,0,0,0.7)',
           paintOrder: 'stroke',
           stroke: 'rgba(0,0,0,0.4)',
           strokeWidth: 1,
           animation: [
-            cfg.name_glow && 'name-glow 2s ease-in-out infinite',
+            cfg.name_glow && cfg.name_glow_pulse && 'name-glow-pulse 1.8s ease-in-out infinite',
             cfg.name_color_cycle && `name-color-cycle ${cfg.color_cycle_speed}s linear infinite`,
           ].filter(Boolean).join(', ') || undefined,
         }}
