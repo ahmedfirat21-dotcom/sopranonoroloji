@@ -686,8 +686,8 @@ export default function FrameEditor({ item }: { item: any }) {
                     <option value="circle">○ Dairesel (avatar etrafında)</option>
                   </select>
                 </label>
-                <Slider label="Mesafe" min={0} max={40} step={2} value={cfg.name_offset} onChange={v => update('name_offset', v)} display={`${cfg.name_offset}px`} />
-                <Slider label="Eğim" min={-45} max={45} step={5} value={cfg.name_rotation} onChange={v => update('name_rotation', v)} display={`${cfg.name_rotation}°`} />
+                <Slider label="Mesafe" min={-20} max={120} step={2} value={cfg.name_offset} onChange={v => update('name_offset', v)} display={`${cfg.name_offset}px`} />
+                <Slider label="Eğim" min={-180} max={180} step={5} value={cfg.name_rotation} onChange={v => update('name_rotation', v)} display={`${cfg.name_rotation}°`} />
                 <Slider label="Boyut" min={10} max={22} step={1} value={cfg.name_size} onChange={v => update('name_size', v)} display={`${cfg.name_size}px`} />
                 <ColorInput label="Renk" value={cfg.name_color} onChange={v => update('name_color', v)} />
                 <Toggle label="Kalın yazı" checked={cfg.name_bold} onChange={v => update('name_bold', v)} />
