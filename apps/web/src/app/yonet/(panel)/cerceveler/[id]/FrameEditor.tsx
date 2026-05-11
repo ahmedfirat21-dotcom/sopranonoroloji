@@ -95,6 +95,25 @@ interface FrameConfig {
   name_glow_color: string;
   name_glow_intensity: number;  // 0.2-1.5
   name_glow_pulse: boolean;     // glow yoğunluğu dalgalanır
+  // ★ 2026-05-11 — Sanatsal avatar paketi
+  avatar_shape: 'circle' | 'rounded-square' | 'hexagon' | 'squircle' | 'star' | 'diamond';
+  // Avatar border (premium ring)
+  avatar_border_enabled: boolean;
+  avatar_border_color: string;
+  avatar_border_width: number;  // 1-12 px
+  avatar_border_style: 'solid' | 'dashed' | 'dotted' | 'double';
+  // Background halo (derinlik için arka plan glow)
+  bg_halo_enabled: boolean;
+  bg_halo_color: string;
+  bg_halo_size: number;         // 1.0-3.0 (avatar boyutuna çarpan)
+  bg_halo_intensity: number;    // 0.2-1
+  // Avatar filtreleri (sanatsal işleme)
+  avatar_hue_rotate: number;    // 0-360°
+  avatar_brightness: number;    // 0.5-1.5x
+  avatar_saturation: number;    // 0-2x
+  avatar_blur: number;          // 0-5 px (subtle dreamy blur)
+  avatar_grayscale: number;     // 0-100%
+  avatar_sepia: number;         // 0-100%
 }
 
 const DEFAULT_CONFIG: FrameConfig = {
@@ -162,6 +181,32 @@ const DEFAULT_CONFIG: FrameConfig = {
   name_glow_color: '#fbbf24',
   name_glow_intensity: 0.6,
   name_glow_pulse: false,
+  // Sanatsal avatar paketi — default'lar müdahale etmez
+  avatar_shape: 'circle',
+  avatar_border_enabled: false,
+  avatar_border_color: '#fbbf24',
+  avatar_border_width: 3,
+  avatar_border_style: 'solid',
+  bg_halo_enabled: false,
+  bg_halo_color: '#fbbf24',
+  bg_halo_size: 1.6,
+  bg_halo_intensity: 0.6,
+  avatar_hue_rotate: 0,
+  avatar_brightness: 1,
+  avatar_saturation: 1,
+  avatar_blur: 0,
+  avatar_grayscale: 0,
+  avatar_sepia: 0,
+};
+
+// Avatar şekli için CSS clip-path / borderRadius değerleri
+const SHAPE_CLIP: Record<string, { borderRadius: string; clipPath?: string; label: string }> = {
+  'circle':         { borderRadius: '50%', label: '⚪ Daire' },
+  'rounded-square': { borderRadius: '22%', label: '⬛ Yuvarlak Kare' },
+  'squircle':       { borderRadius: '36%', label: '◼ Squircle' },
+  'hexagon':        { borderRadius: '0',   clipPath: 'polygon(25% 6.7%, 75% 6.7%, 100% 50%, 75% 93.3%, 25% 93.3%, 0% 50%)', label: '⬢ Altıgen' },
+  'star':           { borderRadius: '0',   clipPath: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)', label: '⭐ Yıldız' },
+  'diamond':        { borderRadius: '0',   clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)', label: '◆ Elmas' },
 };
 
 // Tier badge konum koordinatları — avatar merkezine göre yüzdelik (-1...1)
@@ -307,32 +352,76 @@ export default function FrameEditor({ item }: { item: any }) {
 
           {/* Avatar — merkezi, sabit boyutta. Pulse/float animation transform üzerinden,
               glow_pulse keyframes ile boxShadow yoğunluğunu dalgalandırır. */}
-          <div
-            style={{
-              position: 'absolute',
-              left: stageCenter - avatarSize / 2,
-              top: stageCenter - avatarSize / 2,
-              width: avatarSize,
-              height: avatarSize,
-              borderRadius: '50%',
-              overflow: 'hidden',
-              zIndex: 2,
-              boxShadow: cfg.glow_enabled
-                ? `0 0 ${20 * cfg.glow_intensity}px ${cfg.glow_color}, 0 0 ${40 * cfg.glow_intensity}px ${cfg.glow_color}80`
-                : undefined,
-              animation: [
-                cfg.avatar_pulse && `avatar-pulse ${cfg.avatar_pulse_speed}s ease-in-out infinite`,
-                cfg.avatar_float && `avatar-float ${cfg.avatar_float_speed}s ease-in-out infinite`,
-                cfg.avatar_shake && `avatar-shake 0.6s linear infinite`,
-                cfg.avatar_swing && `avatar-swing 2.5s ease-in-out infinite`,
-                cfg.avatar_tilt && `avatar-tilt 3s ease-in-out infinite`,
-                cfg.glow_enabled && cfg.glow_pulse && `glow-pulse ${cfg.avatar_pulse_speed * 1.5}s ease-in-out infinite`,
-                cfg.glow_enabled && cfg.color_cycle && `glow-color-cycle ${cfg.color_cycle_speed}s linear infinite`,
-              ].filter(Boolean).join(', ') || undefined,
-            }}
-          >
-            <img src={SAMPLE_AVATAR} alt="" className="w-full h-full object-cover" />
-          </div>
+          {/* ★ Background Halo — avatarın ARKASINDA soft diffuse glow (derinlik) */}
+          {cfg.bg_halo_enabled && (() => {
+            const haloSize = avatarSize * cfg.bg_halo_size;
+            return (
+              <div
+                style={{
+                  position: 'absolute',
+                  left: stageCenter - haloSize / 2,
+                  top: stageCenter - haloSize / 2,
+                  width: haloSize,
+                  height: haloSize,
+                  borderRadius: '50%',
+                  background: `radial-gradient(circle, ${cfg.bg_halo_color}${Math.round(cfg.bg_halo_intensity * 255).toString(16).padStart(2, '0')} 0%, ${cfg.bg_halo_color}00 70%)`,
+                  pointerEvents: 'none',
+                  zIndex: 1,
+                }}
+              />
+            );
+          })()}
+
+          {/* Avatar — şekil/border/filter uygulanmış */}
+          {(() => {
+            const shapeDef = SHAPE_CLIP[cfg.avatar_shape] || SHAPE_CLIP.circle;
+            // CSS filter zinciri — sanatsal işleme
+            const filterChain = [
+              cfg.avatar_hue_rotate !== 0 && `hue-rotate(${cfg.avatar_hue_rotate}deg)`,
+              cfg.avatar_brightness !== 1 && `brightness(${cfg.avatar_brightness})`,
+              cfg.avatar_saturation !== 1 && `saturate(${cfg.avatar_saturation})`,
+              cfg.avatar_blur > 0 && `blur(${cfg.avatar_blur}px)`,
+              cfg.avatar_grayscale > 0 && `grayscale(${cfg.avatar_grayscale}%)`,
+              cfg.avatar_sepia > 0 && `sepia(${cfg.avatar_sepia}%)`,
+            ].filter(Boolean).join(' ') || undefined;
+            const borderCss = cfg.avatar_border_enabled
+              ? `${cfg.avatar_border_width}px ${cfg.avatar_border_style} ${cfg.avatar_border_color}`
+              : undefined;
+            return (
+              <div
+                style={{
+                  position: 'absolute',
+                  left: stageCenter - avatarSize / 2,
+                  top: stageCenter - avatarSize / 2,
+                  width: avatarSize,
+                  height: avatarSize,
+                  borderRadius: shapeDef.borderRadius,
+                  clipPath: shapeDef.clipPath,
+                  overflow: 'hidden',
+                  border: borderCss,
+                  boxSizing: 'border-box',
+                  zIndex: 2,
+                  boxShadow: cfg.glow_enabled
+                    ? `0 0 ${20 * cfg.glow_intensity}px ${cfg.glow_color}, 0 0 ${40 * cfg.glow_intensity}px ${cfg.glow_color}80`
+                    : undefined,
+                  animation: [
+                    cfg.avatar_pulse && `avatar-pulse ${cfg.avatar_pulse_speed}s ease-in-out infinite`,
+                    cfg.avatar_float && `avatar-float ${cfg.avatar_float_speed}s ease-in-out infinite`,
+                    cfg.avatar_shake && `avatar-shake 0.6s linear infinite`,
+                    cfg.avatar_swing && `avatar-swing 2.5s ease-in-out infinite`,
+                    cfg.avatar_tilt && `avatar-tilt 3s ease-in-out infinite`,
+                    cfg.glow_enabled && cfg.glow_pulse && `glow-pulse ${cfg.avatar_pulse_speed * 1.5}s ease-in-out infinite`,
+                    cfg.glow_enabled && cfg.color_cycle && `glow-color-cycle ${cfg.color_cycle_speed}s linear infinite`,
+                  ].filter(Boolean).join(', ') || undefined,
+                }}
+              >
+                {/* Filter wrapper iç div'e — animation ile çakışmasın diye ayrı katman */}
+                <div style={{ width: '100%', height: '100%', filter: filterChain }}>
+                  <img src={SAMPLE_AVATAR} alt="" className="w-full h-full object-cover" />
+                </div>
+              </div>
+            );
+          })()}
 
           {/* ★ Particle efekti — avatar etrafında dönen parçacıklar.
                 Gerçek emoji + glow + per-particle pulse. Yörünge avatarın
@@ -597,6 +686,67 @@ export default function FrameEditor({ item }: { item: any }) {
         <Section title="Avatar — İç Doluluk" icon={<Award className="w-4 h-4 text-amber-400" />}>
           <Slider label="Avatar Oranı" min={0.6} max={1.05} step={0.01} value={cfg.avatar_ratio} onChange={v => update('avatar_ratio', v)} display={`${Math.round(cfg.avatar_ratio * 100)}%`} />
           <p className="text-[11px] text-slate-500">Avatar'ın size'a göre boyutu. Frame iç dairesini doldurmasını sağlar.</p>
+        </Section>
+
+        {/* ★ 2026-05-11: Sanatsal avatar paketi — şekil + border + halo + filtre */}
+        <Section title="Avatar Görünümü" icon={<Sparkles className="w-4 h-4 text-fuchsia-400" />}>
+          <SubBlock title="Şekil">
+            <label className="block">
+              <div className="text-xs text-slate-400 mb-1">Avatar şekli</div>
+              <select
+                value={cfg.avatar_shape}
+                onChange={e => update('avatar_shape', e.target.value as FrameConfig['avatar_shape'])}
+                aria-label="Avatar şekli"
+                className="w-full px-2 py-1.5 rounded bg-slate-800 border border-slate-700 text-xs"
+              >
+                {Object.entries(SHAPE_CLIP).map(([key, def]) => (
+                  <option key={key} value={key}>{def.label}</option>
+                ))}
+              </select>
+            </label>
+            <p className="text-[10px] text-slate-500">Daire dışı şekiller eski 5 frame ile çelişebilir, frame opacity'i azaltmayı dene.</p>
+          </SubBlock>
+          <SubBlock title="Border (Premium Ring)">
+            <Toggle label="Border aktif" checked={cfg.avatar_border_enabled} onChange={v => update('avatar_border_enabled', v)} />
+            {cfg.avatar_border_enabled && (
+              <>
+                <ColorInput label="Renk" value={cfg.avatar_border_color} onChange={v => update('avatar_border_color', v)} />
+                <Slider label="Kalınlık" min={1} max={12} step={1} value={cfg.avatar_border_width} onChange={v => update('avatar_border_width', v)} display={`${cfg.avatar_border_width}px`} />
+                <label className="block">
+                  <div className="text-xs text-slate-400 mb-1">Stil</div>
+                  <select
+                    value={cfg.avatar_border_style}
+                    onChange={e => update('avatar_border_style', e.target.value as FrameConfig['avatar_border_style'])}
+                    aria-label="Border stili"
+                    className="w-full px-2 py-1.5 rounded bg-slate-800 border border-slate-700 text-xs"
+                  >
+                    <option value="solid">Düz</option>
+                    <option value="dashed">Kesik kesik</option>
+                    <option value="dotted">Noktalı</option>
+                    <option value="double">Çift çizgi</option>
+                  </select>
+                </label>
+              </>
+            )}
+          </SubBlock>
+          <SubBlock title="🌟 Background Halo (Derinlik)">
+            <Toggle label="Halo aktif (avatar arkasında soft glow)" checked={cfg.bg_halo_enabled} onChange={v => update('bg_halo_enabled', v)} />
+            {cfg.bg_halo_enabled && (
+              <>
+                <ColorInput label="Halo rengi" value={cfg.bg_halo_color} onChange={v => update('bg_halo_color', v)} />
+                <Slider label="Boyut" min={1.0} max={3.0} step={0.1} value={cfg.bg_halo_size} onChange={v => update('bg_halo_size', v)} display={`${cfg.bg_halo_size.toFixed(1)}x`} />
+                <Slider label="Yoğunluk" min={0.2} max={1} step={0.05} value={cfg.bg_halo_intensity} onChange={v => update('bg_halo_intensity', v)} display={`${Math.round(cfg.bg_halo_intensity * 100)}%`} />
+              </>
+            )}
+          </SubBlock>
+          <SubBlock title="🎨 Filtreler (Sanatsal İşleme)">
+            <Slider label="Renk Tonu (Hue)" min={0} max={360} step={5} value={cfg.avatar_hue_rotate} onChange={v => update('avatar_hue_rotate', v)} display={`${cfg.avatar_hue_rotate}°`} />
+            <Slider label="Parlaklık" min={0.5} max={1.5} step={0.05} value={cfg.avatar_brightness} onChange={v => update('avatar_brightness', v)} display={`${cfg.avatar_brightness.toFixed(2)}x`} />
+            <Slider label="Doygunluk" min={0} max={2} step={0.05} value={cfg.avatar_saturation} onChange={v => update('avatar_saturation', v)} display={`${cfg.avatar_saturation.toFixed(2)}x`} />
+            <Slider label="Bulanıklık (Dreamy)" min={0} max={5} step={0.5} value={cfg.avatar_blur} onChange={v => update('avatar_blur', v)} display={`${cfg.avatar_blur}px`} />
+            <Slider label="Siyah-Beyaz" min={0} max={100} step={5} value={cfg.avatar_grayscale} onChange={v => update('avatar_grayscale', v)} display={`%${cfg.avatar_grayscale}`} />
+            <Slider label="Sepia (eski fotoğraf)" min={0} max={100} step={5} value={cfg.avatar_sepia} onChange={v => update('avatar_sepia', v)} display={`%${cfg.avatar_sepia}`} />
+          </SubBlock>
         </Section>
 
         <Section title="Frame — Konum & Boyut" icon={<Move className="w-4 h-4 text-purple-400" />}>
