@@ -844,6 +844,11 @@ export default function FrameEditor({ item }: { item: any }) {
         <Section title="Kimlik & Etiket" icon={<Award className="w-4 h-4 text-cyan-400" />}>
           <SubBlock title="Kullanıcı Adı">
             <Toggle label="Adı çerçeve etrafında göster" checked={cfg.name_enabled} onChange={v => update('name_enabled', v)} />
+            <p className="text-[10px] text-amber-300/70 mt-1 leading-snug">
+              ⚠️ İsim ayarları şimdilik <strong>sadece bu önizlemede</strong> çalışır. Mobil uygulamada
+              isim avatar'ın altında klasik şekilde görünür (yay/dairesel/eğim için React Native SVG
+              modülü gerekiyor — ayrı build paketi).
+            </p>
             {cfg.name_enabled && (
               <>
                 <label className="block">
