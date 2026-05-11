@@ -296,47 +296,67 @@ export default function FrameEditor({ item }: { item: any }) {
             <img src={SAMPLE_AVATAR} alt="" className="w-full h-full object-cover" />
           </div>
 
-          {/* Particle efekti — avatar etrafında dönen parçacıklar */}
-          {cfg.particle_type !== 'none' && (
-            <div
-              style={{
-                position: 'absolute',
-                left: stageCenter - avatarSize * 0.9,
-                top: stageCenter - avatarSize * 0.9,
-                width: avatarSize * 1.8,
-                height: avatarSize * 1.8,
-                pointerEvents: 'none',
-                zIndex: 4,
-              }}
-            >
-              {Array.from({ length: cfg.particle_count }).map((_, i) => {
-                const angle = (360 / cfg.particle_count) * i;
-                const symbol = cfg.particle_type === 'sparkle' ? '✦'
-                  : cfg.particle_type === 'stars' ? '★'
-                  : cfg.particle_type === 'hearts' ? '♥'
-                  : '○';
-                const delay = (i * 0.3) % 2;
-                return (
-                  <span
-                    key={i}
-                    style={{
-                      position: 'absolute',
-                      left: '50%',
-                      top: '50%',
-                      transformOrigin: '0 0',
-                      transform: `rotate(${angle}deg) translate(${avatarSize * 0.65}px, 0)`,
-                      color: cfg.particle_color,
-                      fontSize: Math.max(10, avatarSize * 0.12),
-                      animation: `particle-twinkle 2s ease-in-out ${delay}s infinite, particle-orbit 12s linear infinite`,
-                      textShadow: `0 0 6px ${cfg.particle_color}`,
-                    }}
-                  >
-                    {symbol}
-                  </span>
-                );
-              })}
-            </div>
-          )}
+          {/* ★ Particle efekti — avatar etrafında dönen parçacıklar.
+                Gerçek emoji + glow + per-particle pulse. Yörünge avatarın
+                YETERLİ DIŞINDA (avatarSize/2 + 20px) ki yüzün üstüne binmesin.
+                Wrapper orbit loop yapar, her span sabit pozisyonda + twinkle. */}
+          {cfg.particle_type !== 'none' && (() => {
+            const particleEmoji =
+              cfg.particle_type === 'sparkle' ? '✨'
+              : cfg.particle_type === 'stars'   ? '⭐'
+              : cfg.particle_type === 'hearts'  ? '❤️'
+              : '🫧';
+            const particleSize = Math.max(14, Math.round(avatarSize * 0.18));
+            // Yörünge mesafesi — avatar yarıçapı + dışında en az 20px boşluk
+            // (frame_pulse_ring radar dalgalarıyla uyumlu)
+            const orbitRadius = avatarSize / 2 + Math.max(20, particleSize * 0.4);
+            const wrapperSize = (orbitRadius + particleSize) * 2;
+            return (
+              <div
+                style={{
+                  position: 'absolute',
+                  left: stageCenter - wrapperSize / 2,
+                  top: stageCenter - wrapperSize / 2,
+                  width: wrapperSize,
+                  height: wrapperSize,
+                  pointerEvents: 'none',
+                  zIndex: 4,
+                  animation: 'particle-orbit-wrapper 14s linear infinite',
+                }}
+              >
+                {Array.from({ length: cfg.particle_count }).map((_, i) => {
+                  const angle = (360 / cfg.particle_count) * i;
+                  const rad = (angle * Math.PI) / 180;
+                  const x = Math.cos(rad) * orbitRadius;
+                  const y = Math.sin(rad) * orbitRadius;
+                  const delay = (i * 0.25) % 2;
+                  return (
+                    <span
+                      key={i}
+                      style={{
+                        position: 'absolute',
+                        left: '50%',
+                        top: '50%',
+                        marginLeft: x - particleSize / 2,
+                        marginTop: y - particleSize / 2,
+                        width: particleSize,
+                        height: particleSize,
+                        fontSize: particleSize,
+                        lineHeight: `${particleSize}px`,
+                        textAlign: 'center',
+                        animation: `particle-twinkle 1.8s ease-in-out ${delay}s infinite`,
+                        filter: `drop-shadow(0 0 4px ${cfg.particle_color}) drop-shadow(0 0 8px ${cfg.particle_color})`,
+                        // Counter-rotate: wrapper döndüğü için emoji sabit dik dursun
+                        transformOrigin: 'center',
+                      }}
+                    >
+                      {particleEmoji}
+                    </span>
+                  );
+                })}
+              </div>
+            );
+          })()}
 
           {/* Frame Lottie — avatar etrafında, scale'a göre büyüyebilir.
               frame_breathe ile yavaş büyüyüp küçülür (rotation ile birlikte çalışabilir). */}
@@ -776,12 +796,12 @@ export default function FrameEditor({ item }: { item: any }) {
           50%      { filter: brightness(1.4) }
         }
         @keyframes particle-twinkle {
-          0%, 100% { opacity: 0.3; transform: rotate(var(--angle, 0)) translate(var(--dist, 60px), 0) scale(0.8) }
-          50%      { opacity: 1;   transform: rotate(var(--angle, 0)) translate(var(--dist, 60px), 0) scale(1.2) }
+          0%, 100% { opacity: 0.4; transform: scale(0.85) }
+          50%      { opacity: 1;   transform: scale(1.15) }
         }
-        @keyframes particle-orbit {
-          from { transform: rotate(0deg) translate(0, 0) }
-          to   { transform: rotate(360deg) translate(0, 0) }
+        @keyframes particle-orbit-wrapper {
+          from { transform: rotate(0deg) }
+          to   { transform: rotate(360deg) }
         }
         @keyframes color-cycle {
           0%   { filter: hue-rotate(0deg) }
