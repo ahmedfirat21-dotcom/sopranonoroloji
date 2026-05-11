@@ -49,11 +49,13 @@ interface FrameConfig {
   // ★ 2026-05-11: Kullanıcı adı stilleme — avatar etrafında nereye, hangi şekilde
   name_enabled: boolean;
   name_position: 'top' | 'bottom' | 'left' | 'right'; // ana yön
-  name_offset: number;          // 0-40 px ek mesafe avatar kenarından
-  name_rotation: number;        // -45 → 45 derece eğim
+  // ★ 2026-05-11: Yüzdelik bazlı — her avatar boyutunda (Mini→Profile) orantılı
+  //   görünüm. Pixel bazlı eski sistemde mini'de yazı uçuyor profile'da yapışıyordu.
+  name_offset: number;          // % avatar yarıçapına göre dış mesafe (-50→200)
+  name_rotation: number;        // ±180° eğim
   name_curve_style: 'flat' | 'arc-top' | 'arc-bottom' | 'circle';
   name_color: string;
-  name_size: number;            // px (10-22)
+  name_size: number;            // % avatar boyutuna göre font (6-25)
   name_bold: boolean;
   // ★ Tier etiketi (Plus/Pro/Free badge)
   tier_badge_enabled: boolean;
@@ -124,11 +126,11 @@ const DEFAULT_CONFIG: FrameConfig = {
   // Kimlik & etiket — default kapalı (opsiyonel, frame'in ana işine müdahale etmez)
   name_enabled: false,
   name_position: 'bottom',
-  name_offset: 12,
+  name_offset: 25,    // % avatar yarıçapı (orantılı — her boyutta tutarlı)
   name_rotation: 0,
   name_curve_style: 'flat',
   name_color: '#f8fafc',
-  name_size: 14,
+  name_size: 14,      // % avatar boyutu (60px avatar→8px, 200px avatar→28px)
   name_bold: true,
   tier_badge_enabled: false,
   tier_badge_position: 'tr',
@@ -722,9 +724,9 @@ export default function FrameEditor({ item }: { item: any }) {
                     <option value="circle">○ Dairesel (avatar etrafında)</option>
                   </select>
                 </label>
-                <Slider label="Mesafe" min={-20} max={120} step={2} value={cfg.name_offset} onChange={v => update('name_offset', v)} display={`${cfg.name_offset}px`} />
+                <Slider label="Mesafe (% avatar yarıçapı)" min={-50} max={200} step={5} value={cfg.name_offset} onChange={v => update('name_offset', v)} display={`%${cfg.name_offset}`} />
                 <Slider label="Eğim" min={-180} max={180} step={5} value={cfg.name_rotation} onChange={v => update('name_rotation', v)} display={`${cfg.name_rotation}°`} />
-                <Slider label="Boyut" min={10} max={22} step={1} value={cfg.name_size} onChange={v => update('name_size', v)} display={`${cfg.name_size}px`} />
+                <Slider label="Boyut (% avatar)" min={6} max={25} step={1} value={cfg.name_size} onChange={v => update('name_size', v)} display={`%${cfg.name_size}`} />
                 <ColorInput label="Renk" value={cfg.name_color} onChange={v => update('name_color', v)} />
                 <Toggle label="Kalın yazı" checked={cfg.name_bold} onChange={v => update('name_bold', v)} />
                 <Slider label="Opaklık" min={0.3} max={1} step={0.05} value={cfg.name_opacity} onChange={v => update('name_opacity', v)} display={`${Math.round(cfg.name_opacity * 100)}%`} />
@@ -990,8 +992,14 @@ function NamePreviewSvg({ cfg, avatarSize, stageCenter }: {
   stageCenter: number;
 }) {
   const sampleName = 'Murat Berxo'; // önizleme örneği — mobilde gerçek user.display_name
-  const r = avatarSize / 2 + cfg.name_offset;
-  const svgSize = (r + cfg.name_size) * 2.4; // SVG canvas; rotation ve text overflow için bolca pay
+  // ★ 2026-05-11 YÜZDELİK: name_offset = % avatar yarıçapı, name_size = % avatar boyutu
+  //   Mini (60px) → font 8.4, mesafe ~7.5; Profile (200px) → font 28, mesafe ~25
+  //   Her boyutta ORANTILI görünüm (sabit pixel yerine).
+  const radiusBase = avatarSize / 2;
+  const offsetPx = (cfg.name_offset / 100) * radiusBase;
+  const r = radiusBase + offsetPx;
+  const fontPx = Math.max(8, (cfg.name_size / 100) * avatarSize);
+  const svgSize = (r + fontPx) * 2.4; // SVG canvas; rotation ve text overflow için bolca pay
   const cx = svgSize / 2;
   const cy = svgSize / 2;
   const fontWeight = cfg.name_bold ? 700 : 400;
@@ -1014,13 +1022,14 @@ function NamePreviewSvg({ cfg, avatarSize, stageCenter }: {
       break;
     case 'flat':
     default: {
-      // Konuma göre düz çizgi
-      const len = avatarSize + 80;
+      // Konuma göre düz çizgi — extension uzunluğu da avatara orantılı
+      const len = avatarSize * 1.6;
+      const sideExt = avatarSize * 0.5;
       switch (cfg.name_position) {
         case 'top':    pathD = `M ${cx - len / 2} ${cy - r} L ${cx + len / 2} ${cy - r}`; break;
-        case 'bottom': pathD = `M ${cx - len / 2} ${cy + r + cfg.name_size} L ${cx + len / 2} ${cy + r + cfg.name_size}`; break;
-        case 'left':   pathD = `M ${cx - r - 60} ${cy} L ${cx - r + 60} ${cy}`; textAnchor = 'end'; break;
-        case 'right':  pathD = `M ${cx + r - 60} ${cy} L ${cx + r + 60} ${cy}`; textAnchor = 'start'; break;
+        case 'bottom': pathD = `M ${cx - len / 2} ${cy + r + fontPx} L ${cx + len / 2} ${cy + r + fontPx}`; break;
+        case 'left':   pathD = `M ${cx - r - sideExt} ${cy} L ${cx - r + sideExt} ${cy}`; textAnchor = 'end'; break;
+        case 'right':  pathD = `M ${cx + r - sideExt} ${cy} L ${cx + r + sideExt} ${cy}`; textAnchor = 'start'; break;
       }
       break;
     }
@@ -1092,7 +1101,7 @@ function NamePreviewSvg({ cfg, avatarSize, stageCenter }: {
         )}
       </defs>
       <text
-        fontSize={cfg.name_size}
+        fontSize={fontPx}
         fontWeight={fontWeight}
         fontFamily="Inter, system-ui, sans-serif"
         fill={cfg.name_shimmer ? `url(#shimmer-${pathId})` : cfg.name_color}
