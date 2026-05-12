@@ -694,11 +694,13 @@ export default function FrameEditor({ item }: { item: any }) {
             </div>
           )}
 
-          {/* ★ Kullanıcı Adı — SVG textPath ile düz/yay/dairesel render */}
+          {/* ★ Kullanıcı Adı — SVG textPath ile düz/yay/dairesel render
+             ★ v1.3.62 PARİTE FIX: frameSize = mobileSize (APK'daki `size`). Avatar_ratio
+             değişimi name'i etkilemez (APK'daki davranışla aynı). */}
           {cfg.name_enabled && (
             <NamePreviewSvg
               cfg={cfg}
-              avatarSize={avatarSize}
+              frameSize={mobileSize}
               stageCenter={stageCenter}
             />
           )}
@@ -1313,19 +1315,20 @@ export default function FrameEditor({ item }: { item: any }) {
  * 4 şekil: flat (düz) / arc-top (yay yukarı) / arc-bottom (yay aşağı) / circle (dairesel).
  * Mobile karşılığı react-native-svg ile yapılır (post-launch).
  */
-function NamePreviewSvg({ cfg, avatarSize, stageCenter }: {
+function NamePreviewSvg({ cfg, frameSize, stageCenter }: {
   cfg: FrameConfig;
-  avatarSize: number;
+  frameSize: number;
   stageCenter: number;
 }) {
   const sampleName = 'Burak DENİZ'; // ★ v1.3.59: APK varsayılan kullanıcı (44burakdeniz) ile birebir karşılaştırma için
-  // ★ 2026-05-11 YÜZDELİK: name_offset = % avatar yarıçapı, name_size = % avatar boyutu
-  //   Mini (60px) → font 8.4, mesafe ~7.5; Profile (200px) → font 28, mesafe ~25
-  //   Her boyutta ORANTILI görünüm (sabit pixel yerine).
-  const radiusBase = avatarSize / 2;
+  // ★ v1.3.62 PARİTE FIX: APK NameOverlay `size` (frame size) tabanlı hesap kullanıyor.
+  //   Eski `avatarSize` (frame × avatar_ratio) tabanı, avatar_ratio<1 değerlerde
+  //   admin'de name'i KÜÇÜK gösteriyordu, APK'da BÜYÜK. Şimdi her ikisi frameSize tabanlı.
+  //   APK: fontPx = (name_size/100) × size; offsetPx = (name_offset/100) × (size/2)
+  const radiusBase = frameSize / 2;
   const offsetPx = (cfg.name_offset / 100) * radiusBase;
   const r = radiusBase + offsetPx;
-  const fontPx = Math.max(8, (cfg.name_size / 100) * avatarSize);
+  const fontPx = Math.max(8, (cfg.name_size / 100) * frameSize);
   const svgSize = (r + fontPx) * 2.4; // SVG canvas; rotation ve text overflow için bolca pay
   const cx = svgSize / 2;
   const cy = svgSize / 2;
@@ -1349,9 +1352,9 @@ function NamePreviewSvg({ cfg, avatarSize, stageCenter }: {
       break;
     case 'flat':
     default: {
-      // Konuma göre düz çizgi — extension uzunluğu da avatara orantılı
-      const len = avatarSize * 1.6;
-      const sideExt = avatarSize * 0.5;
+      // Konuma göre düz çizgi — extension uzunluğu frameSize'a orantılı (parite)
+      const len = frameSize * 1.6;
+      const sideExt = frameSize * 0.5;
       switch (cfg.name_position) {
         case 'top':    pathD = `M ${cx - len / 2} ${cy - r} L ${cx + len / 2} ${cy - r}`; break;
         case 'bottom': pathD = `M ${cx - len / 2} ${cy + r + fontPx} L ${cx + len / 2} ${cy + r + fontPx}`; break;
