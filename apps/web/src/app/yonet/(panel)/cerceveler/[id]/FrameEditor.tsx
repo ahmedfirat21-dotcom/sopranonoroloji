@@ -811,7 +811,7 @@ export default function FrameEditor({ item }: { item: any }) {
             {cfg.bg_halo_enabled && (
               <>
                 <ColorInput label="Halo rengi" value={cfg.bg_halo_color} onChange={v => update('bg_halo_color', v)} />
-                <Slider label="Boyut" min={1.0} max={3.0} step={0.1} value={cfg.bg_halo_size} onChange={v => update('bg_halo_size', v)} display={`${cfg.bg_halo_size.toFixed(1)}x`} />
+                <Slider label="Boyut" min={1.0} max={2.0} step={0.1} value={cfg.bg_halo_size} onChange={v => update('bg_halo_size', v)} display={`${cfg.bg_halo_size.toFixed(1)}x`} />
                 <Slider label="Yoğunluk" min={0.2} max={1} step={0.05} value={cfg.bg_halo_intensity} onChange={v => update('bg_halo_intensity', v)} display={`${Math.round(cfg.bg_halo_intensity * 100)}%`} />
               </>
             )}
@@ -827,9 +827,9 @@ export default function FrameEditor({ item }: { item: any }) {
         </Section>
 
         <Section title="Frame — Konum & Boyut" icon={<Move className="w-4 h-4 text-purple-400" />}>
-          <Slider label="Ölçek (Avatar'a göre)" min={0.8} max={2.0} step={0.02} value={cfg.frame_scale} onChange={v => update('frame_scale', v)} display={`${cfg.frame_scale.toFixed(2)}x`} />
-          <Slider label="Yatay Kaydır" min={-0.3} max={0.3} step={0.01} value={cfg.frame_offset_x} onChange={v => update('frame_offset_x', v)} display={`${(cfg.frame_offset_x * 100).toFixed(0)}%`} />
-          <Slider label="Dikey Kaydır" min={-0.3} max={0.3} step={0.01} value={cfg.frame_offset_y} onChange={v => update('frame_offset_y', v)} display={`${(cfg.frame_offset_y * 100).toFixed(0)}%`} />
+          <Slider label="Ölçek (Avatar'a göre)" min={0.8} max={1.5} step={0.02} value={cfg.frame_scale} onChange={v => update('frame_scale', v)} display={`${cfg.frame_scale.toFixed(2)}x`} />
+          <Slider label="Yatay Kaydır" min={-0.15} max={0.15} step={0.01} value={cfg.frame_offset_x} onChange={v => update('frame_offset_x', v)} display={`${(cfg.frame_offset_x * 100).toFixed(0)}%`} />
+          <Slider label="Dikey Kaydır" min={-0.15} max={0.15} step={0.01} value={cfg.frame_offset_y} onChange={v => update('frame_offset_y', v)} display={`${(cfg.frame_offset_y * 100).toFixed(0)}%`} />
           <Slider label="Opaklık" min={0.3} max={1} step={0.05} value={cfg.frame_opacity} onChange={v => update('frame_opacity', v)} display={`${Math.round(cfg.frame_opacity * 100)}%`} />
         </Section>
 
@@ -853,7 +853,7 @@ export default function FrameEditor({ item }: { item: any }) {
           <Slider label="Renk Tonu (Hue)" min={0} max={360} step={5} value={cfg.lottie_hue_rotate} onChange={v => update('lottie_hue_rotate', v)} display={`${cfg.lottie_hue_rotate}°`} />
           <Slider label="Parlaklık" min={0.3} max={2} step={0.05} value={cfg.lottie_brightness} onChange={v => update('lottie_brightness', v)} display={`${cfg.lottie_brightness.toFixed(2)}x`} />
           <Slider label="Doygunluk" min={0} max={2} step={0.05} value={cfg.lottie_saturation} onChange={v => update('lottie_saturation', v)} display={`${cfg.lottie_saturation.toFixed(2)}x`} />
-          <Slider label="Animasyon Hızı" min={0.25} max={3} step={0.05} value={cfg.lottie_speed} onChange={v => update('lottie_speed', v)} display={`${cfg.lottie_speed.toFixed(2)}x`} />
+          <Slider label="Animasyon Hızı" min={0.25} max={2} step={0.05} value={cfg.lottie_speed} onChange={v => update('lottie_speed', v)} display={`${cfg.lottie_speed.toFixed(2)}x`} />
         </Section>
 
         {/* ★ 2026-05-11: Hareket & Efekt — opsiyonel canlandırıcı katmanlar */}
@@ -956,9 +956,9 @@ export default function FrameEditor({ item }: { item: any }) {
                     <option value="circle">○ Dairesel (avatar etrafında)</option>
                   </select>
                 </label>
-                <Slider label="Mesafe (% avatar yarıçapı)" min={-50} max={200} step={5} value={cfg.name_offset} onChange={v => update('name_offset', v)} display={`%${cfg.name_offset}`} />
-                <Slider label="Eğim" min={-180} max={180} step={5} value={cfg.name_rotation} onChange={v => update('name_rotation', v)} display={`${cfg.name_rotation}°`} />
-                <Slider label="Boyut (% avatar)" min={6} max={25} step={1} value={cfg.name_size} onChange={v => update('name_size', v)} display={`%${cfg.name_size}`} />
+                <Slider label="Mesafe (% avatar yarıçapı)" min={-30} max={80} step={5} value={cfg.name_offset} onChange={v => update('name_offset', v)} display={`%${cfg.name_offset}`} />
+                <Slider label="Eğim" min={-90} max={90} step={5} value={cfg.name_rotation} onChange={v => update('name_rotation', v)} display={`${cfg.name_rotation}°`} />
+                <Slider label="Boyut (% avatar)" min={6} max={18} step={1} value={cfg.name_size} onChange={v => update('name_size', v)} display={`%${cfg.name_size}`} />
                 <ColorInput label="Renk" value={cfg.name_color} onChange={v => update('name_color', v)} />
                 <Toggle label="Kalın yazı" checked={cfg.name_bold} onChange={v => update('name_bold', v)} />
                 <Slider label="Opaklık" min={0.3} max={1} step={0.05} value={cfg.name_opacity} onChange={v => update('name_opacity', v)} display={`${Math.round(cfg.name_opacity * 100)}%`} />
