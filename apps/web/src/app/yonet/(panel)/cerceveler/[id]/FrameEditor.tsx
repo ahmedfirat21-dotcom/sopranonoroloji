@@ -226,7 +226,11 @@ const BADGE_POSITIONS: Record<string, { x: number; y: number; label: string }> =
 // ★ v1.3.59: APK ile birebir karşılaştırma için default avatar (avatar_m_1.jpg)
 //   kullanıcı şikayeti: "web admindeki avatarı APK ile aynı yap, hataları net göreyim".
 const SAMPLE_AVATAR = '/avatar_m_1.jpg';
-const STAGE_SIZE = 480;
+// ★ v1.3.60: Sahne boyutu APK ProfileHero kart genişliğine eşit (~360px).
+//   Avatar/sahne oranı = APK avatar/kart oranı → ince ayar slider'larında
+//   görünüm birebir parite. 480px (eski) APK'dan büyüktü, slider çekildiğinde
+//   önizlemede APK'dakinden farklı boyut görünüyordu.
+const STAGE_SIZE = 360;
 // ★ v213e: Mobile size selector — gerçek emülatör pixel boyutlarına göre simulate
 // ★ v1.3.58: APK'daki GERÇEK avatar render boyutları (px). Önizleme aynı boyutta
 //   render eder — kullanıcı slider'ı sürüklediği boyut APK'da gözle gördüğü
