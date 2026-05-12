@@ -234,7 +234,7 @@ const MOBILE_SIZES = [
   { v: 80, l: 'Dinleyici (80)' },     // ListenerGrid
   { v: 120, l: 'Konuşmacı (120)' },   // SpeakerSection grid speakers
   { v: 140, l: 'Sahne Host (140)' },  // SpeakerSection host (cardWidth maxSize)
-  { v: 92, l: 'Profil (92)' },        // ProfileHero
+  { v: 160, l: 'Profil (160)' },      // ProfileHero (modern büyük avatar)
 ];
 
 // Frame Lottie haritası — frameLottieRegistry.ts ile senkron
@@ -353,7 +353,7 @@ export default function FrameEditor({ item }: { item: any }) {
       listener: 80,
       speaker: 120,
       stage_host: 140,
-      profile: 92,
+      profile: 160,
     };
     setMobileSize(sizeMap[editingSize]);
   }, [editingSize]);
@@ -722,7 +722,7 @@ export default function FrameEditor({ item }: { item: any }) {
               { k: 'listener', l: 'Dinleyici', desc: '80px' },
               { k: 'speaker', l: 'Konuşmacı', desc: '120px' },
               { k: 'stage_host', l: 'Sahne Host', desc: '140px' },
-              { k: 'profile', l: 'Profil', desc: '92px' },
+              { k: 'profile', l: 'Profil', desc: '160px' },
             ] as const).map(b => {
               const active = editingSize === b.k;
               const hasOverride = b.k !== 'default' && !!(rawCfg as any).size_overrides?.[b.k];
