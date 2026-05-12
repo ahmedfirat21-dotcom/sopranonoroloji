@@ -223,7 +223,9 @@ const BADGE_POSITIONS: Record<string, { x: number; y: number; label: string }> =
   br: { x: 0.5,  y: 0.5,  label: '↘ Sağ-Alt' },
 };
 
-const SAMPLE_AVATAR = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&h=400&fit=crop';
+// ★ v1.3.59: APK ile birebir karşılaştırma için default avatar (avatar_m_1.jpg)
+//   kullanıcı şikayeti: "web admindeki avatarı APK ile aynı yap, hataları net göreyim".
+const SAMPLE_AVATAR = '/avatar_m_1.jpg';
 const STAGE_SIZE = 480;
 // ★ v213e: Mobile size selector — gerçek emülatör pixel boyutlarına göre simulate
 // ★ v1.3.58: APK'daki GERÇEK avatar render boyutları (px). Önizleme aynı boyutta
