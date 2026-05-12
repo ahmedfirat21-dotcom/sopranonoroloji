@@ -1352,8 +1352,9 @@ function NamePreviewSvg({ cfg, frameSize, stageCenter }: {
       pathD = `M ${cx - r} ${cy} A ${r} ${r} 0 0 0 ${cx + r} ${cy}`;
       break;
     case 'circle':
-      // Tam daire — saat 9 yönünden başla, saat yönünde
-      pathD = `M ${cx - r} ${cy} A ${r} ${r} 0 1 1 ${cx + r} ${cy} A ${r} ${r} 0 1 1 ${cx - r} ${cy}`;
+      // ★ v1.3.62 PARİTE: APK ile aynı — TOP'tan başla (12 yönü), saat yönünde tam daire.
+      //   Eski LEFT (9 yönü) başlangıcı text'i yan döndürüyordu, APK üstten başlar.
+      pathD = `M ${cx} ${cy - r} A ${r} ${r} 0 1 1 ${cx - 0.01} ${cy - r} Z`;
       break;
     case 'flat':
     default: {
