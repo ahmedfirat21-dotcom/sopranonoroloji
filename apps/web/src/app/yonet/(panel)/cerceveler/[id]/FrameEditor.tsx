@@ -400,7 +400,12 @@ export default function FrameEditor({ item }: { item: any }) {
   //   APK'da PngFrame:    frameSize  = size * meta.scale * dynScale
   //   Eski hata: web admin meta.scale'i hesaba katmıyordu (sadece frame_scale kullanıyordu),
   //   bu yüzden aurelius gibi scale=1.8 frame'ler admin'de çok küçük, APK'da çok büyük çıkıyordu.
-  const frameContainerSize = Math.round(mobileSize * metaScale * cfg.frame_scale);
+  // ★ v1.3.62 PARİTE: Admin'den yüklenen frame'ler RemoteAssetFrame ile render edilir;
+  //   image için 1.4x, lottie için 1.8x extra büyütme uygular. Registry'de olmayan
+  //   (registryEntry yoksa) frame'lere bu çarpanı admin de uygular ki halka avatardan
+  //   büyük gözüksün, custom shape (hexagon/star/diamond) köşeleri APK ile aynı görünsün.
+  const remoteFactor = registryEntry ? 1.0 : (isLottie ? 1.8 : 1.4);
+  const frameContainerSize = Math.round(mobileSize * metaScale * cfg.frame_scale * remoteFactor);
   const avatarSize = Math.round(mobileSize * cfg.avatar_ratio);
   const stageCenter = STAGE_SIZE / 2;
 
