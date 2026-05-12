@@ -1249,6 +1249,12 @@ export default function FrameEditor({ item }: { item: any }) {
           0%, 100% { filter: brightness(1) drop-shadow(0 0 2px currentColor) }
           50%      { filter: brightness(1.3) drop-shadow(0 0 8px currentColor) drop-shadow(0 0 14px currentColor) }
         }
+        /* ★ v1.3.60: APK shimmer parite — outer wrapper opacity 0.4 ↔ 1.0 pulse
+           (Animated.View shimmerAnim ile birebir). */
+        @keyframes name-shimmer-opacity {
+          0%, 100% { opacity: 1 }
+          50%      { opacity: 0.4 }
+        }
       `}</style>
     </div>
   );
@@ -1327,6 +1333,8 @@ function NamePreviewSvg({ cfg, avatarSize, stageCenter }: {
     cfg.name_breathe && 'name-anim-breathe 4s ease-in-out infinite',
     cfg.name_wobble && 'name-anim-wobble 2s ease-in-out infinite',
     cfg.name_rotation_continuous && `name-anim-spin ${cfg.name_rotation_speed}s linear infinite`,
+    // ★ v1.3.60: APK parite — shimmer için outer opacity pulse (APK Animated.View)
+    cfg.name_shimmer && 'name-shimmer-opacity 2.4s ease-in-out infinite',
   ].filter(Boolean).join(', ') || undefined;
 
   return (
@@ -1377,13 +1385,17 @@ function NamePreviewSvg({ cfg, avatarSize, stageCenter }: {
         fontSize={fontPx}
         fontWeight={fontWeight}
         fontFamily="Inter, system-ui, sans-serif"
-        fill={cfg.name_shimmer ? `url(#shimmer-${pathId})` : cfg.name_color}
+        // ★ v1.3.60: APK parite — name_shimmer için linearGradient mask fill
+        //   yerine düz renk + outer wrapper opacity pulse (APK Animated.View opacity
+        //   yapısı). Gradient text RN'de yok, web admin önizleme APK'yı simüle eder.
+        fill={cfg.name_color}
         style={{
-          // Glow yapısı: temel siyah outline + opsiyonel renkli glow halkası.
-          // intensity arttıkça blur artar; pulse aktifse animation ile dalgalanır.
+          // ★ v1.3.60: APK parite — tek katman text-shadow (RN textShadow tek katman
+          //   destekler). Eski 3 katman (outline + glow + outer) APK'da imkansız;
+          //   tek shadow radius (14+intensity*18) ile APK formülü.
           textShadow: cfg.name_glow
-            ? `0 1px 3px rgba(0,0,0,0.7), 0 0 ${4 + cfg.name_glow_intensity * 6}px ${cfg.name_glow_color}, 0 0 ${10 + cfg.name_glow_intensity * 12}px ${cfg.name_glow_color}88`
-            : '0 1px 3px rgba(0,0,0,0.7)',
+            ? `0 1px 1px rgba(0,0,0,0.7), 0 0 ${14 + cfg.name_glow_intensity * 18}px ${cfg.name_glow_color}`
+            : '0 1px 1px rgba(0,0,0,0.7)',
           paintOrder: 'stroke',
           stroke: 'rgba(0,0,0,0.4)',
           strokeWidth: 1,
