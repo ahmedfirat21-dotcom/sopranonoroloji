@@ -226,12 +226,15 @@ const BADGE_POSITIONS: Record<string, { x: number; y: number; label: string }> =
 const SAMPLE_AVATAR = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&h=400&fit=crop';
 const STAGE_SIZE = 480;
 // ★ v213e: Mobile size selector — gerçek emülatör pixel boyutlarına göre simulate
+// ★ v1.3.58: APK'daki GERÇEK avatar render boyutları (px). Önizleme aynı boyutta
+//   render eder — kullanıcı slider'ı sürüklediği boyut APK'da gözle gördüğü
+//   sonuca eşit.
 const MOBILE_SIZES = [
-  { v: 60, l: 'Mini (60)' },
-  { v: 80, l: 'Listener (80)' },
-  { v: 120, l: 'Speaker (120)' },
-  { v: 160, l: 'Stage Host (160)' },
-  { v: 200, l: 'Profile (200)' },
+  { v: 40, l: 'Mini (40)' },          // home header, room kart, DM listesi
+  { v: 80, l: 'Dinleyici (80)' },     // ListenerGrid
+  { v: 120, l: 'Konuşmacı (120)' },   // SpeakerSection grid speakers
+  { v: 140, l: 'Sahne Host (140)' },  // SpeakerSection host (cardWidth maxSize)
+  { v: 92, l: 'Profil (92)' },        // ProfileHero
 ];
 
 // Frame Lottie haritası — frameLottieRegistry.ts ile senkron
@@ -345,12 +348,12 @@ export default function FrameEditor({ item }: { item: any }) {
   // ★ editingSize değişince önizleme boyutunu o boyuta auto-tune et
   useEffect(() => {
     const sizeMap: Record<typeof editingSize, number> = {
-      default: 160,
-      mini: 60,
+      default: 140,
+      mini: 40,
       listener: 80,
       speaker: 120,
-      stage_host: 160,
-      profile: 200,
+      stage_host: 140,
+      profile: 92,
     };
     setMobileSize(sizeMap[editingSize]);
   }, [editingSize]);
@@ -715,11 +718,11 @@ export default function FrameEditor({ item }: { item: any }) {
           <div className="grid grid-cols-3 gap-1.5">
             {([
               { k: 'default', l: 'Tümü (Temel)', desc: 'Tüm boyutlar' },
-              { k: 'mini', l: 'Mini', desc: '60px' },
+              { k: 'mini', l: 'Mini', desc: '40px' },
               { k: 'listener', l: 'Dinleyici', desc: '80px' },
               { k: 'speaker', l: 'Konuşmacı', desc: '120px' },
-              { k: 'stage_host', l: 'Sahne Host', desc: '160px' },
-              { k: 'profile', l: 'Profil', desc: '200px' },
+              { k: 'stage_host', l: 'Sahne Host', desc: '140px' },
+              { k: 'profile', l: 'Profil', desc: '92px' },
             ] as const).map(b => {
               const active = editingSize === b.k;
               const hasOverride = b.k !== 'default' && !!(rawCfg as any).size_overrides?.[b.k];
