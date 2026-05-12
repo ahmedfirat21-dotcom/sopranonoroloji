@@ -764,7 +764,7 @@ export default function FrameEditor({ item }: { item: any }) {
         </Section>
 
         <Section title="Avatar — İç Doluluk" icon={<Award className="w-4 h-4 text-amber-400" />}>
-          <Slider label="Avatar Oranı" min={0.6} max={1.05} step={0.01} value={cfg.avatar_ratio} onChange={v => update('avatar_ratio', v)} display={`${Math.round(cfg.avatar_ratio * 100)}%`} />
+          <Slider label="Avatar Oranı" min={0.6} max={1.25} step={0.01} value={cfg.avatar_ratio} onChange={v => update('avatar_ratio', v)} display={`${Math.round(cfg.avatar_ratio * 100)}%`} />
           <p className="text-[11px] text-slate-500">Avatar'ın size'a göre boyutu. Frame iç dairesini doldurmasını sağlar.</p>
         </Section>
 
