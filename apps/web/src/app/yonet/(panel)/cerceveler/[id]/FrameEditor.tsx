@@ -1264,7 +1264,7 @@ function NamePreviewSvg({ cfg, avatarSize, stageCenter }: {
   avatarSize: number;
   stageCenter: number;
 }) {
-  const sampleName = 'Murat Berxo'; // önizleme örneği — mobilde gerçek user.display_name
+  const sampleName = 'Burak DENİZ'; // ★ v1.3.59: APK varsayılan kullanıcı (44burakdeniz) ile birebir karşılaştırma için
   // ★ 2026-05-11 YÜZDELİK: name_offset = % avatar yarıçapı, name_size = % avatar boyutu
   //   Mini (60px) → font 8.4, mesafe ~7.5; Profile (200px) → font 28, mesafe ~25
   //   Her boyutta ORANTILI görünüm (sabit pixel yerine).
