@@ -239,29 +239,54 @@ const MOBILE_SIZES = [
   { v: 160, l: 'Profil (160)' },      // ProfileHero (modern büyük avatar)
 ];
 
-// Frame Lottie haritası — frameLottieRegistry.ts ile senkron
-const FRAME_LOTTIE_MAP: Record<string, string> = {
-  'aurelius': '/lotties/Avatar frame.json',
-  'lunaris': '/lotties/Avatar-Frame1.json',
-  'rose-eternel': '/lotties/Avatar_Frame2.json',
-  'cadence-soprano': '/lotties/Profile Frame.json',
-  'soprano-aura': '/lotties/SopranoAura.json',
-  'midnight-amethyst': '/lotties/MidnightAmethyst.json',
-  'sunrise-gold': '/lotties/SunriseGold.json',
-  'ocean-pearl': '/lotties/OceanPearl.json',
-  'ruby-flame': '/lotties/RubyFlame.json',
-  'neon-pulse': '/lotties/NeonPulse.json',
-  'celestial-orbit': '/lotties/CelestialOrbit.json',
-  'hex-prism': '/lotties/HexPrism.json',
-  'pulse-wave': '/lotties/PulseWave.json',
-  'eclipse-corona': '/lotties/EclipseCorona.json',
-  'glitch-matrix': '/lotties/GlitchMatrix.json',
+// ★ v1.3.61: Frame Lottie haritası — frameLottieRegistry.ts ile birebir senkron.
+//   meta_scale: APK'daki meta.scale değeri. Bu değer Lottie/PNG'nin avatar boyutuna
+//   göre ne kadar büyütüleceğini belirler. Web admin önizleme bu değeri hesaba
+//   KATMALIDIR yoksa preview ile APK boyutları uyuşmaz.
+//   avatar_ratio: APK'daki avatarRatio — avatarın frame iç dairesine oturması için.
+interface FrameLottieEntry {
+  url: string;
+  /** APK'daki meta.scale — Lottie kompozisyonunu avatar boyutuna göre kaç kat genişlet */
+  meta_scale: number;
+  /** APK'daki avatarRatio — avatarın frame içine oturma oranı */
+  avatar_ratio: number;
+}
+const FRAME_LOTTIE_MAP: Record<string, FrameLottieEntry> = {
+  // VIP kanatlı frame'ler — meta.scale 1.8, avatarRatio 0.78
+  'aurelius':        { url: '/lotties/Avatar frame.json',    meta_scale: 1.8,  avatar_ratio: 0.78 },
+  'lunaris':         { url: '/lotties/Avatar-Frame1.json',   meta_scale: 1.8,  avatar_ratio: 0.78 },
+  'rose-eternel':    { url: '/lotties/Avatar_Frame2.json',   meta_scale: 1.8,  avatar_ratio: 0.78 },
+  'cadence-soprano': { url: '/lotties/Profile Frame.json',   meta_scale: 1.85, avatar_ratio: 0.78 },
+  // SopranoAura — scale 1.14, avatar full
+  'soprano-aura':    { url: '/lotties/SopranoAura.json',     meta_scale: 1.14, avatar_ratio: 1.0  },
+  // Premium scale=1.0 frame'ler — avatarRatio 0.92
+  'midnight-amethyst': { url: '/lotties/MidnightAmethyst.json', meta_scale: 1.0, avatar_ratio: 0.92 },
+  'sunrise-gold':      { url: '/lotties/SunriseGold.json',     meta_scale: 1.0, avatar_ratio: 0.92 },
+  'ocean-pearl':       { url: '/lotties/OceanPearl.json',      meta_scale: 1.0, avatar_ratio: 0.92 },
+  'ruby-flame':        { url: '/lotties/RubyFlame.json',       meta_scale: 1.0, avatar_ratio: 0.92 },
+  'neon-pulse':        { url: '/lotties/NeonPulse.json',       meta_scale: 1.0, avatar_ratio: 0.92 },
+  // Egzantrik çerçeveler — scale 1.0, avatarRatio 0.92
+  'celestial-orbit':   { url: '/lotties/CelestialOrbit.json',  meta_scale: 1.0, avatar_ratio: 0.92 },
+  'hex-prism':         { url: '/lotties/HexPrism.json',        meta_scale: 1.0, avatar_ratio: 0.92 },
+  'pulse-wave':        { url: '/lotties/PulseWave.json',       meta_scale: 1.0, avatar_ratio: 0.92 },
+  'eclipse-corona':    { url: '/lotties/EclipseCorona.json',   meta_scale: 1.0, avatar_ratio: 0.92 },
+  'glitch-matrix':     { url: '/lotties/GlitchMatrix.json',    meta_scale: 1.0, avatar_ratio: 0.92 },
+  // TealRibbon — scale 1.15, avatarRatio 0.85
+  'teal-ribbon':       { url: '/lotties/TealRibbon.json',      meta_scale: 1.15, avatar_ratio: 0.85 },
 };
 
 export default function FrameEditor({ item }: { item: any }) {
   const initialCfg: FrameConfig = useMemo(() => {
     const fromCfg = (item.editor_config as any)?.frame_config;
-    return { ...DEFAULT_CONFIG, ...(fromCfg || {}) };
+    // ★ v1.3.61: Registry'deki avatar_ratio'yu default olarak kullan.
+    //   APK'da getFrameAvatarRatio(frameId) → registry değeri döner;
+    //   admin'de de aynı varsayılan kullanılmalı (eşleşme için).
+    const entry = FRAME_LOTTIE_MAP[item.id];
+    const registryDefaults: Partial<FrameConfig> = {};
+    if (entry) {
+      registryDefaults.avatar_ratio = entry.avatar_ratio;
+    }
+    return { ...DEFAULT_CONFIG, ...registryDefaults, ...(fromCfg || {}) };
   }, [item.id]);
 
   // ★ v1.3.54: Per-size config — DB'de top-level config + size_overrides[sizeKey].
@@ -279,13 +304,19 @@ export default function FrameEditor({ item }: { item: any }) {
   // ★ Mobile boyut: önizleme bu boyutta (gerçek emülatör pixel), oran kalır
   const [mobileSize, setMobileSize] = useState(160);
 
+  // ★ v1.3.61: Registry meta — APK'daki meta.scale ve avatarRatio değerleri.
+  //   Önizleme bu değerleri hesaba katmalı yoksa boyutlar uyuşmaz.
+  const registryEntry = FRAME_LOTTIE_MAP[item.id] || null;
+  const metaScale = registryEntry?.meta_scale ?? 1.0;
+  const registryAvatarRatio = registryEntry?.avatar_ratio ?? 0.92;
+
   // ★ 2026-05-11: asset_url (DB'deki yeni kolon) öncelikli — web admin'den yüklenen
   //   yeni ürünlerin id'si hardcoded FRAME_LOTTIE_MAP'te olmaz, ama asset_url'de var.
   //   Eski editor_config.lottie_url ve FRAME_LOTTIE_MAP backward-compat için kalıyor.
   const assetUrl: string | null =
     (typeof item.asset_url === 'string' && item.asset_url) ||
     (item.editor_config as any)?.lottie_url ||
-    FRAME_LOTTIE_MAP[item.id] ||
+    registryEntry?.url ||
     null;
   // Asset Lottie mi (.json) yoksa görsel mi (PNG/JPG/SVG/GIF/WebP)?
   const isLottie = !!assetUrl && /\.json($|\?)/i.test(assetUrl);
@@ -360,10 +391,12 @@ export default function FrameEditor({ item }: { item: any }) {
     setMobileSize(sizeMap[editingSize]);
   }, [editingSize]);
 
-  // ★ v213e: Mobile-matching — emülatörde size=mobileSize için aynı pixel hesabı.
-  //   StatusAvatar mobile: avatarSize = size * avatar_ratio (centered in size wrapper)
-  //   AvatarFrame mobile: lottieSize = size * scale (overlay)
-  const frameContainerSize = Math.round(mobileSize * cfg.frame_scale);
+  // ★ v1.3.61: APK ile birebir parite — frame boyutu hesaplaması.
+  //   APK'da LottieFrame: lottieSize = size * meta.scale * dynScale
+  //   APK'da PngFrame:    frameSize  = size * meta.scale * dynScale
+  //   Eski hata: web admin meta.scale'i hesaba katmıyordu (sadece frame_scale kullanıyordu),
+  //   bu yüzden aurelius gibi scale=1.8 frame'ler admin'de çok küçük, APK'da çok büyük çıkıyordu.
+  const frameContainerSize = Math.round(mobileSize * metaScale * cfg.frame_scale);
   const avatarSize = Math.round(mobileSize * cfg.avatar_ratio);
   const stageCenter = STAGE_SIZE / 2;
 
@@ -381,8 +414,19 @@ export default function FrameEditor({ item }: { item: any }) {
           </span>
         </h2>
         <div
-          className="relative rounded-lg overflow-hidden shadow-2xl"
-          style={{ width: STAGE_SIZE, height: STAGE_SIZE, background: 'linear-gradient(180deg, #1e293b 0%, #0a0f1a 100%)' }}
+          className="relative rounded-2xl overflow-hidden shadow-2xl"
+          style={{
+            width: STAGE_SIZE,
+            height: STAGE_SIZE,
+            // ★ v1.3.60: APK ProfileHero card görünümü ile birebir parite —
+            //   slate diagonal gradient + amber radial overlay (ProfileHero s.card
+            //   ile aynı katmanlar). Slider çekildiğinde APK kart görünümü simüle.
+            background:
+              'radial-gradient(ellipse 70% 50% at 50% 0%, rgba(245,158,11,0.08), transparent 60%),' +
+              'radial-gradient(ellipse 60% 40% at 0% 0%, rgba(245,158,11,0.20), transparent 50%),' +
+              'linear-gradient(135deg, #3a4658 0%, #2a3344 50%, #1a2030 100%)',
+            border: '1px solid rgba(255,255,255,0.04)',
+          }}
         >
           {/* Mock chat avatarları */}
           <div className="absolute top-3 left-3 flex gap-2 z-10">
@@ -816,7 +860,7 @@ export default function FrameEditor({ item }: { item: any }) {
             {cfg.bg_halo_enabled && (
               <>
                 <ColorInput label="Halo rengi" value={cfg.bg_halo_color} onChange={v => update('bg_halo_color', v)} />
-                <Slider label="Boyut" min={1.0} max={2.0} step={0.1} value={cfg.bg_halo_size} onChange={v => update('bg_halo_size', v)} display={`${cfg.bg_halo_size.toFixed(1)}x`} />
+                <Slider label="Boyut" min={1.0} max={3.0} step={0.1} value={cfg.bg_halo_size} onChange={v => update('bg_halo_size', v)} display={`${cfg.bg_halo_size.toFixed(1)}x`} />
                 <Slider label="Yoğunluk" min={0.2} max={1} step={0.05} value={cfg.bg_halo_intensity} onChange={v => update('bg_halo_intensity', v)} display={`${Math.round(cfg.bg_halo_intensity * 100)}%`} />
               </>
             )}
