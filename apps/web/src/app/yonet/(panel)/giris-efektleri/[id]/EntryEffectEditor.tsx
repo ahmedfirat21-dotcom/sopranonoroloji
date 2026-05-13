@@ -16,7 +16,11 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Lottie from 'lottie-react';
-import { Save, RotateCcw, Sparkles, Move, Repeat, MessageSquare, Settings as SettingsIcon, Wand2 } from 'lucide-react';
+import { Save, RotateCcw, Sparkles, Move, Repeat, MessageSquare, Settings as SettingsIcon, Wand2, Play, LogOut, Film, Wind, Volume2, Filter, Stars } from 'lucide-react';
+
+// ★ v117 (13 May 2026): Sekme sistemi — mevcut tek scroll panel 9 tab'a bölündü
+//   + yeni özellik tab'ları: Partikül, Sahne Efekti, Aura/Trail, Ses, Trigger.
+type Tab = 'konum' | 'giris' | 'loop' | 'cikis' | 'banner' | 'lottie' | 'partikul' | 'sahne' | 'aura' | 'ses' | 'trigger' | 'genel';
 
 // ─── Animasyon tipleri ──────────────────────────────────────────
 type IntroAnim = 'none' | 'fade' | 'scale-up' | 'scale-down' | 'slide-up' | 'slide-down' | 'slide-left' | 'slide-right' | 'bounce' | 'flip-x' | 'flip-y' | 'rotate-in' | 'zoom-blur';
@@ -85,6 +89,80 @@ interface EntryConfig {
   lottie_brightness: number;     // 0.5..2
   lottie_saturation: number;     // 0..2
   lottie_invert: boolean;
+
+  // ★ v117 — Yeni özellik paketleri (Skia render ile mobile)
+  // ─── Partikül Sistemi ───
+  particles_enabled: boolean;
+  particles_type: 'confetti' | 'glitter' | 'stars' | 'hearts' | 'fireworks' | 'snowflakes' | 'smoke' | 'sparkles' | 'coins';
+  particles_count: number;             // 10-150 — toplam partikül
+  particles_lifetime_ms: number;        // 500-5000 — her partiküler yaşam süresi
+  particles_speed: number;              // 0.5-3 — hız çarpanı
+  particles_spread_deg: number;          // 10-360 — yayılma açısı
+  particles_gravity: number;            // -1..1 (negatif=yukarı, pozitif=aşağı)
+  particles_size_min: number;           // 4-20
+  particles_size_max: number;           // 8-40
+  particles_color_palette: string[];    // renk array
+  particles_emit_x: number;             // 0-1 (canvas'a göre)
+  particles_emit_y: number;             // 0-1
+  particles_burst: boolean;              // true=ilk başta hepsi, false=sürekli emit
+  particles_emit_rate: number;          // 1-20/saniye (burst yoksa)
+  particles_fade_out: boolean;          // lifetime sonunda fade
+  particles_rotation_speed: number;     // -360..360 deg/sn
+
+  // ─── Sahne Efekti ───
+  scene_flash_enabled: boolean;
+  scene_flash_color: string;
+  scene_flash_intensity: number;        // 0-1
+  scene_flash_duration_ms: number;      // 100-2000
+  scene_shake_enabled: boolean;
+  scene_shake_intensity: number;        // 1-20 px amplitude
+  scene_shake_duration_ms: number;
+  scene_vignette_enabled: boolean;
+  scene_vignette_color: string;
+  scene_vignette_pulse: boolean;
+  scene_vignette_size: number;          // 0.3-1 (radius)
+  scene_bg_blur_enabled: boolean;
+  scene_bg_blur_max: number;            // 0-20 px
+  scene_bg_blur_duration_ms: number;
+  scene_color_tint_enabled: boolean;
+  scene_color_tint_color: string;
+  scene_color_tint_intensity: number;   // 0-1
+  scene_zoom_in_enabled: boolean;       // kamera push-in
+  scene_zoom_in_scale: number;          // 1-1.5
+  scene_zoom_in_duration_ms: number;
+
+  // ─── Avatar Aura / Trail / Halo ───
+  aura_enabled: boolean;
+  aura_color: string;
+  aura_size: number;                    // 1.2-3.0 (avatar size çarpanı)
+  aura_pulse: boolean;
+  aura_pulse_speed: number;             // sn
+  aura_intensity: number;               // 0.2-1.5
+  aura_layers: number;                  // 1-4 (kaç katman halo)
+  trail_enabled: boolean;
+  trail_color: string;
+  trail_length: number;                 // 3-15
+  trail_decay_ms: number;               // 200-2000
+  trail_thickness: number;              // 1-8 px
+  halo_ring_enabled: boolean;
+  halo_ring_color: string;
+  halo_ring_thickness: number;          // 1-6
+  halo_ring_spin_speed: number;         // sn (full cycle)
+  halo_ring_dashed: boolean;
+
+  // ─── Ses Efekti ───
+  sound_enabled: boolean;
+  sound_id: string;                     // 'whoosh' | 'magic' | 'sparkle' | 'horn' | 'chime' | ... veya custom URL
+  sound_volume: number;                 // 0-1
+  sound_delay_ms: number;               // 0-3000 (intro'dan sonra)
+
+  // ─── Trigger Koşulları ───
+  trigger_first_join_only: boolean;
+  trigger_min_tier: 'free' | 'plus' | 'pro' | 'gm';
+  trigger_owner_only: boolean;
+  trigger_cooldown_minutes: number;     // 0-60 (0=yok)
+  trigger_birthday_only: boolean;       // doğum gününde ekstra efekt
+  trigger_milestone: 'none' | 'first_join' | 'tier_upgrade' | 'streak_7' | 'streak_30';
 }
 
 const DEFAULT_CONFIG: EntryConfig = {
@@ -143,6 +221,75 @@ const DEFAULT_CONFIG: EntryConfig = {
   lottie_brightness: 1,
   lottie_saturation: 1,
   lottie_invert: false,
+
+  // ★ v117 defaults
+  particles_enabled: false,
+  particles_type: 'confetti',
+  particles_count: 40,
+  particles_lifetime_ms: 2500,
+  particles_speed: 1.0,
+  particles_spread_deg: 180,
+  particles_gravity: 0.3,
+  particles_size_min: 6,
+  particles_size_max: 14,
+  particles_color_palette: ['#FBBF24', '#F472B6', '#22D3EE', '#A78BFA', '#10B981'],
+  particles_emit_x: 0.5,
+  particles_emit_y: 0.5,
+  particles_burst: true,
+  particles_emit_rate: 8,
+  particles_fade_out: true,
+  particles_rotation_speed: 180,
+
+  scene_flash_enabled: false,
+  scene_flash_color: '#FFFFFF',
+  scene_flash_intensity: 0.6,
+  scene_flash_duration_ms: 300,
+  scene_shake_enabled: false,
+  scene_shake_intensity: 6,
+  scene_shake_duration_ms: 500,
+  scene_vignette_enabled: false,
+  scene_vignette_color: '#000000',
+  scene_vignette_pulse: false,
+  scene_vignette_size: 0.7,
+  scene_bg_blur_enabled: false,
+  scene_bg_blur_max: 8,
+  scene_bg_blur_duration_ms: 800,
+  scene_color_tint_enabled: false,
+  scene_color_tint_color: '#FBBF24',
+  scene_color_tint_intensity: 0.25,
+  scene_zoom_in_enabled: false,
+  scene_zoom_in_scale: 1.08,
+  scene_zoom_in_duration_ms: 600,
+
+  aura_enabled: false,
+  aura_color: '#FBBF24',
+  aura_size: 1.6,
+  aura_pulse: true,
+  aura_pulse_speed: 1.8,
+  aura_intensity: 0.7,
+  aura_layers: 2,
+  trail_enabled: false,
+  trail_color: '#22D3EE',
+  trail_length: 8,
+  trail_decay_ms: 800,
+  trail_thickness: 3,
+  halo_ring_enabled: false,
+  halo_ring_color: '#FBBF24',
+  halo_ring_thickness: 2,
+  halo_ring_spin_speed: 4,
+  halo_ring_dashed: false,
+
+  sound_enabled: false,
+  sound_id: 'sparkle',
+  sound_volume: 0.6,
+  sound_delay_ms: 200,
+
+  trigger_first_join_only: false,
+  trigger_min_tier: 'free',
+  trigger_owner_only: false,
+  trigger_cooldown_minutes: 0,
+  trigger_birthday_only: false,
+  trigger_milestone: 'none',
 };
 
 const SAMPLE_AVATAR = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop';
@@ -165,6 +312,8 @@ export default function EntryEffectEditor({ item }: { item: any }) {
   const [previewPhase, setPreviewPhase] = useState<'idle' | 'playing' | 'outro'>('idle');
   const [lottieProgress, setLottieProgress] = useState(0);
   const lottieRef = useRef<any>(null);
+  // ★ v117: Tab state — config panelini 12 sekmeye böl
+  const [tab, setTab] = useState<Tab>('konum');
   // ★ v213c: Hedef layer'ın animated rotation keyframe'leri — avatar bu değerleri birebir takip eder
   const [syncedRotation, setSyncedRotation] = useState(0);
 
@@ -442,7 +591,23 @@ export default function EntryEffectEditor({ item }: { item: any }) {
         <div
           ref={stageRef}
           className="relative rounded-lg overflow-hidden shadow-2xl"
-          style={{ width: STAGE_W, height: STAGE_H, background: 'linear-gradient(180deg, #0f172a 0%, #0a0f1a 100%)' }}
+          style={{
+            width: STAGE_W,
+            height: STAGE_H,
+            background: 'linear-gradient(180deg, #0f172a 0%, #0a0f1a 100%)',
+            // ★ v117 sahne efektleri — yalnızca preview oynarken
+            ...(previewPhase === 'playing' ? {
+              animation: [
+                cfg.scene_shake_enabled && `scene-shake ${Math.max(200, cfg.scene_shake_duration_ms / 6)}ms steps(4) ${Math.floor(cfg.scene_shake_duration_ms / Math.max(200, cfg.scene_shake_duration_ms / 6))} both`,
+                cfg.scene_zoom_in_enabled && `scene-zoom-in ${cfg.scene_zoom_in_duration_ms}ms ease-out forwards`,
+              ].filter(Boolean).join(', '),
+              ['--shake-x' as any]: `${cfg.scene_shake_intensity}px`,
+              ['--zoom-scale' as any]: cfg.scene_zoom_in_scale,
+            } : {}),
+            // BG blur (children'a uygular)
+            filter: previewPhase === 'playing' && cfg.scene_bg_blur_enabled ? `blur(${cfg.scene_bg_blur_max}px)` : undefined,
+            transition: cfg.scene_bg_blur_enabled ? `filter ${cfg.scene_bg_blur_duration_ms}ms ease-out` : undefined,
+          } as React.CSSProperties}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
@@ -529,6 +694,52 @@ export default function EntryEffectEditor({ item }: { item: any }) {
               {sampleName}
             </div>
           )}
+
+          {/* ★ v117 — Partikül canvas (preview oynuyor + aktif) */}
+          {cfg.particles_enabled && previewPhase === 'playing' && (
+            <ParticleCanvas key={`particles-${previewKey}`} cfg={cfg} width={STAGE_W} height={STAGE_H} />
+          )}
+
+          {/* ★ v117 — Sahne efekti overlay'leri */}
+          {previewPhase === 'playing' && (
+            <>
+              {/* Color tint (z-22) */}
+              {cfg.scene_color_tint_enabled && (
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background: cfg.scene_color_tint_color,
+                    opacity: cfg.scene_color_tint_intensity,
+                    mixBlendMode: 'overlay',
+                    zIndex: 22,
+                  }}
+                />
+              )}
+              {/* Vignette (z-24) */}
+              {cfg.scene_vignette_enabled && (
+                <div
+                  className={`absolute inset-0 pointer-events-none ${cfg.scene_vignette_pulse ? 'animate-pulse' : ''}`}
+                  style={{
+                    background: `radial-gradient(circle at center, transparent ${cfg.scene_vignette_size * 50}%, ${cfg.scene_vignette_color} 100%)`,
+                    zIndex: 24,
+                  }}
+                />
+              )}
+              {/* Flash (z-30, full coverage) */}
+              {cfg.scene_flash_enabled && (
+                <div
+                  key={`flash-${previewKey}`}
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background: cfg.scene_flash_color,
+                    zIndex: 30,
+                    animation: `scene-flash ${cfg.scene_flash_duration_ms}ms ease-out forwards`,
+                    ['--flash-intensity' as any]: cfg.scene_flash_intensity,
+                  } as React.CSSProperties}
+                />
+              )}
+            </>
+          )}
         </div>
         <p className="text-xs text-slate-500">
           Avatar slot'u sürükleyerek konumlandır. ▶ Önizleme tüm intro+loop+outro'yu canlı oynatır.
@@ -555,6 +766,34 @@ export default function EntryEffectEditor({ item }: { item: any }) {
         </div>
         {savedNote && <div className="text-xs text-emerald-300">{savedNote}</div>}
 
+        {/* ★ v117: Tab bar — 12 sekme, sticky top */}
+        <div className="sticky top-12 z-10 -mx-2 px-2 pb-2 pt-1 bg-[#0a0f1a]/95 backdrop-blur-md flex gap-1 overflow-x-auto">
+          {([
+            { k: 'konum',    l: 'Konum',     i: <Move className="w-3 h-3" /> },
+            { k: 'giris',    l: 'Giriş',     i: <Play className="w-3 h-3" /> },
+            { k: 'loop',     l: 'Loop',      i: <Repeat className="w-3 h-3" /> },
+            { k: 'cikis',    l: 'Çıkış',     i: <LogOut className="w-3 h-3" /> },
+            { k: 'banner',   l: 'Banner',    i: <MessageSquare className="w-3 h-3" /> },
+            { k: 'lottie',   l: 'Lottie',    i: <Film className="w-3 h-3" /> },
+            { k: 'partikul', l: 'Partikül',  i: <Stars className="w-3 h-3" /> },
+            { k: 'sahne',    l: 'Sahne',     i: <Filter className="w-3 h-3" /> },
+            { k: 'aura',     l: 'Aura',      i: <Sparkles className="w-3 h-3" /> },
+            { k: 'ses',      l: 'Ses',       i: <Volume2 className="w-3 h-3" /> },
+            { k: 'trigger',  l: 'Tetik',     i: <Wind className="w-3 h-3" /> },
+            { k: 'genel',    l: 'Genel',     i: <SettingsIcon className="w-3 h-3" /> },
+          ] as { k: Tab; l: string; i: React.ReactNode }[]).map(t => (
+            <button key={t.k} type="button" onClick={() => setTab(t.k)}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-medium whitespace-nowrap transition-all ${
+                tab === t.k
+                  ? 'bg-fuchsia-500/20 text-fuchsia-200 border border-fuchsia-500/40'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent'
+              }`}>
+              {t.i}{t.l}
+            </button>
+          ))}
+        </div>
+
+        {tab === 'konum' && (
         <Section title="Avatar — Konum & Boyut" icon={<Move className="w-4 h-4 text-fuchsia-400" />}>
           <Toggle label="Avatar göster" checked={cfg.has_avatar} onChange={v => update('has_avatar', v)} />
           {cfg.has_avatar && (
@@ -566,8 +805,9 @@ export default function EntryEffectEditor({ item }: { item: any }) {
             </>
           )}
         </Section>
+        )}
 
-        {cfg.has_avatar && (
+        {tab === 'konum' && cfg.has_avatar && (
           <Section title="Avatar Yaşam Döngüsü (Lottie ile senkron)" icon={<Repeat className="w-4 h-4 text-emerald-400" />}>
             <p className="text-[11px] text-slate-500 mb-2">
               Lottie'nin yüzde kaçında avatar görünür olur ve kaybolur. Badge'in patlayarak gelip kaybolma anına denk getirin.
@@ -581,7 +821,7 @@ export default function EntryEffectEditor({ item }: { item: any }) {
           </Section>
         )}
 
-        {cfg.has_avatar && (
+        {tab === 'giris' && cfg.has_avatar && (
           <Section title="Giriş Animasyonu (Intro)" icon={<Sparkles className="w-4 h-4 text-emerald-400" />}>
             <Select label="Tip" value={cfg.intro_anim} onChange={v => update('intro_anim', v as IntroAnim)} options={[
               { v: 'none', l: 'Yok' },
@@ -603,7 +843,7 @@ export default function EntryEffectEditor({ item }: { item: any }) {
           </Section>
         )}
 
-        {cfg.has_avatar && (
+        {tab === 'loop' && cfg.has_avatar && (
           <Section title="Sürekli Animasyonlar (Loop)" icon={<Repeat className="w-4 h-4 text-cyan-400" />}>
             <SubBlock title="3D Sağ-Sol Salınım (RotateY)">
               <Toggle label="Aktif" checked={cfg.loop_rotate_y} onChange={v => update('loop_rotate_y', v)} />
@@ -653,7 +893,7 @@ export default function EntryEffectEditor({ item }: { item: any }) {
           </Section>
         )}
 
-        {cfg.has_avatar && (
+        {tab === 'cikis' && cfg.has_avatar && (
           <Section title="Çıkış Animasyonu (Outro)" icon={<Sparkles className="w-4 h-4 text-rose-400" />}>
             <Select label="Tip" value={cfg.outro_anim} onChange={v => update('outro_anim', v as OutroAnim)} options={[
               { v: 'none', l: 'Yok' },
@@ -669,6 +909,7 @@ export default function EntryEffectEditor({ item }: { item: any }) {
           </Section>
         )}
 
+        {tab === 'banner' && (
         <Section title="Metin (Banner)" icon={<MessageSquare className="w-4 h-4 text-amber-400" />}>
           <Toggle label="Metin göster" checked={cfg.text_visible} onChange={v => update('text_visible', v)} />
           {cfg.text_visible && (
@@ -688,7 +929,9 @@ export default function EntryEffectEditor({ item }: { item: any }) {
             </>
           )}
         </Section>
+        )}
 
+        {tab === 'lottie' && (
         <Section title="Lottie Animasyon Kontrolü" icon={<Sparkles className="w-4 h-4 text-purple-400" />}>
           <SubBlock title="Boyut & Konum">
             <Slider label="Ölçek" min={0.3} max={2} step={0.05} value={cfg.lottie_scale} onChange={v => update('lottie_scale', v)} display={`${cfg.lottie_scale.toFixed(2)}x`} />
@@ -710,7 +953,209 @@ export default function EntryEffectEditor({ item }: { item: any }) {
             <Toggle label="Negatif (Invert)" checked={cfg.lottie_invert} onChange={v => update('lottie_invert', v)} />
           </SubBlock>
         </Section>
+        )}
 
+        {/* ═══════════════════════ YENİ ÖZELLİK PAKETLERİ (v117) ═══════════════════════ */}
+
+        {tab === 'partikul' && (
+        <Section title="Partikül Sistemi" icon={<Stars className="w-4 h-4 text-pink-400" />}>
+          <Toggle label="Partikülleri Aktif Et" checked={cfg.particles_enabled} onChange={v => update('particles_enabled', v)} />
+          {cfg.particles_enabled && (<>
+            <Select label="Partikül Tipi" value={cfg.particles_type} onChange={v => update('particles_type', v as any)} options={[
+              { v: 'confetti',   l: 'Konfeti 🎉' },
+              { v: 'glitter',    l: 'Pırıltı ✨' },
+              { v: 'stars',      l: 'Yıldız ⭐' },
+              { v: 'hearts',     l: 'Kalp ❤️' },
+              { v: 'fireworks',  l: 'Havai Fişek 🎆' },
+              { v: 'snowflakes', l: 'Kar Tanesi ❄️' },
+              { v: 'smoke',      l: 'Duman 💨' },
+              { v: 'sparkles',   l: 'Parlatma ⚡' },
+              { v: 'coins',      l: 'Para 🪙' },
+            ]} />
+            <SubBlock title="Sayı & Yaşam">
+              <Slider label="Toplam Sayı" min={10} max={150} step={5} value={cfg.particles_count} onChange={v => update('particles_count', v)} display={`${cfg.particles_count}`} />
+              <Slider label="Yaşam Süresi" min={500} max={5000} step={100} value={cfg.particles_lifetime_ms} onChange={v => update('particles_lifetime_ms', v)} display={`${cfg.particles_lifetime_ms}ms`} />
+              <Toggle label="Burst Mod (Hepsi Aynı Anda)" checked={cfg.particles_burst} onChange={v => update('particles_burst', v)} />
+              {!cfg.particles_burst && (
+                <Slider label="Emit Hızı (saniyede)" min={1} max={20} step={1} value={cfg.particles_emit_rate} onChange={v => update('particles_emit_rate', v)} display={`${cfg.particles_emit_rate}/sn`} />
+              )}
+              <Toggle label="Sonunda Solsun (Fade)" checked={cfg.particles_fade_out} onChange={v => update('particles_fade_out', v)} />
+            </SubBlock>
+            <SubBlock title="Hareket">
+              <Slider label="Hız Çarpanı" min={0.3} max={3} step={0.1} value={cfg.particles_speed} onChange={v => update('particles_speed', v)} display={`${cfg.particles_speed.toFixed(1)}x`} />
+              <Slider label="Yayılma Açısı" min={10} max={360} step={10} value={cfg.particles_spread_deg} onChange={v => update('particles_spread_deg', v)} display={`${cfg.particles_spread_deg}°`} />
+              <Slider label="Yer Çekimi" min={-1} max={1} step={0.05} value={cfg.particles_gravity} onChange={v => update('particles_gravity', v)} display={`${cfg.particles_gravity.toFixed(2)}`} />
+              <Slider label="Dönüş Hızı" min={-360} max={360} step={10} value={cfg.particles_rotation_speed} onChange={v => update('particles_rotation_speed', v)} display={`${cfg.particles_rotation_speed}°/sn`} />
+            </SubBlock>
+            <SubBlock title="Boyut & Çıkış Noktası">
+              <Slider label="Min Boyut" min={2} max={20} step={1} value={cfg.particles_size_min} onChange={v => update('particles_size_min', v)} display={`${cfg.particles_size_min}px`} />
+              <Slider label="Max Boyut" min={4} max={40} step={1} value={cfg.particles_size_max} onChange={v => update('particles_size_max', v)} display={`${cfg.particles_size_max}px`} />
+              <Slider label="Çıkış X" min={0} max={1} step={0.02} value={cfg.particles_emit_x} onChange={v => update('particles_emit_x', v)} display={`${Math.round(cfg.particles_emit_x * 100)}%`} />
+              <Slider label="Çıkış Y" min={0} max={1} step={0.02} value={cfg.particles_emit_y} onChange={v => update('particles_emit_y', v)} display={`${Math.round(cfg.particles_emit_y * 100)}%`} />
+            </SubBlock>
+            <SubBlock title="Renk Paleti">
+              <p className="text-[10px] text-slate-500 mb-1">Virgülle ayrılmış HEX renkler. Her partikül rastgele birini seçer.</p>
+              <input type="text" value={cfg.particles_color_palette.join(',')}
+                onChange={e => update('particles_color_palette', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+                aria-label="Partikül renk paleti (virgülle ayrılmış HEX)"
+                placeholder="#FBBF24, #F472B6, #22D3EE"
+                className="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs font-mono text-slate-200" />
+              <div className="flex flex-wrap gap-1 mt-2">
+                {cfg.particles_color_palette.map((c, i) => (
+                  <div key={i} className="w-6 h-6 rounded border border-slate-600" style={{ background: c }} title={c} />
+                ))}
+              </div>
+            </SubBlock>
+          </>)}
+        </Section>
+        )}
+
+        {tab === 'sahne' && (
+        <Section title="Sahne Efektleri" icon={<Filter className="w-4 h-4 text-orange-400" />}>
+          <SubBlock title="Ekran Flash (Aniden Beyaz)">
+            <Toggle label="Flash Aktif" checked={cfg.scene_flash_enabled} onChange={v => update('scene_flash_enabled', v)} />
+            {cfg.scene_flash_enabled && (<>
+              <ColorInput label="Flash Rengi" value={cfg.scene_flash_color} onChange={v => update('scene_flash_color', v)} />
+              <Slider label="Şiddet" min={0.1} max={1} step={0.05} value={cfg.scene_flash_intensity} onChange={v => update('scene_flash_intensity', v)} display={`${Math.round(cfg.scene_flash_intensity * 100)}%`} />
+              <Slider label="Süre (ms)" min={50} max={2000} step={50} value={cfg.scene_flash_duration_ms} onChange={v => update('scene_flash_duration_ms', v)} display={`${cfg.scene_flash_duration_ms}ms`} />
+            </>)}
+          </SubBlock>
+
+          <SubBlock title="Kamera Shake (Sallama)">
+            <Toggle label="Shake Aktif" checked={cfg.scene_shake_enabled} onChange={v => update('scene_shake_enabled', v)} />
+            {cfg.scene_shake_enabled && (<>
+              <Slider label="Şiddet (px)" min={1} max={20} step={1} value={cfg.scene_shake_intensity} onChange={v => update('scene_shake_intensity', v)} display={`±${cfg.scene_shake_intensity}px`} />
+              <Slider label="Süre (ms)" min={100} max={3000} step={100} value={cfg.scene_shake_duration_ms} onChange={v => update('scene_shake_duration_ms', v)} display={`${cfg.scene_shake_duration_ms}ms`} />
+            </>)}
+          </SubBlock>
+
+          <SubBlock title="Vignette (Köşe Karartma)">
+            <Toggle label="Vignette Aktif" checked={cfg.scene_vignette_enabled} onChange={v => update('scene_vignette_enabled', v)} />
+            {cfg.scene_vignette_enabled && (<>
+              <ColorInput label="Vignette Rengi" value={cfg.scene_vignette_color} onChange={v => update('scene_vignette_color', v)} />
+              <Slider label="Boyut (radius)" min={0.3} max={1} step={0.05} value={cfg.scene_vignette_size} onChange={v => update('scene_vignette_size', v)} display={`${Math.round(cfg.scene_vignette_size * 100)}%`} />
+              <Toggle label="Pulse (Nefes Alsın)" checked={cfg.scene_vignette_pulse} onChange={v => update('scene_vignette_pulse', v)} />
+            </>)}
+          </SubBlock>
+
+          <SubBlock title="Arkaplan Blur (Sahne Bulanıklığı)">
+            <Toggle label="BG Blur Aktif" checked={cfg.scene_bg_blur_enabled} onChange={v => update('scene_bg_blur_enabled', v)} />
+            {cfg.scene_bg_blur_enabled && (<>
+              <Slider label="Max Blur" min={1} max={20} step={1} value={cfg.scene_bg_blur_max} onChange={v => update('scene_bg_blur_max', v)} display={`${cfg.scene_bg_blur_max}px`} />
+              <Slider label="Süre" min={200} max={3000} step={100} value={cfg.scene_bg_blur_duration_ms} onChange={v => update('scene_bg_blur_duration_ms', v)} display={`${cfg.scene_bg_blur_duration_ms}ms`} />
+            </>)}
+          </SubBlock>
+
+          <SubBlock title="Renk Tint (Sahne Üzerine Renkli Kaplama)">
+            <Toggle label="Tint Aktif" checked={cfg.scene_color_tint_enabled} onChange={v => update('scene_color_tint_enabled', v)} />
+            {cfg.scene_color_tint_enabled && (<>
+              <ColorInput label="Tint Rengi" value={cfg.scene_color_tint_color} onChange={v => update('scene_color_tint_color', v)} />
+              <Slider label="Şiddet" min={0.05} max={1} step={0.05} value={cfg.scene_color_tint_intensity} onChange={v => update('scene_color_tint_intensity', v)} display={`${Math.round(cfg.scene_color_tint_intensity * 100)}%`} />
+            </>)}
+          </SubBlock>
+
+          <SubBlock title="Kamera Push-In (Yakınlaşma)">
+            <Toggle label="Zoom-In Aktif" checked={cfg.scene_zoom_in_enabled} onChange={v => update('scene_zoom_in_enabled', v)} />
+            {cfg.scene_zoom_in_enabled && (<>
+              <Slider label="Zoom Oranı" min={1.02} max={1.5} step={0.02} value={cfg.scene_zoom_in_scale} onChange={v => update('scene_zoom_in_scale', v)} display={`${cfg.scene_zoom_in_scale.toFixed(2)}x`} />
+              <Slider label="Süre" min={200} max={2000} step={100} value={cfg.scene_zoom_in_duration_ms} onChange={v => update('scene_zoom_in_duration_ms', v)} display={`${cfg.scene_zoom_in_duration_ms}ms`} />
+            </>)}
+          </SubBlock>
+        </Section>
+        )}
+
+        {tab === 'aura' && (
+        <Section title="Aura / Trail / Halo (Avatar Çevresi)" icon={<Sparkles className="w-4 h-4 text-teal-400" />}>
+          <SubBlock title="Aura (Yumuşak Glow)">
+            <Toggle label="Aura Aktif" checked={cfg.aura_enabled} onChange={v => update('aura_enabled', v)} />
+            {cfg.aura_enabled && (<>
+              <ColorInput label="Aura Rengi" value={cfg.aura_color} onChange={v => update('aura_color', v)} />
+              <Slider label="Boyut Çarpanı" min={1.1} max={3} step={0.1} value={cfg.aura_size} onChange={v => update('aura_size', v)} display={`${cfg.aura_size.toFixed(1)}x`} />
+              <Slider label="Yoğunluk" min={0.1} max={1.5} step={0.05} value={cfg.aura_intensity} onChange={v => update('aura_intensity', v)} display={`${cfg.aura_intensity.toFixed(2)}`} />
+              <Slider label="Katman Sayısı" min={1} max={4} step={1} value={cfg.aura_layers} onChange={v => update('aura_layers', v)} display={`${cfg.aura_layers}`} />
+              <Toggle label="Pulse (Nefes)" checked={cfg.aura_pulse} onChange={v => update('aura_pulse', v)} />
+              {cfg.aura_pulse && (
+                <Slider label="Pulse Hızı" min={0.5} max={5} step={0.1} value={cfg.aura_pulse_speed} onChange={v => update('aura_pulse_speed', v)} display={`${cfg.aura_pulse_speed.toFixed(1)}sn`} />
+              )}
+            </>)}
+          </SubBlock>
+
+          <SubBlock title="Trail (Hareket Kuyruğu)">
+            <Toggle label="Trail Aktif" checked={cfg.trail_enabled} onChange={v => update('trail_enabled', v)} />
+            {cfg.trail_enabled && (<>
+              <ColorInput label="Trail Rengi" value={cfg.trail_color} onChange={v => update('trail_color', v)} />
+              <Slider label="Uzunluk" min={3} max={15} step={1} value={cfg.trail_length} onChange={v => update('trail_length', v)} display={`${cfg.trail_length}`} />
+              <Slider label="Kalınlık" min={1} max={8} step={0.5} value={cfg.trail_thickness} onChange={v => update('trail_thickness', v)} display={`${cfg.trail_thickness}px`} />
+              <Slider label="Sönüş Süresi" min={200} max={2000} step={100} value={cfg.trail_decay_ms} onChange={v => update('trail_decay_ms', v)} display={`${cfg.trail_decay_ms}ms`} />
+            </>)}
+          </SubBlock>
+
+          <SubBlock title="Halo Ring (Dönen Halka)">
+            <Toggle label="Halo Ring Aktif" checked={cfg.halo_ring_enabled} onChange={v => update('halo_ring_enabled', v)} />
+            {cfg.halo_ring_enabled && (<>
+              <ColorInput label="Ring Rengi" value={cfg.halo_ring_color} onChange={v => update('halo_ring_color', v)} />
+              <Slider label="Kalınlık" min={1} max={6} step={0.5} value={cfg.halo_ring_thickness} onChange={v => update('halo_ring_thickness', v)} display={`${cfg.halo_ring_thickness}px`} />
+              <Slider label="Dönüş Hızı (sn)" min={1} max={15} step={0.5} value={cfg.halo_ring_spin_speed} onChange={v => update('halo_ring_spin_speed', v)} display={`${cfg.halo_ring_spin_speed}sn`} />
+              <Toggle label="Kesik (Dashed)" checked={cfg.halo_ring_dashed} onChange={v => update('halo_ring_dashed', v)} />
+            </>)}
+          </SubBlock>
+        </Section>
+        )}
+
+        {tab === 'ses' && (
+        <Section title="Ses Efekti" icon={<Volume2 className="w-4 h-4 text-indigo-400" />}>
+          <Toggle label="Ses Aktif" checked={cfg.sound_enabled} onChange={v => update('sound_enabled', v)} />
+          {cfg.sound_enabled && (<>
+            <Select label="Ses Şablonu" value={cfg.sound_id} onChange={v => update('sound_id', v)} options={[
+              { v: 'sparkle',  l: 'Pırıltı (Sparkle)' },
+              { v: 'whoosh',   l: 'Whoosh (Rüzgar)' },
+              { v: 'magic',    l: 'Sihirli Çan' },
+              { v: 'horn',     l: 'Boru Sesi (Horn)' },
+              { v: 'chime',    l: 'Çan (Chime)' },
+              { v: 'pop',      l: 'Pop (Patlama)' },
+              { v: 'glitter',  l: 'Glitter' },
+              { v: 'rise',     l: 'Yükselen Ton' },
+              { v: 'fanfare',  l: 'Fanfar' },
+              { v: 'custom',   l: 'Özel URL' },
+            ]} />
+            {cfg.sound_id === 'custom' && (
+              <label className="block">
+                <div className="text-xs text-slate-400 mb-1">Özel ses URL'i</div>
+                <input type="text" value={cfg.sound_id} onChange={e => update('sound_id', e.target.value)} placeholder="https://..."
+                  className="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs font-mono" />
+              </label>
+            )}
+            <Slider label="Ses Seviyesi" min={0} max={1} step={0.05} value={cfg.sound_volume} onChange={v => update('sound_volume', v)} display={`${Math.round(cfg.sound_volume * 100)}%`} />
+            <Slider label="Gecikme (intro'dan sonra)" min={0} max={3000} step={50} value={cfg.sound_delay_ms} onChange={v => update('sound_delay_ms', v)} display={`${cfg.sound_delay_ms}ms`} />
+            <p className="text-[10px] text-amber-400/70">⚠ Ses sadece kullanıcı uygulama ses ayarlarına bağlı olarak çalar. Sessize alınmışsa atlanır.</p>
+          </>)}
+        </Section>
+        )}
+
+        {tab === 'trigger' && (
+        <Section title="Tetik (Trigger) Koşulları" icon={<Wind className="w-4 h-4 text-violet-400" />}>
+          <p className="text-[11px] text-slate-500">Bu efektin oynayacağı koşulları belirle. Boş bırakırsan her girişte oynar.</p>
+          <Toggle label="Sadece İlk Girişte" checked={cfg.trigger_first_join_only} onChange={v => update('trigger_first_join_only', v)} />
+          <Toggle label="Sadece Oda Sahibi İçin" checked={cfg.trigger_owner_only} onChange={v => update('trigger_owner_only', v)} />
+          <Toggle label="Sadece Doğum Gününde" checked={cfg.trigger_birthday_only} onChange={v => update('trigger_birthday_only', v)} />
+          <Select label="Minimum Tier" value={cfg.trigger_min_tier} onChange={v => update('trigger_min_tier', v as any)} options={[
+            { v: 'free', l: 'Free (Herkes)' },
+            { v: 'plus', l: 'Plus+' },
+            { v: 'pro',  l: 'Pro+' },
+            { v: 'gm',   l: 'GM (Yönetici)' },
+          ]} />
+          <Select label="Milestone (Özel Olay)" value={cfg.trigger_milestone} onChange={v => update('trigger_milestone', v as any)} options={[
+            { v: 'none',           l: 'Yok' },
+            { v: 'first_join',     l: 'İlk Giriş (Hayat Boyu)' },
+            { v: 'tier_upgrade',   l: 'Tier Yükselmesi' },
+            { v: 'streak_7',       l: '7 Gün Streak' },
+            { v: 'streak_30',      l: '30 Gün Streak' },
+          ]} />
+          <Slider label="Cooldown (peş peşe spam engelle)" min={0} max={60} step={1} value={cfg.trigger_cooldown_minutes} onChange={v => update('trigger_cooldown_minutes', v)} display={cfg.trigger_cooldown_minutes === 0 ? 'Yok' : `${cfg.trigger_cooldown_minutes}dk`} />
+        </Section>
+        )}
+
+        {tab === 'genel' && (
         <Section title="Genel" icon={<SettingsIcon className="w-4 h-4 text-slate-400" />}>
           <Slider label="Toplam Görünür Süre (ms)" min={2000} max={12000} step={500} value={cfg.duration_ms} onChange={v => update('duration_ms', v)} display={`${cfg.duration_ms}`} />
           <label className="block">
@@ -719,6 +1164,7 @@ export default function EntryEffectEditor({ item }: { item: any }) {
               className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm" />
           </label>
         </Section>
+        )}
 
         <details className="text-xs">
           <summary className="cursor-pointer text-slate-400 select-none">JSON çıktı</summary>
@@ -751,6 +1197,32 @@ export default function EntryEffectEditor({ item }: { item: any }) {
         @keyframes zoom-blur-in { from { transform: scale(2); opacity: 0; filter: blur(20px) } to { transform: scale(1); opacity: 1; filter: blur(0) } }
         @keyframes blur-out { from { filter: blur(0); opacity: 1 } to { filter: blur(20px); opacity: 0 } }
         @keyframes spin-out { from { transform: rotate(0) scale(1); opacity: 1 } to { transform: rotate(360deg) scale(0); opacity: 0 } }
+
+        /* ★ v117 — Sahne efekti keyframes */
+        @keyframes scene-flash {
+          0% { opacity: var(--flash-intensity, 0.6) }
+          100% { opacity: 0 }
+        }
+        @keyframes scene-shake {
+          0%, 100% { transform: translate(0, 0) }
+          25%      { transform: translate(calc(var(--shake-x) * -1), calc(var(--shake-x) * 0.5)) }
+          50%      { transform: translate(var(--shake-x), calc(var(--shake-x) * -0.4)) }
+          75%      { transform: translate(calc(var(--shake-x) * -0.5), var(--shake-x)) }
+        }
+        @keyframes scene-zoom-in {
+          from { transform: scale(1) }
+          to   { transform: scale(var(--zoom-scale, 1.08)) }
+        }
+        /* Halo ring rotation */
+        @keyframes halo-spin {
+          from { transform: rotate(0deg) }
+          to   { transform: rotate(360deg) }
+        }
+        /* Aura pulse */
+        @keyframes aura-pulse {
+          0%, 100% { opacity: 0.6; transform: scale(1) }
+          50%      { opacity: 1;   transform: scale(1.08) }
+        }
       `}</style>
     </div>
   );
@@ -877,19 +1349,66 @@ function AvatarPreview({ left, top, size, circular, cfg, previewPhase, previewKe
     boxShadow: `0 0 ${20 * cfg.loop_glow_intensity}px ${cfg.loop_glow_color}, 0 0 ${40 * cfg.loop_glow_intensity}px ${cfg.loop_glow_color}80`,
   } : {};
 
+  // ★ v117 — Aura/Halo katmanları (avatar etrafında, transform'a tabi değil)
+  const auraLayers = cfg.aura_enabled ? Array.from({ length: cfg.aura_layers }, (_, i) => {
+    const layerScale = 1 + (i + 1) * 0.18 * (cfg.aura_size - 1);
+    const layerOpacity = cfg.aura_intensity * (1 - i * 0.25);
+    return { scale: layerScale, opacity: layerOpacity, key: i };
+  }) : [];
+
   return (
     <div
-      ref={ref}
-      className="absolute cursor-move border-2 border-fuchsia-400/70"
-      style={{
-        left, top, width: size, height: size,
-        borderRadius: circular ? '50%' : 8,
-        overflow: 'hidden',
-        transformOrigin: 'center center',
-        ...glowStyle,
-      }}
+      className="absolute"
+      style={{ left, top, width: size, height: size }}
     >
-      <img src={SAMPLE_AVATAR} alt="" className="w-full h-full object-cover pointer-events-none" />
+      {/* ★ Aura katmanları — avatar altında, ana ref'in dışında, transform'a tabi DEĞİL */}
+      {auraLayers.map(L => (
+        <div
+          key={`aura-${L.key}`}
+          className="absolute pointer-events-none"
+          style={{
+            left: '50%', top: '50%',
+            width: size * L.scale, height: size * L.scale,
+            transform: 'translate(-50%, -50%)',
+            borderRadius: '50%',
+            background: `radial-gradient(circle, ${cfg.aura_color}${Math.round(L.opacity * 100).toString(16).padStart(2, '0')} 0%, transparent 70%)`,
+            animation: cfg.aura_pulse ? `aura-pulse ${cfg.aura_pulse_speed}s ease-in-out infinite` : undefined,
+            zIndex: 1,
+          }}
+        />
+      ))}
+
+      {/* ★ Halo ring — dönen çember */}
+      {cfg.halo_ring_enabled && (
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            left: '50%', top: '50%',
+            width: size * 1.25, height: size * 1.25,
+            transform: 'translate(-50%, -50%)',
+            borderRadius: '50%',
+            border: `${cfg.halo_ring_thickness}px ${cfg.halo_ring_dashed ? 'dashed' : 'solid'} ${cfg.halo_ring_color}`,
+            animation: `halo-spin ${cfg.halo_ring_spin_speed}s linear infinite`,
+            zIndex: 2,
+          }}
+        />
+      )}
+
+      {/* Asıl avatar (transform'lu) */}
+      <div
+        ref={ref}
+        className="absolute cursor-move border-2 border-fuchsia-400/70"
+        style={{
+          left: 0, top: 0, width: size, height: size,
+          borderRadius: circular ? '50%' : 8,
+          overflow: 'hidden',
+          transformOrigin: 'center center',
+          zIndex: 3,
+          ...glowStyle,
+        }}
+      >
+        <img src={SAMPLE_AVATAR} alt="" className="w-full h-full object-cover pointer-events-none" />
+      </div>
     </div>
   );
 }
@@ -927,6 +1446,213 @@ function getOutroKeyframes(type: OutroAnim): Keyframe[] {
     case 'blur-out': return [{ filter: 'blur(0)', opacity: 1 }, { filter: 'blur(20px)', opacity: 0 }];
     case 'spin-out': return [{ transform: 'rotate(0) scale(1)', opacity: 1 }, { transform: 'rotate(360deg) scale(0)', opacity: 0 }];
     default: return [];
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// ★ v117 — ParticleCanvas: Canvas2D + RAF ile parçacık simülasyonu
+// Tüm partikül tiplerini (konfeti, yıldız, kalp, havai fişek, kar, duman, coin, glitter, sparkles)
+// gerçek zamanlı render eder. Mobile tarafta Skia ile aynı parametrelerle çalışacak.
+// ═══════════════════════════════════════════════════════════════════════
+function ParticleCanvas({ cfg, width, height }: { cfg: EntryConfig; width: number; height: number }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = ref.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const dpr = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    ctx.scale(dpr, dpr);
+
+    type P = {
+      x: number; y: number;
+      vx: number; vy: number;
+      size: number; color: string;
+      rot: number; vrot: number;
+      born: number; life: number;
+    };
+    const particles: P[] = [];
+    const startTime = performance.now();
+    const emitX = width * cfg.particles_emit_x;
+    const emitY = height * cfg.particles_emit_y;
+
+    function spawn(now: number) {
+      const angleRange = (cfg.particles_spread_deg * Math.PI) / 180;
+      const baseAngle = -Math.PI / 2; // yukarı
+      const angle = baseAngle + (Math.random() - 0.5) * angleRange;
+      const speed = (80 + Math.random() * 140) * cfg.particles_speed;
+      const size = cfg.particles_size_min + Math.random() * Math.max(0, cfg.particles_size_max - cfg.particles_size_min);
+      const palette = cfg.particles_color_palette.length > 0 ? cfg.particles_color_palette : ['#FBBF24'];
+      const color = palette[Math.floor(Math.random() * palette.length)] || '#FBBF24';
+      particles.push({
+        x: emitX, y: emitY,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        size, color,
+        rot: Math.random() * Math.PI * 2,
+        vrot: ((cfg.particles_rotation_speed * Math.PI) / 180) * (0.4 + Math.random() * 0.8),
+        born: now,
+        life: cfg.particles_lifetime_ms,
+      });
+    }
+
+    if (cfg.particles_burst) {
+      for (let i = 0; i < cfg.particles_count; i++) spawn(startTime);
+    }
+
+    let lastEmit = startTime;
+    let lastFrame = startTime;
+    let raf = 0;
+
+    function frame(now: number) {
+      const dt = Math.min(0.05, (now - lastFrame) / 1000);
+      lastFrame = now;
+
+      if (!cfg.particles_burst) {
+        const interval = 1000 / Math.max(1, cfg.particles_emit_rate);
+        while (now - lastEmit > interval && particles.length < cfg.particles_count) {
+          spawn(now);
+          lastEmit += interval;
+        }
+      }
+
+      ctx!.clearRect(0, 0, width, height);
+      const gravity = cfg.particles_gravity * 250; // px/s²
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        const age = now - p.born;
+        if (age > p.life) { particles.splice(i, 1); continue; }
+        p.vy += gravity * dt;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.rot += p.vrot * dt;
+        const ageNorm = age / p.life;
+        const alpha = cfg.particles_fade_out ? Math.max(0, 1 - ageNorm) : 1;
+
+        ctx!.save();
+        ctx!.translate(p.x, p.y);
+        ctx!.rotate(p.rot);
+        ctx!.globalAlpha = alpha;
+        drawParticle(ctx!, cfg.particles_type, p.size, p.color);
+        ctx!.restore();
+      }
+
+      raf = requestAnimationFrame(frame);
+    }
+    raf = requestAnimationFrame(frame);
+    return () => { cancelAnimationFrame(raf); };
+  }, [cfg, width, height]);
+
+  return (
+    <canvas
+      ref={ref}
+      className="absolute inset-0 pointer-events-none"
+      style={{ zIndex: 20 }}
+    />
+  );
+}
+
+function drawParticle(ctx: CanvasRenderingContext2D, type: EntryConfig['particles_type'], size: number, color: string) {
+  ctx.fillStyle = color;
+  ctx.strokeStyle = color;
+  switch (type) {
+    case 'confetti': {
+      ctx.fillRect(-size / 2, -size / 4, size, size / 2);
+      return;
+    }
+    case 'glitter':
+    case 'sparkles': {
+      // 4 köşeli ışık yıldızı
+      ctx.beginPath();
+      for (let i = 0; i < 8; i++) {
+        const r = i % 2 === 0 ? size / 2 : size / 6;
+        const a = (i * Math.PI) / 4;
+        const x = Math.cos(a) * r;
+        const y = Math.sin(a) * r;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fill();
+      return;
+    }
+    case 'stars': {
+      // 5 köşe yıldız
+      ctx.beginPath();
+      for (let i = 0; i < 10; i++) {
+        const r = i % 2 === 0 ? size / 2 : size / 5;
+        const a = (i * Math.PI) / 5 - Math.PI / 2;
+        const x = Math.cos(a) * r;
+        const y = Math.sin(a) * r;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fill();
+      return;
+    }
+    case 'hearts': {
+      ctx.beginPath();
+      ctx.moveTo(0, size * 0.35);
+      ctx.bezierCurveTo(-size * 0.6, -size * 0.1, -size * 0.6, -size * 0.5, 0, -size * 0.15);
+      ctx.bezierCurveTo(size * 0.6, -size * 0.5, size * 0.6, -size * 0.1, 0, size * 0.35);
+      ctx.closePath();
+      ctx.fill();
+      return;
+    }
+    case 'fireworks': {
+      ctx.beginPath();
+      ctx.arc(0, 0, size / 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.lineWidth = 1.5;
+      for (let i = 0; i < 8; i++) {
+        const a = (i * Math.PI) / 4;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * size / 3, Math.sin(a) * size / 3);
+        ctx.lineTo(Math.cos(a) * size, Math.sin(a) * size);
+        ctx.stroke();
+      }
+      return;
+    }
+    case 'snowflakes': {
+      ctx.lineWidth = 1.5;
+      for (let i = 0; i < 6; i++) {
+        const a = (i * Math.PI) / 3;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(Math.cos(a) * size / 2, Math.sin(a) * size / 2);
+        ctx.stroke();
+      }
+      return;
+    }
+    case 'smoke': {
+      const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, size / 2);
+      grad.addColorStop(0, color);
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(0, 0, size / 2, 0, Math.PI * 2);
+      ctx.fill();
+      return;
+    }
+    case 'coins': {
+      ctx.beginPath();
+      ctx.ellipse(0, 0, size / 2, size / 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      return;
+    }
+    default: {
+      ctx.beginPath();
+      ctx.arc(0, 0, size / 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 }
 

@@ -13,6 +13,7 @@ const ITEM_FIELDS = [
   'bg_gradient_start', 'bg_gradient_mid', 'bg_gradient_end', 'bg_radial',
   'price_sp', 'per_message', 'is_featured', 'collection_id', 'active', 'display_order',
   'asset_url', // ★ 2026-05-10 v114: Lottie/PNG URL — mobile direkt buradan render
+  'thumb_url', 'hero_url', 'preview_url', // ★ v119 (13 May 2026): çoklu görsel slot
 ];
 
 export async function POST(req: Request) {

@@ -14,6 +14,8 @@ const ITEM_FIELDS = new Set([
   'bg_gradient_start', 'bg_gradient_mid', 'bg_gradient_end', 'bg_radial',
   'price_sp', 'per_message', 'is_featured', 'collection_id', 'active', 'display_order',
   'asset_url', // ★ 2026-05-10 v114: Lottie/PNG URL — mobile dinamik render için
+  // ★ v119 (13 May 2026): Çoklu görsel slot — mağaza listesi/detay/picker
+  'thumb_url', 'hero_url', 'preview_url',
 ]);
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {

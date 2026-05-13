@@ -1,23 +1,39 @@
 "use client";
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import {
   LayoutDashboard, Flag, Users, Store, Home, MessageSquare,
   Coins, Bell, Crown, Settings as SettingsIcon, TrendingUp, Banknote, ScrollText,
-  ShieldAlert, UserPlus,
+  ShieldAlert, UserPlus, Layout as LayoutIcon,
+  Image as ImageIcon, Sparkles, Award, Palette, Smile, Stars, MessageCircle, Frame, Gift,
 } from 'lucide-react';
 import SopranoLogoMini, { SopranoLogoStyleTag } from './SopranoLogoMini';
 
-const NAV = [
+type NavItem = { href: string; label: string; icon: any; exact?: boolean };
+type NavGroup = { type: 'group'; label: string } | NavItem;
+
+const NAV: NavGroup[] = [
   { href: '/yonet', label: 'Panel', icon: LayoutDashboard, exact: true },
   { href: '/yonet/ekonomi', label: 'Ekonomi', icon: TrendingUp },
   { href: '/yonet/sikayetler', label: 'Şikayetler', icon: Flag },
   { href: '/yonet/kullanicilar', label: 'Kullanıcılar', icon: Users },
-  { href: '/yonet/magaza', label: 'Mağaza', icon: Store },
-  // ★ 2026-05-11: 'Çerçeveler' ve 'Giriş Efektleri' linkleri kaldırıldı.
-  //   Hepsi Mağaza içinde kategori filtresi ile yönetiliyor; konfig için
-  //   ürün satırındaki "🎨 Konfig" butonu deeplink yapar.
+
+  { type: 'group', label: 'Kozmetik (Mağaza)' },
+  { href: '/yonet/magaza', label: 'Mağaza (Tümü)', icon: Store },
+  { href: '/yonet/magaza?cat=frames', label: 'Çerçeveler', icon: Frame },
+  { href: '/yonet/magaza?cat=entry_effect', label: 'Giriş Animasyonları', icon: Sparkles },
+  { href: '/yonet/magaza?cat=gift', label: 'Hediyeler', icon: Gift },
+  { href: '/yonet/magaza?cat=glow_message', label: 'Parlak Mesajlar', icon: MessageCircle },
+  { href: '/yonet/magaza?cat=effect', label: 'Efektler', icon: Stars },
+  { href: '/yonet/magaza?cat=background', label: 'Arkaplanlar', icon: ImageIcon },
+  { href: '/yonet/magaza?cat=emoji', label: 'Özel Emojiler', icon: Smile },
+  { href: '/yonet/magaza?cat=badge', label: 'Rozetler', icon: Award },
+
+  { type: 'group', label: 'Sistem' },
+  // ★ Uygulama Teması — renk paleti + oda düzeni + sayfa-bazlı detaylar TEK YERDE
+  { href: '/yonet/tema-sistemi', label: 'Uygulama Teması', icon: Palette },
   { href: '/yonet/uyelik', label: 'Üyelik Planları', icon: Crown },
   { href: '/yonet/odalar', label: 'Odalar', icon: Home },
   { href: '/yonet/mesajlar', label: 'Mesaj İncelemesi', icon: MessageSquare },
@@ -32,6 +48,12 @@ const NAV = [
 
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  // ★ Hydration mismatch fix: searchParams server-side boş, client-side gerçek.
+  //   Active state'i mount sonrasında hesapla (ilk render server-client eşit).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  const currentCat = mounted ? searchParams.get('cat') : null;
 
   return (
     <aside className="w-64 shrink-0 border-r border-white/[0.08] flex flex-col">
@@ -45,17 +67,38 @@ export default function AdminSidebar() {
       </div>
 
       {/* Nav — turkuaz aktif vurgu (ana sayfa paleti) */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {NAV.map(item => {
-          const active = item.exact
-            ? pathname === item.href
-            : pathname.startsWith(item.href);
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto yonet-scrollbar">
+        {NAV.map((it, idx) => {
+          if ('type' in it && it.type === 'group') {
+            return (
+              <div key={`g-${idx}`} className="pt-3 pb-1 px-3 text-[9px] font-bold tracking-[0.15em] text-slate-500 uppercase">
+                {it.label}
+              </div>
+            );
+          }
+          const item = it as NavItem;
+          // Defansif: href yoksa atla
+          if (!item.href) return null;
+          // Kategori filtreli URL'ler için: pathname + cat query parametresi match
+          const hasQuery = item.href.includes('?');
+          let active: boolean;
+          if (item.exact) {
+            active = pathname === item.href;
+          } else if (hasQuery) {
+            // /yonet/magaza?cat=frames gibi — pathname eşleşmeli + cat eşleşmeli
+            const [hrefPath, hrefQuery] = item.href.split('?');
+            const hrefCat = new URLSearchParams(hrefQuery).get('cat');
+            active = pathname === hrefPath && currentCat === hrefCat;
+          } else {
+            // Plain path — sadece pathname.startsWith (cat query'siz)
+            active = pathname.startsWith(item.href) && !currentCat;
+          }
           const Icon = item.icon;
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${
+              className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all ${
                 active
                   ? 'bg-gradient-to-r from-teal-500/20 to-cyan-500/10 text-cyan-200 border border-teal-500/30 shadow-[0_0_12px_-4px_rgba(20,184,166,0.4)]'
                   : 'text-slate-400 hover:bg-white/5 hover:text-slate-100 border border-transparent'

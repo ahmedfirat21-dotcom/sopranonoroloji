@@ -58,9 +58,14 @@ interface FrameConfig {
   name_size: number;            // % avatar boyutuna göre font (6-25)
   name_bold: boolean;
   // ★ Tier etiketi (Plus/Pro/Free badge)
-  // Tier rozet — sade model: sadece aç/kapat + 8 nokta konum
+  // Tier rozet — sade model: aç/kapat + 8 nokta ana konum + ince ayar offset.
+  // ★ v1.3.64: tier_badge_offset_x/y — 8 noktayı ana referans alıp üstüne pixel-ince
+  //   ayar yapabilmek için. % avatar boyutuna göre orantılı (her boyutta tutarlı).
   tier_badge_enabled: boolean;
   tier_badge_position: 'tl' | 'tc' | 'tr' | 'ml' | 'mr' | 'bl' | 'bc' | 'br';
+  tier_badge_offset_x: number;  // % avatar boyutu (-50..+50) yatay ince ayar
+  tier_badge_offset_y: number;  // % avatar boyutu (-50..+50) dikey ince ayar
+  tier_badge_scale: number;     // 0.5..2.0 — rozeti büyüt/küçült (default 1.0)
   // ★ 2026-05-11 — EK animasyon paleti
   // Avatar
   avatar_shake: boolean;        // hızlı titreşim (bildirim hissi)
@@ -156,6 +161,9 @@ const DEFAULT_CONFIG: FrameConfig = {
   name_bold: true,
   tier_badge_enabled: false,
   tier_badge_position: 'br',
+  tier_badge_offset_x: 0,
+  tier_badge_offset_y: 0,
+  tier_badge_scale: 1.0,
   // Ek animasyon paleti — default kapalı (opsiyonel zenginlik)
   avatar_shake: false,
   avatar_swing: false,
@@ -211,16 +219,66 @@ const SHAPE_CLIP: Record<string, { borderRadius: string; clipPath?: string; labe
   'diamond':        { borderRadius: '0',   clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)', label: '◆ Elmas' },
 };
 
+// ★ v265 (13 May 2026): TierBadge önizleme size paleti — mobile/components/TierBadge.tsx
+//   SIZE config ile birebir aynı. editingSize'a göre APK'da hangi tierBadgeSize çağırılır:
+//     - mini, listener → 'xs' (sadece icon, label fontSize=0 ile gizli)
+//     - speaker → 'sm' (kompakt label)
+//     - stage_host, profile → 'md' (full label)
+//     - default (Tümü) → 'md' (referans/temel boyut)
+const TIER_BADGE_SIZE: Record<string, { height: number; paddingH: number; fontSize: number; iconSize: number; radius: number; letterSpacing: number; showLabel: boolean }> = {
+  xs: { height: 14, paddingH: 4, fontSize: 0,   iconSize: 9, radius: 7,    letterSpacing: 0,   showLabel: false },
+  sm: { height: 14, paddingH: 5, fontSize: 8.5, iconSize: 8, radius: 7,    letterSpacing: 0.6, showLabel: true  },
+  md: { height: 17, paddingH: 6, fontSize: 9.5, iconSize: 9, radius: 8.5,  letterSpacing: 0.7, showLabel: true  },
+  lg: { height: 22, paddingH: 8, fontSize: 11,  iconSize: 11,radius: 11,   letterSpacing: 0.8, showLabel: true  },
+};
+function badgeSizeForEditingSize(es: string): keyof typeof TIER_BADGE_SIZE {
+  if (es === 'mini' || es === 'listener') return 'xs';
+  if (es === 'speaker') return 'sm';
+  if (es === 'stage_host' || es === 'profile') return 'md';
+  return 'md'; // default/Tümü
+}
+
+const TIER_PREVIEW: Record<'Plus' | 'Pro' | 'GodMaster', {
+  label: string;
+  iconChar: string;       // ★ ✦ ✧ — Ionicons yerine unicode approximation
+  gradient: string;       // CSS linear-gradient
+  glow: string;           // shadow color
+  textColor: string;
+}> = {
+  Plus: {
+    label: 'PLUS',
+    iconChar: '◆',
+    gradient: 'linear-gradient(135deg, #5EEAD4 0%, #0E7490 100%)',
+    glow: 'rgba(94,234,212,0.55)',
+    textColor: '#F0FDFA',
+  },
+  Pro: {
+    label: 'PRO',
+    iconChar: '★',
+    gradient: 'linear-gradient(135deg, #FCD34D 0%, #B45309 100%)',
+    glow: 'rgba(251,191,36,0.65)',
+    textColor: '#7C2D12',
+  },
+  GodMaster: {
+    label: 'GM',
+    iconChar: '✦',
+    gradient: 'linear-gradient(135deg, #F472B6 0%, #FBBF24 100%)',
+    glow: 'rgba(244,114,182,0.7)',
+    textColor: '#ffffff',
+  },
+};
+
 // Tier badge konum koordinatları — avatar merkezine göre yüzdelik (-1...1)
+// ★ v265: Daire avatar için köşeler 0.354 (sin 45°). Mobile BADGE_POS ile parite.
 const BADGE_POSITIONS: Record<string, { x: number; y: number; label: string }> = {
-  tl: { x: -0.5, y: -0.5, label: '↖ Sol-Üst' },
-  tc: { x: 0,    y: -0.55, label: '↑ Üst' },
-  tr: { x: 0.5,  y: -0.5, label: '↗ Sağ-Üst' },
-  ml: { x: -0.55, y: 0,   label: '← Sol' },
-  mr: { x: 0.55, y: 0,    label: '→ Sağ' },
-  bl: { x: -0.5, y: 0.5,  label: '↙ Sol-Alt' },
-  bc: { x: 0,    y: 0.55, label: '↓ Alt' },
-  br: { x: 0.5,  y: 0.5,  label: '↘ Sağ-Alt' },
+  tl: { x: -0.354, y: -0.354, label: '↖ Sol-Üst' },
+  tc: { x: 0,      y: -0.5,   label: '↑ Üst' },
+  tr: { x: 0.354,  y: -0.354, label: '↗ Sağ-Üst' },
+  ml: { x: -0.5,   y: 0,      label: '← Sol' },
+  mr: { x: 0.5,    y: 0,      label: '→ Sağ' },
+  bl: { x: -0.354, y: 0.354,  label: '↙ Sol-Alt' },
+  bc: { x: 0,      y: 0.5,    label: '↓ Alt' },
+  br: { x: 0.354,  y: 0.354,  label: '↘ Sağ-Alt' },
 };
 
 // ★ v1.3.59: APK ile birebir karşılaştırma için default avatar (avatar_m_1.jpg)
@@ -277,6 +335,14 @@ const FRAME_LOTTIE_MAP: Record<string, FrameLottieEntry> = {
   'glitch-matrix':     { url: '/lotties/GlitchMatrix.json',    meta_scale: 1.0, avatar_ratio: 0.92 },
   // TealRibbon — scale 1.15, avatarRatio 0.85
   'teal-ribbon':       { url: '/lotties/TealRibbon.json',      meta_scale: 1.15, avatar_ratio: 0.85 },
+  // ★ v1.3.65: Premium PNG çerçeveler — APK frameLottieRegistry.ts ile birebir.
+  //   scale 1.0, avatar_ratio 0.92 (premium grubu). public/avatar_frames/premium/
+  //   bundle'dan kopyalanmış PNG'ler.
+  'gold-royal':        { url: '/avatar_frames/premium/GoldRoyal.png',      meta_scale: 1.0, avatar_ratio: 0.92 },
+  'silver-platinum':   { url: '/avatar_frames/premium/SilverPlatinum.png', meta_scale: 1.0, avatar_ratio: 0.92 },
+  'rose-gold':         { url: '/avatar_frames/premium/RoseGold.png',       meta_scale: 1.0, avatar_ratio: 0.92 },
+  'teal-neon':         { url: '/avatar_frames/premium/TealNeon.png',       meta_scale: 1.0, avatar_ratio: 0.92 },
+  'purple-violet':     { url: '/avatar_frames/premium/PurpleViolet.png',   meta_scale: 1.0, avatar_ratio: 0.92 },
 };
 
 export default function FrameEditor({ item }: { item: any }) {
@@ -307,6 +373,11 @@ export default function FrameEditor({ item }: { item: any }) {
   const [savedNote, setSavedNote] = useState<string | null>(null);
   // ★ Mobile boyut: önizleme bu boyutta (gerçek emülatör pixel), oran kalır
   const [mobileSize, setMobileSize] = useState(160);
+  // ★ v265 (13 May 2026): Tier rozet önizleme seçici — APK'daki TierBadge'in tier'a göre
+  //   farklı render ettiği parite (Plus=teal diamond, Pro=altın star, GM=pembe sparkles).
+  //   Önceden tüm tier'lar "PRO" hardcode'la gösteriliyordu; admin Plus/GM ayarı yapsa bile
+  //   önizlemede aynı görünüyordu.
+  const [previewTier, setPreviewTier] = useState<'Plus' | 'Pro' | 'GodMaster'>('Pro');
 
   // ★ v1.3.61: Registry meta — APK'daki meta.scale ve avatarRatio değerleri.
   //   Önizleme bu değerleri hesaba katmalı yoksa boyutlar uyuşmaz.
@@ -470,6 +541,38 @@ export default function FrameEditor({ item }: { item: any }) {
             );
           })()}
 
+          {/* ★ v1.3.63 PARİTE: Glow Halo — APK BgHaloOverlay ile birebir.
+                Eski: avatar wrapper boxShadow (sıkı 20/40px neon halka).
+                Yeni: avatar arkasında ayrı radial-gradient div, sizeMul ve intensity
+                APK formülüyle (1.15 + intensity*0.15, intensity*0.8). Görsel: yumuşak
+                duman gibi yayılan halo — APK SVG RadialGradient ile aynı görünüm. */}
+          {cfg.glow_enabled && (() => {
+            const glowSizeMul = 1.15 + cfg.glow_intensity * 0.15;
+            const glowOpacity = Math.min(1, cfg.glow_intensity * 0.8);
+            const haloSize = avatarSize * glowSizeMul;
+            const opacityHex = Math.round(glowOpacity * 255).toString(16).padStart(2, '0');
+            return (
+              <div
+                style={{
+                  position: 'absolute',
+                  left: stageCenter - haloSize / 2,
+                  top: stageCenter - haloSize / 2,
+                  width: haloSize,
+                  height: haloSize,
+                  borderRadius: '50%',
+                  background: `radial-gradient(circle, ${cfg.glow_color}${opacityHex} 0%, ${cfg.glow_color}00 70%)`,
+                  pointerEvents: 'none',
+                  // glow_pulse aktifse opacity dalgalanır (APK glowPulseAnim 1↔1.4 brightness)
+                  animation: [
+                    cfg.glow_pulse && `glow-halo-pulse ${cfg.avatar_pulse_speed * 1.5}s ease-in-out infinite`,
+                    cfg.color_cycle && `glow-halo-hue ${cfg.color_cycle_speed}s linear infinite`,
+                  ].filter(Boolean).join(', ') || undefined,
+                  zIndex: 1.5 as any,
+                }}
+              />
+            );
+          })()}
+
           {/* Avatar — şekil/border/filter uygulanmış */}
           {(() => {
             const shapeDef = SHAPE_CLIP[cfg.avatar_shape] || SHAPE_CLIP.circle;
@@ -499,17 +602,14 @@ export default function FrameEditor({ item }: { item: any }) {
                   border: borderCss,
                   boxSizing: 'border-box',
                   zIndex: 2,
-                  boxShadow: cfg.glow_enabled
-                    ? `0 0 ${20 * cfg.glow_intensity}px ${cfg.glow_color}, 0 0 ${40 * cfg.glow_intensity}px ${cfg.glow_color}80`
-                    : undefined,
+                  // ★ v1.3.63: boxShadow KALDIRILDI — glow artık ayrı radial-gradient
+                  //   halo div'i ile (yukarıda) APK BgHaloOverlay paritesi sağlanıyor.
                   animation: [
                     cfg.avatar_pulse && `avatar-pulse ${cfg.avatar_pulse_speed}s ease-in-out infinite`,
                     cfg.avatar_float && `avatar-float ${cfg.avatar_float_speed}s ease-in-out infinite`,
                     cfg.avatar_shake && `avatar-shake 0.6s linear infinite`,
                     cfg.avatar_swing && `avatar-swing 2.5s ease-in-out infinite`,
                     cfg.avatar_tilt && `avatar-tilt 3s ease-in-out infinite`,
-                    cfg.glow_enabled && cfg.glow_pulse && `glow-pulse ${cfg.avatar_pulse_speed * 1.5}s ease-in-out infinite`,
-                    cfg.glow_enabled && cfg.color_cycle && `glow-color-cycle ${cfg.color_cycle_speed}s linear infinite`,
                   ].filter(Boolean).join(', ') || undefined,
                 }}
               >
@@ -531,10 +631,12 @@ export default function FrameEditor({ item }: { item: any }) {
               : cfg.particle_type === 'stars'   ? '⭐'
               : cfg.particle_type === 'hearts'  ? '❤️'
               : '🫧';
-            const particleSize = Math.max(14, Math.round(avatarSize * 0.18));
-            // Yörünge mesafesi — avatar yarıçapı + dışında en az 20px boşluk
-            // (frame_pulse_ring radar dalgalarıyla uyumlu)
-            const orbitRadius = avatarSize / 2 + Math.max(20, particleSize * 0.4);
+            // ★ v269 (14 May 2026): Mobile AvatarFrame ile birebir parite (audit aksiyon 3+4):
+            //   - fontSize çarpan: 0.18 → 0.15, min 14 → 12 (mobile L:429 ile eşit)
+            //   - orbit min pad: 20 → 4, fontSize çarpan 0.4 → 0.15 (mobile L:432 ile eşit)
+            //   Önceden web admin'de parçacıklar uzakta+iri, mobile'da yakın+küçük gösterilirdi.
+            const particleSize = Math.max(12, Math.round(avatarSize * 0.15));
+            const orbitRadius = avatarSize / 2 + Math.max(4, particleSize * 0.15);
             const wrapperSize = (orbitRadius + particleSize) * 2;
             return (
               <div
@@ -584,7 +686,11 @@ export default function FrameEditor({ item }: { item: any }) {
           })()}
 
           {/* Frame Lottie — avatar etrafında, scale'a göre büyüyebilir.
-              frame_breathe ile yavaş büyüyüp küçülür (rotation ile birlikte çalışabilir). */}
+              frame_breathe ile yavaş büyüyüp küçülür (rotation ile birlikte çalışabilir).
+              ★ v1.3.63 PARİTE: APK Lottie native filter desteklemez. Gerçek CSS
+              `hue-rotate / brightness / saturate` ve `color-cycle` keyframes
+              KALDIRILDI — yerine APK LottieFrame.tsx ile aynı renkli overlay div
+              katmanları kullanılıyor (hue: HSL %25, brightness: white/black, sat<1: gri). */}
           {lottieData && (
             <div
               style={{
@@ -594,12 +700,10 @@ export default function FrameEditor({ item }: { item: any }) {
                 width: frameContainerSize,
                 height: frameContainerSize,
                 opacity: cfg.frame_opacity,
-                filter: `hue-rotate(${cfg.lottie_hue_rotate}deg) brightness(${cfg.lottie_brightness}) saturate(${cfg.lottie_saturation})`,
                 animation: [
                   cfg.frame_rotation > 0 && `frame-spin ${cfg.frame_rotation}s linear infinite`,
                   cfg.frame_breathe && `frame-breathe 4s ease-in-out infinite`,
                   cfg.frame_wobble && `frame-wobble 2s ease-in-out infinite`,
-                  cfg.color_cycle && `color-cycle ${cfg.color_cycle_speed}s linear infinite`,
                 ].filter(Boolean).join(', ') || undefined,
                 zIndex: 3,
                 pointerEvents: 'none',
@@ -607,10 +711,40 @@ export default function FrameEditor({ item }: { item: any }) {
             >
               <Lottie animationData={lottieData} loop autoplay speed={cfg.lottie_speed}
                 style={{ width: '100%', height: '100%' }} />
+              {/* APK LottieFrame renkli overlay simülasyonu — hue/brightness/saturation */}
+              {cfg.lottie_hue_rotate !== 0 && (
+                <div style={{
+                  position: 'absolute', top: 0, left: 0,
+                  width: '100%', height: '100%',
+                  backgroundColor: `hsl(${cfg.lottie_hue_rotate}, 70%, 50%)`,
+                  opacity: 0.25, borderRadius: '50%', pointerEvents: 'none',
+                }} />
+              )}
+              {cfg.lottie_brightness !== 1 && (
+                <div style={{
+                  position: 'absolute', top: 0, left: 0,
+                  width: '100%', height: '100%',
+                  backgroundColor: cfg.lottie_brightness > 1 ? 'white' : 'black',
+                  opacity: Math.min(0.5, Math.abs(cfg.lottie_brightness - 1) * 0.4),
+                  borderRadius: '50%', pointerEvents: 'none',
+                }} />
+              )}
+              {cfg.lottie_saturation < 1 && (
+                <div style={{
+                  position: 'absolute', top: 0, left: 0,
+                  width: '100%', height: '100%',
+                  backgroundColor: 'rgba(128,128,128,1)',
+                  opacity: (1 - cfg.lottie_saturation) * 0.4,
+                  borderRadius: '50%', pointerEvents: 'none',
+                }} />
+              )}
             </div>
           )}
-          {/* ★ PNG/JPG/SVG asset — Lottie değilse direkt Image render
-                Hue/brightness/saturation/breathe/rotation animasyonları PNG'lere de uygulanır. */}
+          {/* ★ PNG/JPG/SVG asset — Lottie değilse direkt Image render.
+              ★ v1.3.63 PARİTE: APK PngFrame `lottie_hue_rotate/brightness/saturation`
+              flag'lerini UYGULAMAZ — sadece `color_cycle` aktifse tintColor cycle.
+              Web önizleme bu davranışla birebir: filter kaldırıldı, sadece color_cycle
+              aktifken hue-rotate animasyonu (APK tintColor cycle'ın görsel karşılığı). */}
           {imageUrl && !lottieData && (
             <div
               style={{
@@ -620,11 +754,11 @@ export default function FrameEditor({ item }: { item: any }) {
                 width: frameContainerSize,
                 height: frameContainerSize,
                 opacity: cfg.frame_opacity,
-                filter: `hue-rotate(${cfg.lottie_hue_rotate}deg) brightness(${cfg.lottie_brightness}) saturate(${cfg.lottie_saturation})`,
                 animation: [
                   cfg.frame_rotation > 0 && `frame-spin ${cfg.frame_rotation}s linear infinite`,
                   cfg.frame_breathe && `frame-breathe 4s ease-in-out infinite`,
                   cfg.frame_wobble && `frame-wobble 2s ease-in-out infinite`,
+                  // APK PngFrame'de tintColor cycle — web'de hue-rotate ile yaklaşık
                   cfg.color_cycle && `color-cycle ${cfg.color_cycle_speed}s linear infinite`,
                 ].filter(Boolean).join(', ') || undefined,
                 zIndex: 3,
@@ -635,26 +769,41 @@ export default function FrameEditor({ item }: { item: any }) {
               <img src={imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             </div>
           )}
-          {/* ★ Frame shimmer — üzerinden ışık süpürmesi geçer */}
-          {cfg.frame_shimmer && (lottieData || imageUrl) && (
-            <div
-              style={{
-                position: 'absolute',
-                left: stageCenter - frameContainerSize / 2 + cfg.frame_offset_x * mobileSize,
-                top: stageCenter - frameContainerSize / 2 + cfg.frame_offset_y * mobileSize,
-                width: frameContainerSize,
-                height: frameContainerSize,
-                borderRadius: '50%',
-                overflow: 'hidden',
-                pointerEvents: 'none',
-                zIndex: 4,
-                background: 'linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.4) 50%, transparent 70%)',
-                backgroundSize: '200% 100%',
-                animation: 'frame-shimmer 2.5s linear infinite',
-                mixBlendMode: 'overlay',
-              }}
-            />
-          )}
+          {/* ★ Frame shimmer — üzerinden ışık süpürmesi geçer.
+              ★ v1.3.63 PARİTE: mixBlendMode KALDIRILDI — RN'de mixBlendMode yok,
+              APK'da düz LinearGradient overlay + wrapper translateX kullanılıyor.
+              Web önizleme APK görünümü ile birebir olsun diye blend mode kaldırıldı. */}
+          {cfg.frame_shimmer && (lottieData || imageUrl) && (() => {
+            const shScale = cfg.frame_shimmer_scale ?? 1;
+            const shSize = frameContainerSize * shScale;
+            const shSpeed = cfg.frame_shimmer_speed ?? 2.5;
+            const shOpacity = cfg.frame_shimmer_opacity ?? 0.4;
+            const shAngle = cfg.frame_shimmer_angle ?? 110;
+            const shBand = cfg.frame_shimmer_band ?? 0.2;
+            const shReverse = !!cfg.frame_shimmer_reverse;
+            const bandHalf = Math.max(0.02, Math.min(0.48, shBand / 2));
+            const stopStartPct = (0.5 - bandHalf) * 100;
+            const stopEndPct = (0.5 + bandHalf) * 100;
+            return (
+              <div
+                style={{
+                  position: 'absolute',
+                  left: stageCenter - shSize / 2 + cfg.frame_offset_x * mobileSize,
+                  top: stageCenter - shSize / 2 + cfg.frame_offset_y * mobileSize,
+                  width: shSize,
+                  height: shSize,
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  pointerEvents: 'none',
+                  zIndex: (cfg.frame_shimmer_layer ?? 'above') === 'below' ? 2 : 4,
+                  backgroundImage: `linear-gradient(${shAngle}deg, transparent ${stopStartPct}%, rgba(255,255,255,${shOpacity}) 50%, transparent ${stopEndPct}%)`,
+                  backgroundSize: '200% 100%',
+                  backgroundRepeat: 'no-repeat',
+                  animation: `${shReverse ? 'frame-shimmer-rev' : 'frame-shimmer'} ${shSpeed}s linear infinite`,
+                }}
+              />
+            );
+          })()}
 
           {/* ★ Pulse Ring — radar dalgası, frame etrafında dışa yayılır */}
           {cfg.frame_pulse_ring && (
@@ -710,38 +859,77 @@ export default function FrameEditor({ item }: { item: any }) {
             />
           )}
 
-          {/* ★ Tier Badge — sade önizleme (PRO mock, sabit görünüm).
-               Web admin sadece aç/kapat + 8 nokta konum kontrolü yapar. */}
+          {/* ★ v1.3.63 PARİTE: Tier Badge önizleme APK TierBadge ile birebir.
+               components/TierBadge.tsx → md size: height 17, paddingH 6, fontSize 9.5,
+               letterSpacing 0.7, radius 8.5, gradient #FCD34D→#B45309 (LinearGradient
+               start 0,0 → end 1,1 = CSS 135deg), shadow rgba(251,191,36,0.65) blur 5.
+               Shimmer loop: opacity 0.85↔1, scale 1↔1.04, 1.6s ease-in-out. */}
           {cfg.tier_badge_enabled && (() => {
             const pos = BADGE_POSITIONS[cfg.tier_badge_position];
-            const badgeX = stageCenter + pos.x * avatarSize;
-            const badgeY = stageCenter + pos.y * avatarSize;
+            // ★ v1.3.64: 8 nokta ana konum + ince ayar offset (% avatar boyutu).
+            //   ?? 0/1.0 fallback — eski DB kayıtlarında bu alanlar undefined,
+            //   Next.js hot reload state'inde de eski rawCfg olabilir.
+            const offsetX = cfg.tier_badge_offset_x ?? 0;
+            const offsetY = cfg.tier_badge_offset_y ?? 0;
+            const badgeScale = cfg.tier_badge_scale ?? 1.0;
+            const fineOffsetX = (offsetX / 100) * avatarSize;
+            const fineOffsetY = (offsetY / 100) * avatarSize;
+            const badgeX = stageCenter + pos.x * avatarSize + fineOffsetX;
+            const badgeY = stageCenter + pos.y * avatarSize + fineOffsetY;
             return (
               <div
                 style={{
                   position: 'absolute',
                   left: badgeX,
                   top: badgeY,
-                  transform: 'translate(-50%, -50%)',
+                  // ★ v1.3.64: tier_badge_scale — kullanıcı sliderı 0.5..2.0 ile
+                  //   rozeti büyütüp küçültür. translate(-50%,-50%) ile ortalı kalır.
+                  //   APK: StatusAvatar wrapper static transform [translate + scale],
+                  //   TierBadge component içinde shimmer scale ayrıca uygulanır.
+                  //   Web'de iki katman: outer=static scale, inner=shimmer animation.
+                  transform: `translate(-50%, -50%) scale(${badgeScale})`,
+                  transformOrigin: 'center',
                   zIndex: 5,
                   pointerEvents: 'none',
                 }}
               >
                 <div style={{
-                  background: 'linear-gradient(135deg, #FCD34D, #B45309)',
-                  color: '#7C2D12',
-                  padding: '2px 7px',
-                  fontSize: 10,
-                  fontWeight: 900,
-                  letterSpacing: 0.7,
-                  borderRadius: 8,
-                  boxShadow: '0 0 8px rgba(251,191,36,0.55), 0 2px 4px rgba(0,0,0,0.3)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 3,
+                  // İç katman — APK TierBadge component shimmer animation paritesi.
+                  // opacity 0.85↔1, scale 1↔1.04, 1.6s × 2 (round-trip 3.2s).
+                  animation: 'tier-badge-shimmer-inner 3.2s ease-in-out infinite',
+                  transformOrigin: 'center',
                 }}>
-                  <span style={{ fontSize: 10 }}>★</span>
-                  PRO
+                {(() => {
+                  // ★ v265: TierBadge dinamik render — previewTier (Plus/Pro/GM) +
+                  //   editingSize'a göre tierBadgeSize (xs/sm/md). APK parite.
+                  const tcfg = TIER_PREVIEW[previewTier];
+                  const badgeSizeKey = badgeSizeForEditingSize(editingSize);
+                  const bs = TIER_BADGE_SIZE[badgeSizeKey];
+                  return (
+                    <div style={{
+                      background: tcfg.gradient,
+                      color: tcfg.textColor,
+                      height: bs.height,
+                      padding: `0 ${bs.paddingH}px`,
+                      fontSize: bs.fontSize,
+                      fontWeight: 900,
+                      letterSpacing: bs.letterSpacing,
+                      borderRadius: bs.radius,
+                      boxShadow: `0 0 5px ${tcfg.glow}, 0 0 10px ${tcfg.glow.replace(/[0-9.]+\)/, '0.45)')}, 0 1px 2px rgba(0,0,0,0.2)`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: bs.showLabel ? 3 : 0,
+                      textShadow: '0 1px 1px rgba(0,0,0,0.25)',
+                      overflow: 'hidden',
+                      fontFamily: 'system-ui, -apple-system, sans-serif',
+                      lineHeight: 1,
+                    }}>
+                      <span style={{ fontSize: bs.iconSize, lineHeight: 1, display: 'inline-flex', alignItems: 'center' }}>{tcfg.iconChar}</span>
+                      {bs.showLabel && <span style={{ lineHeight: 1 }}>{tcfg.label}</span>}
+                    </div>
+                  );
+                })()}
                 </div>
               </div>
             );
@@ -750,6 +938,42 @@ export default function FrameEditor({ item }: { item: any }) {
         <p className="text-xs text-slate-500">
           Avatar görsel sabit. Frame ölçeği avatara göre büyür/küçülür.
         </p>
+
+        {/* ★ v265 (13 May 2026): Tier rozet önizleme seçici — APK'da kullanıcının
+            subscription_tier'ına göre TierBadge farklı render eder (Plus=teal diamond,
+            Pro=altın star, GM=pembe sparkles). Admin burada toggle ile hepsini görür. */}
+        {cfg.tier_badge_enabled && (
+          <div className="mt-3 p-2.5 rounded-lg bg-slate-900/60 border border-slate-700/40">
+            <div className="text-[10px] uppercase tracking-wider text-slate-400 mb-1.5 font-semibold">
+              Tier Rozet Önizleme
+            </div>
+            <div className="flex gap-1.5">
+              {(['Plus', 'Pro', 'GodMaster'] as const).map((t) => {
+                const tcfg = TIER_PREVIEW[t];
+                const sel = previewTier === t;
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setPreviewTier(t)}
+                    className={`flex-1 px-2 py-1.5 rounded-md text-[10px] font-bold transition border ${
+                      sel
+                        ? 'border-amber-500 bg-amber-500/15 text-amber-200'
+                        : 'border-slate-700 bg-slate-800/40 text-slate-400 hover:bg-slate-800'
+                    }`}
+                  >
+                    <span style={{ marginRight: 4 }}>{tcfg.iconChar}</span>
+                    {tcfg.label}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-[10px] text-slate-500 mt-1.5 leading-snug">
+              Önizlemedeki rozet sadece görsel kontrol içindir. APK'da kullanıcının gerçek tier'ı
+              gösterilir (Free → rozet gizli).
+            </p>
+          </div>
+        )}
       </div>
 
       {/* SAĞ — config panel */}
@@ -936,6 +1160,49 @@ export default function FrameEditor({ item }: { item: any }) {
             <Toggle label="Glow nefes (parlaklık dalgalanır)" checked={cfg.glow_pulse} onChange={v => update('glow_pulse', v)} />
             <p className="text-[10px] text-slate-500">Glow nefes için yukarıdaki Glow aktif olmalı.</p>
             <Toggle label="Shimmer (üzerinden ışık süpürmesi)" checked={cfg.frame_shimmer} onChange={v => update('frame_shimmer', v)} />
+            {cfg.frame_shimmer && (
+              <div className="space-y-2 pl-2 border-l-2 border-cyan-500/30">
+                <Slider label="Boyut" min={0.3} max={2.0} step={0.05}
+                  value={cfg.frame_shimmer_scale ?? 1}
+                  onChange={v => update('frame_shimmer_scale', v)}
+                  display={`${Math.round((cfg.frame_shimmer_scale ?? 1) * 100)}%`} />
+                <Slider label="Hız (saniye)" min={0.5} max={10} step={0.1}
+                  value={cfg.frame_shimmer_speed ?? 2.5}
+                  onChange={v => update('frame_shimmer_speed', v)}
+                  display={`${(cfg.frame_shimmer_speed ?? 2.5).toFixed(1)}s`} />
+                <Slider label="Parlaklık (peak)" min={0.05} max={1} step={0.05}
+                  value={cfg.frame_shimmer_opacity ?? 0.4}
+                  onChange={v => update('frame_shimmer_opacity', v)}
+                  display={`${Math.round((cfg.frame_shimmer_opacity ?? 0.4) * 100)}%`} />
+                <Slider label="Açı (derece)" min={0} max={359} step={1}
+                  value={cfg.frame_shimmer_angle ?? 110}
+                  onChange={v => update('frame_shimmer_angle', v)}
+                  display={`${cfg.frame_shimmer_angle ?? 110}°`} />
+                <Slider label="Bant Genişliği" min={0.05} max={0.5} step={0.01}
+                  value={cfg.frame_shimmer_band ?? 0.2}
+                  onChange={v => update('frame_shimmer_band', v)}
+                  display={`${Math.round((cfg.frame_shimmer_band ?? 0.2) * 100)}%`} />
+                <label className="flex items-center gap-2 text-xs text-slate-400">
+                  <input type="checkbox"
+                    checked={cfg.frame_shimmer_reverse ?? false}
+                    onChange={e => update('frame_shimmer_reverse', e.target.checked)}
+                    aria-label="Shimmer yönü ters" />
+                  Yön: ters çevir (sola → sağa)
+                </label>
+                <label className="block">
+                  <div className="text-xs text-slate-400 mb-1">Konum (Katman)</div>
+                  <select
+                    value={cfg.frame_shimmer_layer ?? 'above'}
+                    onChange={e => update('frame_shimmer_layer', e.target.value as 'above' | 'below')}
+                    aria-label="Shimmer katman pozisyonu"
+                    className="w-full px-2 py-1.5 rounded bg-slate-800 border border-slate-700 text-xs"
+                  >
+                    <option value="above">Çerçeve Üstü (frame PNG'yi de kapatır)</option>
+                    <option value="below">Çerçeve Altı (frame PNG arkasında, iç dairede)</option>
+                  </select>
+                </label>
+              </div>
+            )}
             <Toggle label="Wobble (titreşim — hafif sallama)" checked={cfg.frame_wobble} onChange={v => update('frame_wobble', v)} />
             <Toggle label="Pulse Ring (radar dalgası — dışa yayılan halka)" checked={cfg.frame_pulse_ring} onChange={v => update('frame_pulse_ring', v)} />
           </SubBlock>
@@ -981,10 +1248,10 @@ export default function FrameEditor({ item }: { item: any }) {
         <Section title="Kimlik & Etiket" icon={<Award className="w-4 h-4 text-cyan-400" />}>
           <SubBlock title="Kullanıcı Adı">
             <Toggle label="Adı çerçeve etrafında göster" checked={cfg.name_enabled} onChange={v => update('name_enabled', v)} />
-            <p className="text-[10px] text-amber-300/70 mt-1 leading-snug">
-              ⚠️ İsim ayarları şimdilik <strong>sadece bu önizlemede</strong> çalışır. Mobil uygulamada
-              isim avatar'ın altında klasik şekilde görünür (yay/dairesel/eğim için React Native SVG
-              modülü gerekiyor — ayrı build paketi).
+            <p className="text-[10px] text-emerald-300/70 mt-1 leading-snug">
+              ✓ İsim ayarları mobil uygulamada da çalışır — yay / dairesel / eğim
+              react-native-svg ile gerçek render edilir. Hareket, glow, shimmer,
+              renk döngüsü ve wave animasyonları paralel paritededir.
             </p>
             {cfg.name_enabled && (
               <>
@@ -1105,9 +1372,68 @@ export default function FrameEditor({ item }: { item: any }) {
                     })}
                   </div>
                 </label>
+                {/* ★ v1.3.64: 8 nokta ana referans + ince ayar slider'ları.
+                    8 nokta kaba konum verir, slider'lar %-50..+50 arası pixel-ince
+                    sürükleme. Yüzdelik bazlı (her avatar boyutunda orantılı). */}
+                <div className="pt-2 border-t border-slate-700/40 space-y-2">
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    🎯 İnce Ayar — Serbest Konum & Boyut
+                  </div>
+                  <p className="text-[10px] text-slate-500 leading-snug">
+                    8 nokta ana referans. Yatay/dikey slider'lar rozetin konumunu
+                    %-50..+50 avatar boyutuna oranla kaydırır. Boyut slider'ı 0.5×–2.0×
+                    arası büyütüp küçültür.
+                  </p>
+                  {(() => {
+                    // ★ v1.3.64: ?? fallback — eski DB kayıtları + hot reload state
+                    //   bu alanları undefined bırakabilir; UI çökmesin diye localize.
+                    const offX = cfg.tier_badge_offset_x ?? 0;
+                    const offY = cfg.tier_badge_offset_y ?? 0;
+                    const scl = cfg.tier_badge_scale ?? 1.0;
+                    return (
+                      <>
+                        <Slider
+                          label="Yatay İnce Ayar (X)"
+                          min={-50} max={50} step={1}
+                          value={offX}
+                          onChange={(v: number) => update('tier_badge_offset_x', v)}
+                          display={`${offX > 0 ? '+' : ''}${offX}%`}
+                        />
+                        <Slider
+                          label="Dikey İnce Ayar (Y)"
+                          min={-50} max={50} step={1}
+                          value={offY}
+                          onChange={(v: number) => update('tier_badge_offset_y', v)}
+                          display={`${offY > 0 ? '+' : ''}${offY}%`}
+                        />
+                        <Slider
+                          label="Boyut (Büyüt / Küçült)"
+                          min={0.5} max={2.0} step={0.05}
+                          value={scl}
+                          onChange={(v: number) => update('tier_badge_scale', v)}
+                          display={`${scl.toFixed(2)}×`}
+                        />
+                        {(offX !== 0 || offY !== 0 || scl !== 1.0) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              update('tier_badge_offset_x', 0);
+                              update('tier_badge_offset_y', 0);
+                              update('tier_badge_scale', 1.0);
+                            }}
+                            className="px-2 py-1 text-[10px] rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700"
+                          >
+                            ↺ İnce ayarı sıfırla
+                          </button>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
                 <p className="text-[10px] text-slate-500 leading-relaxed mt-1">
                   Rozetin görünüm tasarımı (PLUS / PRO / GM gradient + glow) sabittir.
-                  Burada sadece <strong>aç/kapat</strong> ve <strong>konum</strong> ayarlanır.
+                  Burada sadece <strong>aç/kapat</strong>, <strong>konum</strong> ve
+                  <strong> ince ayar</strong> kontrol edilir.
                 </p>
               </>
             )}
@@ -1186,6 +1512,10 @@ export default function FrameEditor({ item }: { item: any }) {
         @keyframes frame-shimmer {
           0%   { background-position: 200% 0 }
           100% { background-position: -200% 0 }
+        }
+        @keyframes frame-shimmer-rev {
+          0%   { background-position: -200% 0 }
+          100% { background-position: 200% 0 }
         }
         @keyframes frame-wobble {
           0%, 100% { transform: rotate(0deg) }
@@ -1310,6 +1640,33 @@ export default function FrameEditor({ item }: { item: any }) {
           0%, 100% { opacity: 1 }
           50%      { opacity: 0.4 }
         }
+        /* ★ v1.3.63: Tier badge shimmer — APK TierBadge.tsx ile birebir.
+           opacity 0.85↔1, scale 1↔1.04, 1.6s ease-in-out × 2 (round-trip 3.2s).
+           ★ v1.3.64: shimmer artık iç katmanda — outer wrapper static
+           translate(-50%,-50%) scale(tier_badge_scale) ile büyütme/küçültme.
+           Bu keyframe sadece scale + opacity (translate yok, çakışma engellendi). */
+        @keyframes tier-badge-shimmer-inner {
+          0%, 100% {
+            transform: scale(1);
+            opacity: 0.85;
+          }
+          50% {
+            transform: scale(1.04);
+            opacity: 1;
+          }
+        }
+        /* ★ v1.3.63: Glow halo pulse — APK glowPulseAnim 1↔1.4 brightness paritesi.
+           Radial-gradient div opacity 0.7↔1.0 ile glow yoğunluğu nefes alır. */
+        @keyframes glow-halo-pulse {
+          0%, 100% { opacity: 0.7 }
+          50%      { opacity: 1 }
+        }
+        /* ★ v1.3.63: Glow halo hue — color_cycle aktifken radial-gradient
+           rengi sürekli döner. APK setCycleColor (setInterval HSL) ile parite. */
+        @keyframes glow-halo-hue {
+          0%   { filter: hue-rotate(0deg) }
+          100% { filter: hue-rotate(360deg) }
+        }
       `}</style>
     </div>
   );
@@ -1418,25 +1775,9 @@ function NamePreviewSvg({ cfg, frameSize, stageCenter }: {
     >
       <defs>
         <path id={pathId} d={pathD} fill="none" />
-        {cfg.name_shimmer && (
-          <linearGradient id={`shimmer-${pathId}`} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor={cfg.name_color} stopOpacity="0.6" />
-            <stop offset="50%" stopColor="#ffffff" stopOpacity="1" />
-            <stop offset="100%" stopColor={cfg.name_color} stopOpacity="0.6" />
-            <animate
-              attributeName="x1"
-              values="-100%;100%"
-              dur="2.5s"
-              repeatCount="indefinite"
-            />
-            <animate
-              attributeName="x2"
-              values="0%;200%"
-              dur="2.5s"
-              repeatCount="indefinite"
-            />
-          </linearGradient>
-        )}
+        {/* ★ v1.3.63: name_shimmer linearGradient KALDIRILDI — fill'de
+            kullanılmıyordu (ölü kod). APK MaskedView desteklemiyor; gerçek shimmer
+            için outer wrapper opacity pulse yeterli (name-shimmer-opacity keyframes). */}
       </defs>
       <text
         fontSize={fontPx}

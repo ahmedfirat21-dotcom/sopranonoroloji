@@ -38,6 +38,9 @@ type Item = {
   display_order: number | null;
   asset_url?: string | null; // ★ v114 — Lottie/PNG URL (mobile dinamik render)
   editor_config?: any;       // ★ JSONB — frame_config / entry_config (ince ayar slider'ları)
+  thumb_url?: string | null;   // ★ v119 — Mağaza listesi küçük resim (60×60)
+  hero_url?: string | null;    // ★ v119 — Mağaza detay/banner (800×400)
+  preview_url?: string | null; // ★ v119 — Picker/inline gösterim (160×160)
 };
 
 type Bundle = {
@@ -286,16 +289,20 @@ export default function StoreClient({
                 style={{ borderColor: it.bg_gradient_start ? `${it.bg_gradient_start}40` : 'rgba(255,255,255,0.1)' }}
               >
                 <div className="flex items-center gap-3 mb-2">
-                  <div
-                    className="w-12 h-12 rounded-lg flex items-center justify-center shrink-0 overflow-hidden"
-                    style={{
-                      background: it.bg_gradient_start && it.bg_gradient_end
-                        ? `linear-gradient(135deg, ${it.bg_gradient_start}, ${it.bg_gradient_end})`
-                        : '#1e293b',
-                    }}
-                  >
-                    <ItemLottiePreview itemId={it.id} assetUrl={it.asset_url} fallbackEmoji={it.art_emoji} size={48} />
-                  </div>
+                  <CategoryCoverMini
+                    category={it.category}
+                    gradStart={it.bg_gradient_start || '#1e293b'}
+                    gradEnd={it.bg_gradient_end || '#0f172a'}
+                    thumbUrl={(it as any).thumb_url}
+                    assetUrl={it.asset_url}
+                    artEmoji={it.art_emoji}
+                    formId={it.id}
+                    size={48}
+                    padding={(it.editor_config as any)?.cover?.padding ?? 0}
+                    scale={(it.editor_config as any)?.cover?.scale ?? 1}
+                    fit={(it.editor_config as any)?.cover?.fit ?? 'cover'}
+                    position={(it.editor_config as any)?.cover?.position ?? 'center'}
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-sm text-slate-100 truncate flex items-center gap-1.5">
                       {it.name}
@@ -387,16 +394,20 @@ export default function StoreClient({
                     <tr key={it.id} className="hover:bg-white/[0.02]">
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-3">
-                          <div
-                            className="w-9 h-9 rounded-lg flex items-center justify-center overflow-hidden"
-                            style={{
-                              background: it.bg_gradient_start && it.bg_gradient_end
-                                ? `linear-gradient(135deg, ${it.bg_gradient_start}, ${it.bg_gradient_end})`
-                                : '#1e293b',
-                            }}
-                          >
-                            <ItemLottiePreview itemId={it.id} fallbackEmoji={it.art_emoji} size={36} />
-                          </div>
+                          <CategoryCoverMini
+                            category={it.category}
+                            gradStart={it.bg_gradient_start || '#1e293b'}
+                            gradEnd={it.bg_gradient_end || '#0f172a'}
+                            thumbUrl={(it as any).thumb_url}
+                            assetUrl={it.asset_url}
+                            artEmoji={it.art_emoji}
+                            formId={it.id}
+                            size={36}
+                            padding={(it.editor_config as any)?.cover?.padding ?? 0}
+                            scale={(it.editor_config as any)?.cover?.scale ?? 1}
+                            fit={(it.editor_config as any)?.cover?.fit ?? 'cover'}
+                            position={(it.editor_config as any)?.cover?.position ?? 'center'}
+                          />
                           <div className="min-w-0">
                             <div className="font-semibold text-slate-100 truncate flex items-center gap-1.5">
                               {it.name}
@@ -632,16 +643,20 @@ function rarityLabel(rarity: string | null): string {
 }
 
 // Kategoriye göre asset format ipucu — neyin yüklenmesi gerektiğini açık söyler
-const ASSET_FORMAT_HINTS: Record<string, { recommended: string; tip: string }> = {
-  frames:        { recommended: 'PNG (şeffaf zemin, kare) veya Lottie JSON',     tip: '512×512 px önerilir' },
-  entry_effect:  { recommended: 'Lottie JSON (animasyonlu)',                      tip: 'Veya GIF/WebP fallback' },
-  gift:          { recommended: 'Lottie JSON veya PNG',                           tip: 'Sohbete gönderildiğinde oynayacak' },
-  glow_message:  { recommended: 'Küçük PNG/SVG',                                  tip: 'Mesaj baloncuğu efekti' },
-  effect:        { recommended: 'Lottie JSON',                                    tip: 'Genel görsel efekt' },
-  theme:         { recommended: 'PNG/JPG arkaplan',                               tip: '1080×1920 önerilir' },
-  background:    { recommended: 'PNG/JPG arkaplan',                               tip: 'Profil/oda arkaplanı' },
-  emoji:         { recommended: 'PNG (şeffaf zemin)',                             tip: '128×128 önerilir' },
-  badge:         { recommended: 'PNG/SVG (şeffaf zemin)',                         tip: '128×128 rozet ikonu' },
+const ASSET_FORMAT_HINTS: Record<string, { recommended: string; tip: string; needsAsset?: boolean; needsCover?: boolean; assetNote?: string }> = {
+  frames:        { recommended: 'PNG (şeffaf zemin, kare) veya Lottie JSON',     tip: '512×512 px önerilir', needsAsset: true,  needsCover: true },
+  entry_effect:  { recommended: 'Lottie JSON (animasyonlu)',                      tip: 'Veya GIF/WebP fallback', needsAsset: true,  needsCover: true },
+  gift:          { recommended: 'Lottie JSON veya PNG',                           tip: 'Sohbete gönderildiğinde oynayacak', needsAsset: true,  needsCover: true },
+  background:    { recommended: 'PNG/JPG arkaplan',                               tip: 'Profil/oda arkaplanı', needsAsset: true,  needsCover: true },
+  effect:        { recommended: 'Lottie JSON',                                    tip: 'Genel görsel efekt', needsAsset: true,  needsCover: true },
+  emoji:         { recommended: 'PNG (şeffaf zemin)',                             tip: '128×128 önerilir', needsAsset: false, needsCover: true,
+                   assetNote: 'Emoji setindeki tek tek emojiler "İnce Ayar > Liste" sekmesinden eklenir.' },
+  badge:         { recommended: 'PNG/SVG (şeffaf zemin)',                         tip: '128×128 rozet ikonu', needsAsset: false, needsCover: true,
+                   assetNote: 'Rozet şekli/renk/ikonu "İnce Ayar" sayfasından seçilir. Özel görsel istersen yüklenebilir.' },
+  glow_message:  { recommended: '—',                                              tip: '', needsAsset: false, needsCover: true,
+                   assetNote: 'Parlak mesaj sadece config (renk/glow/animasyon). Dosya yüklemeye gerek yok — "İnce Ayar"dan düzenle.' },
+  theme:         { recommended: '—',                                              tip: '', needsAsset: false, needsCover: true,
+                   assetNote: 'Tema sadece renk paleti. Dosya yüklemeye gerek yok — "İnce Ayar" sayfasından renkleri düzenle.' },
 };
 
 function ItemEditModal({
@@ -697,9 +712,21 @@ function ItemEditModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.name, form.category]);
 
-  // Asset upload state — modal içi yükleme akışı
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [uploading, setUploading] = useState(false);
+  // ★ v119: 4 slot upload akışı — asset (Lottie/ana), thumb (60×60), hero (800×400), preview (160×160)
+  type MediaSlot = 'asset' | 'thumb' | 'hero' | 'preview';
+  const SLOT_COLUMN: Record<MediaSlot, 'asset_url' | 'thumb_url' | 'hero_url' | 'preview_url'> = {
+    asset: 'asset_url', thumb: 'thumb_url', hero: 'hero_url', preview: 'preview_url',
+  };
+  const fileInputRefs: Record<MediaSlot, React.MutableRefObject<HTMLInputElement | null>> = {
+    asset: useRef<HTMLInputElement | null>(null),
+    thumb: useRef<HTMLInputElement | null>(null),
+    hero: useRef<HTMLInputElement | null>(null),
+    preview: useRef<HTMLInputElement | null>(null),
+  };
+  // Geriye dönük uyumluluk — eski tek-slot UI parçaları için fileInputRef alias
+  const fileInputRef = fileInputRefs.asset;
+  const [uploadingSlot, setUploadingSlot] = useState<MediaSlot | null>(null);
+  const uploading = uploadingSlot === 'asset'; // eski UI parçaları için
   const [uploadedType, setUploadedType] = useState<'lottie' | 'image' | null>(
     item?.asset_url ? (/\.json($|\?)/i.test(item.asset_url) ? 'lottie' : 'image') : null
   );
@@ -707,49 +734,62 @@ function ItemEditModal({
   const formatHint = ASSET_FORMAT_HINTS[form.category || ''] ?? {
     recommended: 'PNG, Lottie JSON, SVG, GIF veya WebP',
     tip: 'Maks 10 MB',
+    needsAsset: true,
+    needsCover: true,
   };
+  const needsAsset = formatHint.needsAsset !== false;
+  const needsCover = formatHint.needsCover !== false;
 
-  const handleFileUpload = async (file: File) => {
+  const handleFileUpload = async (file: File, slot: MediaSlot = 'asset') => {
     if (file.size > 10 * 1024 * 1024) {
       await dialog.alert({ title: 'Dosya çok büyük', message: 'Maks 10 MB olabilir.', variant: 'error' });
       return;
     }
-    const allowed = ['application/json', 'image/png', 'image/jpeg', 'image/svg+xml', 'image/gif', 'image/webp'];
+    // Thumbnail/Hero/Preview yalnızca image
+    const isImageOnlySlot = slot !== 'asset';
+    const allowed = isImageOnlySlot
+      ? ['image/png', 'image/jpeg', 'image/svg+xml', 'image/gif', 'image/webp']
+      : ['application/json', 'image/png', 'image/jpeg', 'image/svg+xml', 'image/gif', 'image/webp'];
     if (!allowed.includes(file.type)) {
       await dialog.alert({
         title: 'Geçersiz tip',
-        message: `${file.type} kabul edilmiyor. JSON (Lottie), PNG, JPG, SVG, GIF veya WebP olabilir.`,
+        message: isImageOnlySlot
+          ? `${file.type} kabul edilmiyor. Sadece PNG, JPG, SVG, GIF veya WebP olabilir.`
+          : `${file.type} kabul edilmiyor. JSON (Lottie), PNG, JPG, SVG, GIF veya WebP olabilir.`,
         variant: 'error',
       });
       return;
     }
 
-    setUploading(true);
+    setUploadingSlot(slot);
     try {
       const fd = new FormData();
       fd.append('file', file);
       fd.append('category', form.category || 'other');
-      // Asset SADECE Storage'a yüklenir — DB'ye sadece "Kaydet" basılınca gider.
-      // (Eski davranış mevcut üründe item_id pas edip DB'yi anında güncelliyordu;
-      //  o zaman "İptal" değişikliği geri almıyordu, beklenti kırılıyordu.)
+      fd.append('slot', slot);
       const res = await fetch('/yonet/api/store/upload-asset', { method: 'POST', body: fd });
       const j = await res.json();
       if (!res.ok || !j.ok) throw new Error(j.error || 'Yükleme başarısız');
 
-      setForm(prev => ({ ...prev, asset_url: j.url }));
-      setUploadedType(j.asset_type);
+      const col = SLOT_COLUMN[slot];
+      setForm(prev => ({ ...prev, [col]: j.url }));
+      if (slot === 'asset') setUploadedType(j.asset_type);
     } catch (e: any) {
       await dialog.alert({ title: 'Yükleme hatası', message: e.message, variant: 'error' });
     } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      setUploadingSlot(null);
+      const r = fileInputRefs[slot].current;
+      if (r) r.value = '';
     }
   };
 
-  const handleClearAsset = () => {
-    setForm(prev => ({ ...prev, asset_url: null }));
-    setUploadedType(null);
+  const handleClearSlot = (slot: MediaSlot) => {
+    const col = SLOT_COLUMN[slot];
+    setForm(prev => ({ ...prev, [col]: null }));
+    if (slot === 'asset') setUploadedType(null);
   };
+  // Eski tek-slot çağrıları için alias
+  const handleClearAsset = () => handleClearSlot('asset');
 
   const handleSave = async () => {
     if (!form.id || !form.name) {
@@ -784,12 +824,16 @@ function ItemEditModal({
   // İnce ayar paneli — frame ve entry effect için modal-içi tab.
   // (Eski: /yonet/cerceveler/[id] sayfasına yönlendirme yapıyordu — tek modaldan
   //  ayrılmamak için artık FrameEditor/EntryEffectEditor doğrudan tab içinde embed.)
-  const fineEditorType: 'frame' | 'entry' | null =
-    form.category === 'frames' || form.category === 'atelier'
-      ? 'frame'
-      : form.category === 'entry_effect'
-        ? 'entry'
-        : null;
+  const fineEditorType: 'frame' | 'entry' | 'glow' | 'badge' | 'background' | 'theme' | 'emoji' | 'effect' | null =
+    form.category === 'frames' || form.category === 'atelier' ? 'frame'
+      : form.category === 'entry_effect' ? 'entry'
+      : form.category === 'glow_message' ? 'glow'
+      : form.category === 'badge' ? 'badge'
+      : form.category === 'background' ? 'background'
+      : form.category === 'theme' ? 'theme'
+      : form.category === 'emoji' ? 'emoji'
+      : form.category === 'effect' ? 'effect'
+      : null;
   const showFineTab = !isNew && !!fineEditorType;
   const [activeTab, setActiveTab] = useState<'general' | 'fine'>('general');
   // Yeni ürüne dönülünce veya kategori değişince tab'ı sıfırla
@@ -847,43 +891,62 @@ function ItemEditModal({
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-0">
           {/* SOL — form */}
           <div className="p-5 space-y-5 max-h-[75vh] overflow-y-auto">
-            {/* 1) Kategori chip seçici — en üstte, vurgulu */}
-            <div>
-              <label className="block text-[10px] font-bold tracking-wider text-amber-300 mb-2">
-                1. KATEGORİ <span className="text-red-400">*</span>
-              </label>
-              <div className="flex flex-wrap gap-1.5">
-                {CATEGORIES.map(c => {
-                  const active = form.category === c.slug;
-                  return (
-                    <button
-                      key={c.slug}
-                      type="button"
-                      onClick={() => update('category', c.slug)}
-                      disabled={!isNew}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors flex items-center gap-1.5 ${
-                        active
-                          ? 'bg-amber-500/25 border-amber-500/60 text-amber-200'
-                          : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
-                      } disabled:opacity-50 disabled:cursor-not-allowed`}
-                      title={isNew ? c.description : 'Mevcut ürünün kategorisi değiştirilemez'}
-                    >
-                      <span>{c.emoji}</span> {c.label}
-                    </button>
-                  );
-                })}
-              </div>
-              {!isNew && (
-                <div className="text-[10px] text-slate-500 mt-1.5">
-                  Mevcut ürünün kategorisi değiştirilemez (envanter bütünlüğü için).
+            {/* 1) Kategori — yeni ürün ise chip seçici, mevcut ürün ise readonly badge */}
+            {isNew ? (
+              <div>
+                <label className="block text-[10px] font-bold tracking-wider text-amber-300 mb-2">
+                  1. KATEGORİ <span className="text-red-400">*</span>
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {CATEGORIES.map(c => {
+                    const active = form.category === c.slug;
+                    return (
+                      <button
+                        key={c.slug}
+                        type="button"
+                        onClick={() => update('category', c.slug)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors flex items-center gap-1.5 ${
+                          active
+                            ? 'bg-amber-500/25 border-amber-500/60 text-amber-200'
+                            : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
+                        }`}
+                        title={c.description}
+                      >
+                        <span>{c.emoji}</span> {c.label}
+                      </button>
+                    );
+                  })}
                 </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                <span className="opacity-70">Kategori:</span>
+                {(() => {
+                  const c = CATEGORIES.find(x => x.slug === form.category);
+                  return (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-200 font-semibold">
+                      <span>{c?.emoji || '📦'}</span> {c?.label || form.category}
+                    </span>
+                  );
+                })()}
+              </div>
+            )}
 
-            {/* 2) Asset upload — kategoriye özel format ipucu */}
+            {/* 2) Asset upload — kategoriye özel format ipucu (sadece needsAsset olan kategoriler için) */}
+            {!needsAsset ? (
+              <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-3.5 flex items-start gap-2.5">
+                <div className="text-xl shrink-0">💡</div>
+                <div className="flex-1">
+                  <div className="text-xs font-bold text-cyan-200">Bu kategori için dosya yüklemeye gerek yok</div>
+                  <div className="text-[11px] text-cyan-300/80 mt-1 leading-relaxed">
+                    {(formatHint as any).assetNote || 'Ayarlar İnce Ayar sayfasından yapılır.'}
+                  </div>
+                </div>
+              </div>
+            ) : (
             <div>
               <label className="block text-[10px] font-bold tracking-wider text-amber-300 mb-2 flex items-center justify-between">
-                <span>2. DOSYA <span className="text-slate-500 font-normal text-[9px] ml-1">(opsiyonel)</span></span>
+                <span>2. ANA DOSYA <span className="text-slate-500 font-normal text-[9px] ml-1">(animasyon / asset)</span></span>
                 <span className="text-[9px] font-normal normal-case text-amber-300/80">
                   💡 {formatHint.recommended}
                 </span>
@@ -980,6 +1043,171 @@ function ItemEditModal({
                 </div>
               )}
             </div>
+            )}
+
+            {/* ★ v119: 2b — Mağaza Ön Kapak Görseli (tek slot + boyutlandırma seçenekleri) */}
+            {needsCover && (
+            <div>
+              <label className="block text-[10px] font-bold tracking-wider text-amber-300 mb-2">
+                2b. MAĞAZA ÖN KAPAK GÖRSELİ <span className="text-slate-500 font-normal text-[9px] ml-1">(opsiyonel — boş bırakırsan kategori varsayılanı gösterilir)</span>
+              </label>
+              {(() => {
+                const url = form.thumb_url as string | null | undefined;
+                const isUploading = uploadingSlot === 'thumb';
+                const inputRef = fileInputRefs.thumb;
+                // Boyutlandırma alanları editor_config.cover_fit içinde tutulur — opsiyonel
+                const cov = (form.editor_config?.cover || {}) as { fit?: string; scale?: number; padding?: number; position?: string };
+                const fit = cov.fit || 'cover';
+                const scale = cov.scale ?? 1;
+                const padding = cov.padding ?? 0;
+                const position = cov.position || 'center';
+                const setCov = (patch: Partial<typeof cov>) => setForm(prev => ({
+                  ...prev,
+                  editor_config: { ...(prev.editor_config || {}), cover: { ...(prev.editor_config?.cover || {}), ...patch } },
+                }));
+                const gradStart = form.bg_gradient_start || '#1e293b';
+                const gradEnd = form.bg_gradient_end || '#0f172a';
+                const rarityLabelMap: Record<string, string> = {
+                  common: 'NORMAL', uncommon: 'NADİR', rare: 'EFSANE', epic: 'EPIK', legendary: 'EFSANEVİ',
+                };
+                return (
+                  <div className="rounded-lg border border-white/10 bg-white/5 p-3 space-y-3">
+                    <div className="flex items-start gap-3">
+                      {/* MAĞAZA ÜRÜN KARTI ÖNİZLEMESİ — gerçek listedeki kartın birebir aynısı */}
+                      <div className="shrink-0 space-y-1.5">
+                        <div className="text-[9px] text-amber-300/80 font-bold tracking-wider uppercase">
+                          Ürün Kartı Önizleme
+                        </div>
+                        <div className="rounded-xl border bg-white/5 p-3 relative" style={{ width: 200, borderColor: `${gradStart}40` }}>
+                          {/* Üst satır: kapak + ad + kategori + aktif badge */}
+                          <div className="flex items-center gap-2 mb-2">
+                            <CategoryCoverMini
+                              category={form.category || ''}
+                              gradStart={gradStart}
+                              gradEnd={gradEnd}
+                              padding={padding}
+                              scale={scale}
+                              fit={fit}
+                              position={position}
+                              thumbUrl={url}
+                              assetUrl={form.asset_url}
+                              artEmoji={form.art_emoji}
+                              formId={form.id}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-xs text-slate-100 truncate">
+                                {form.name || 'Ürün adı'}
+                              </div>
+                              <div className="text-[9px] text-slate-400">
+                                {(() => {
+                                  const c = CATEGORIES.find(x => x.slug === form.category);
+                                  return c ? `${c.emoji} ${c.label}` : '📦 Diğer';
+                                })()}
+                              </div>
+                            </div>
+                            {form.active ? (
+                              <span className="px-1.5 py-0.5 rounded-full bg-green-500/10 border border-green-500/30 text-green-400 text-[8px] font-bold">AKTİF</span>
+                            ) : (
+                              <span className="px-1.5 py-0.5 rounded-full bg-slate-500/10 border border-slate-500/30 text-slate-400 text-[8px] font-bold">PASİF</span>
+                            )}
+                          </div>
+                          {/* Alt satır: rarity + fiyat */}
+                          <div className="flex items-center justify-between text-[10px]">
+                            <span className="px-1.5 py-0.5 rounded-full text-[8px] font-bold tracking-wider bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                              {rarityLabelMap[form.rarity || 'common'] || 'NORMAL'}
+                            </span>
+                            <span className="text-amber-400 font-bold">
+                              ★ {(form.price_sp ?? 0).toLocaleString('tr-TR')} SP
+                            </span>
+                          </div>
+                          {/* Upload/clear butonları sağ üst köşe */}
+                          <div className="absolute -top-1 -right-1 flex gap-1">
+                            <button type="button" onClick={() => inputRef.current?.click()}
+                              className="w-6 h-6 rounded-md bg-cyan-500/90 text-white flex items-center justify-center hover:bg-cyan-500 shadow-md"
+                              title="Görsel yükle / değiştir" disabled={isUploading}>
+                              {isUploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
+                            </button>
+                            {url && (
+                              <button type="button" onClick={() => handleClearSlot('thumb')}
+                                className="w-6 h-6 rounded-md bg-red-500/90 text-white flex items-center justify-center hover:bg-red-500 shadow-md"
+                                title="Görseli kaldır">
+                                <X className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-[9px] text-slate-500 leading-tight">
+                          ↑ Mağaza listesinde böyle görünür
+                        </div>
+                      </div>
+
+                      {/* Boyutlandırma seçenekleri */}
+                      <div className="flex-1 space-y-2">
+                        <div>
+                          <div className="text-[10px] text-slate-400 mb-1">Sığdırma</div>
+                          <select value={fit} onChange={e => setCov({ fit: e.target.value })}
+                            title="Görsel sığdırma modu" aria-label="Sığdırma modu"
+                            className="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200">
+                            <option value="cover">Cover (kırp + doldur)</option>
+                            <option value="contain">Contain (sığdır)</option>
+                            <option value="fill">Fill (bozarak doldur)</option>
+                            <option value="none">None (orijinal)</option>
+                          </select>
+                        </div>
+                        <div>
+                          <div className="text-[10px] text-slate-400 mb-1">Konum</div>
+                          <select value={position} onChange={e => setCov({ position: e.target.value })}
+                            title="Görsel konum hizalama" aria-label="Konum"
+                            className="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200">
+                            <option value="center">Merkez</option>
+                            <option value="top">Üst</option>
+                            <option value="bottom">Alt</option>
+                            <option value="left">Sol</option>
+                            <option value="right">Sağ</option>
+                            <option value="top left">Sol Üst</option>
+                            <option value="top right">Sağ Üst</option>
+                            <option value="bottom left">Sol Alt</option>
+                            <option value="bottom right">Sağ Alt</option>
+                          </select>
+                        </div>
+                        <div>
+                          <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1">
+                            <span>Ölçek</span>
+                            <span className="text-slate-200 font-mono">{scale.toFixed(2)}x</span>
+                          </div>
+                          <input type="range" min={0.5} max={1.5} step={0.05} value={scale}
+                            onChange={e => setCov({ scale: parseFloat(e.target.value) })}
+                            title="Görsel ölçek (0.5x — 1.5x)" aria-label="Ölçek"
+                            className="w-full accent-cyan-500" />
+                        </div>
+                        <div>
+                          <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1">
+                            <span>İç Boşluk (Padding)</span>
+                            <span className="text-slate-200 font-mono">{padding}px</span>
+                          </div>
+                          <input type="range" min={0} max={20} step={1} value={padding}
+                            onChange={e => setCov({ padding: parseFloat(e.target.value) })}
+                            title="Görsel iç boşluğu (px)" aria-label="Padding"
+                            className="w-full accent-cyan-500" />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-[10px] text-slate-500 leading-relaxed">
+                      💡 Bu görsel mağaza listesinde / ürün kartında ön kapak olarak gösterilir. Boyutlandırma ayarları görsel kırpılma şeklini belirler.
+                    </div>
+                    <input ref={inputRef} type="file"
+                      accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+                      aria-label="Mağaza ön kapak görseli"
+                      onChange={e => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileUpload(file, 'thumb');
+                      }}
+                      className="hidden" />
+                  </div>
+                );
+              })()}
+            </div>
+            )}
 
             {/* 3) Temel bilgiler */}
             <div>
@@ -1162,11 +1390,13 @@ function ItemEditModal({
               <button
                 type="button"
                 onClick={() => {
-                  if (fineEditorType === 'frame') {
-                    router.push(`/yonet/cerceveler/${item.id}`);
-                  } else if (fineEditorType === 'entry') {
-                    router.push(`/yonet/giris-efektleri/${item.id}`);
-                  }
+                  const routeMap: Record<string, string> = {
+                    frame: 'cerceveler', entry: 'giris-efektleri', glow: 'parlak-mesajlar',
+                    badge: 'rozetler', background: 'arkaplanlar', theme: 'temalar',
+                    emoji: 'emojiler', effect: 'efektler',
+                  };
+                  const seg = fineEditorType ? routeMap[fineEditorType] : null;
+                  if (seg) router.push(`/yonet/${seg}/${item.id}`);
                 }}
                 className="w-full flex items-center gap-2 px-4 py-3 rounded-lg bg-fuchsia-500/10 border border-fuchsia-500/30 text-fuchsia-300 hover:bg-fuchsia-500/20 text-sm font-semibold transition-colors"
                 title="Slider'lı detaylı yapılandırma — ayrı sayfada açılır"
@@ -1175,7 +1405,14 @@ function ItemEditModal({
                 <div className="flex-1 text-left">
                   <div>İnce Ayar Sayfasına Geç</div>
                   <div className="text-[10px] text-fuchsia-400/70 font-normal">
-                    {fineEditorType === 'entry' ? 'Avatar pozisyonu, animasyon hızı, loop' : 'Boyut bazlı + tüm slider/toggle/renk ayarları'}
+                    {fineEditorType === 'entry' ? 'Avatar pozisyonu, animasyon, partikül, sahne efekti'
+                      : fineEditorType === 'glow' ? 'Bubble glow, animasyon, sınır, yazı stili'
+                      : fineEditorType === 'badge' ? 'Şekil, ikon, glow, animasyon, konum'
+                      : fineEditorType === 'background' ? 'Görsel, gradient, blur, parallax'
+                      : fineEditorType === 'theme' ? 'Renk palet, gradient, dark/light'
+                      : fineEditorType === 'emoji' ? 'Set yönetimi, animasyon, sıralama'
+                      : fineEditorType === 'effect' ? 'Partikül, overlay, sahne efekti'
+                      : 'Boyut bazlı + tüm slider/toggle/renk ayarları'}
                   </div>
                 </div>
                 <span className="text-lg">→</span>
@@ -1222,6 +1459,188 @@ function ItemEditModal({
             )}
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * CategoryCoverMini — Mağaza ürün kartı kapak alanı (48px civarı thumbnail)
+ * Kategori-bazlı mock + ürün asset'i overlay. Hem modal önizlemede hem mağaza
+ * listesinde kullanılır.
+ *
+ * Öncelik: thumb_url (manuel kapak) → kategori mock + asset overlay → emoji fallback
+ */
+function CategoryCoverMini({ category, gradStart, gradEnd, padding = 0, scale = 1, fit = 'cover', position = 'center',
+  thumbUrl, assetUrl, artEmoji, formId, size = 48,
+}: {
+  category: string; gradStart: string; gradEnd: string;
+  padding?: number; scale?: number; fit?: string; position?: string;
+  thumbUrl?: string | null; assetUrl?: string | null; artEmoji?: string | null;
+  formId?: string; size?: number;
+}) {
+  // Manuel ön kapak yüklenmişse onu göster (en yüksek öncelik)
+  if (thumbUrl) {
+    return (
+      <div className="rounded-lg flex items-center justify-center shrink-0 overflow-hidden relative"
+        style={{ width: size, height: size, background: `linear-gradient(135deg, ${gradStart}, ${gradEnd})`, padding }}>
+        <img src={thumbUrl} alt="Kapak" style={{
+          width: '100%', height: '100%',
+          objectFit: fit as any, objectPosition: position,
+          transform: `scale(${scale})`, transformOrigin: 'center',
+        }} />
+      </div>
+    );
+  }
+
+  // Kategori bazlı mock varsayılan
+  const inner = (() => {
+    const innerSize = size - padding * 2;
+    switch (category) {
+      case 'frames':
+      case 'atelier': {
+        // Mini avatar + çerçeve overlay
+        return (
+          <div className="relative" style={{ width: innerSize, height: innerSize }}>
+            {/* Varsayılan profil avatar */}
+            <div className="absolute rounded-full flex items-center justify-center"
+              style={{
+                inset: innerSize * 0.18,
+                background: 'linear-gradient(135deg, #F472B6, #A78BFA)',
+                fontSize: innerSize * 0.36,
+              }}>
+              👤
+            </div>
+            {/* Çerçeve overlay */}
+            <div className="absolute inset-0">
+              <ItemLottiePreview itemId={formId || 'preview'} assetUrl={assetUrl}
+                fallbackEmoji={artEmoji} size={innerSize} />
+            </div>
+          </div>
+        );
+      }
+      case 'badge': {
+        // Avatar + sağ alt rozet
+        return (
+          <div className="relative" style={{ width: innerSize, height: innerSize }}>
+            <div className="rounded-full" style={{
+              width: innerSize * 0.85, height: innerSize * 0.85,
+              background: 'linear-gradient(135deg, #F472B6, #A78BFA)',
+            }} />
+            <div className="absolute" style={{ bottom: 0, right: 0, width: innerSize * 0.42, height: innerSize * 0.42 }}>
+              <ItemLottiePreview itemId={formId || 'preview'} assetUrl={assetUrl}
+                fallbackEmoji={artEmoji || '✓'} size={innerSize * 0.42} />
+            </div>
+          </div>
+        );
+      }
+      case 'entry_effect': {
+        // Avatar + dans eden Lottie
+        return (
+          <div className="relative" style={{ width: innerSize, height: innerSize }}>
+            <div className="absolute rounded-full" style={{
+              inset: innerSize * 0.25,
+              background: 'linear-gradient(135deg, #14B8A6, #06B6D4)',
+            }} />
+            <div className="absolute inset-0">
+              <ItemLottiePreview itemId={formId || 'preview'} assetUrl={assetUrl}
+                fallbackEmoji={artEmoji || '✨'} size={innerSize} />
+            </div>
+          </div>
+        );
+      }
+      case 'glow_message': {
+        // Mini chat balon + glow
+        const glowColor = gradStart || '#14B8A6';
+        return (
+          <div style={{ width: innerSize, height: innerSize, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{
+              width: innerSize * 0.8, height: innerSize * 0.5,
+              borderRadius: innerSize * 0.18,
+              background: glowColor + '40',
+              border: `1px solid ${glowColor}80`,
+              boxShadow: `0 0 ${innerSize * 0.4}px ${glowColor}80`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: innerSize * 0.32, color: '#FFF',
+            }}>💬</div>
+          </div>
+        );
+      }
+      case 'gift': {
+        return (
+          <div className="relative" style={{ width: innerSize, height: innerSize, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <ItemLottiePreview itemId={formId || 'preview'} assetUrl={assetUrl}
+              fallbackEmoji={artEmoji || '🎁'} size={innerSize} />
+          </div>
+        );
+      }
+      case 'theme': {
+        // 4 renk paleti dot (gradient'lerden + accent + danger)
+        const colors = [gradStart, gradEnd, '#14B8A6', '#EF4444'];
+        return (
+          <div className="grid grid-cols-2 gap-0.5" style={{ width: innerSize, height: innerSize, padding: 2 }}>
+            {colors.map((c, i) => (
+              <div key={i} className="rounded" style={{ background: c, width: '100%', height: '100%' }} />
+            ))}
+          </div>
+        );
+      }
+      case 'emoji': {
+        // 4 emoji mini grid
+        const emojis = artEmoji?.split('') || ['😊', '🎵', '✨', '💎'];
+        const list = emojis.length >= 4 ? emojis.slice(0, 4) : [...emojis, '😊', '🎵', '✨'].slice(0, 4);
+        return (
+          <div className="grid grid-cols-2 gap-0" style={{ width: innerSize, height: innerSize, padding: 1 }}>
+            {list.map((e, i) => (
+              <div key={i} style={{
+                fontSize: innerSize * 0.36, display: 'flex',
+                alignItems: 'center', justifyContent: 'center',
+              }}>{e}</div>
+            ))}
+          </div>
+        );
+      }
+      case 'background': {
+        // Gradient bg + landscape emoji
+        return (
+          <div style={{
+            width: innerSize, height: innerSize, position: 'relative',
+            backgroundImage: `linear-gradient(135deg, ${gradStart}, ${gradEnd})`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <span style={{ fontSize: innerSize * 0.45 }}>{artEmoji || '🌌'}</span>
+          </div>
+        );
+      }
+      case 'effect': {
+        // Partikül emoji yıldız ışıltısı
+        return (
+          <div style={{ width: innerSize, height: innerSize, position: 'relative', overflow: 'hidden' }}>
+            <ItemLottiePreview itemId={formId || 'preview'} assetUrl={assetUrl}
+              fallbackEmoji={artEmoji || '✨'} size={innerSize} />
+            {/* Dekoratif yıldızlar */}
+            <span style={{ position: 'absolute', top: 2, right: 4, fontSize: innerSize * 0.18, opacity: 0.7 }}>✦</span>
+            <span style={{ position: 'absolute', bottom: 4, left: 4, fontSize: innerSize * 0.15, opacity: 0.5 }}>✦</span>
+          </div>
+        );
+      }
+      default:
+        return (
+          <ItemLottiePreview itemId={formId || 'preview'} assetUrl={assetUrl}
+            fallbackEmoji={artEmoji || '📦'} size={innerSize} />
+        );
+    }
+  })();
+
+  return (
+    <div className="rounded-lg flex items-center justify-center shrink-0 overflow-hidden relative"
+      style={{ width: size, height: size, background: `linear-gradient(135deg, ${gradStart}, ${gradEnd})`, padding }}>
+      <div style={{
+        width: '100%', height: '100%',
+        transform: `scale(${scale})`, transformOrigin: 'center',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        {inner}
       </div>
     </div>
   );
