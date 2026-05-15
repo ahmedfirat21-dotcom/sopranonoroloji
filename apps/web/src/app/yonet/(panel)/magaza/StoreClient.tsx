@@ -74,6 +74,9 @@ export default function StoreClient({
   const [editing, setEditing] = useState<Item | null>(null);
   const [creating, setCreating] = useState(false);
   const [previewItem, setPreviewItem] = useState<Item | null>(null);
+  // ★ P0-3: Bundle (paket) yönetimi
+  const [editingBundle, setEditingBundle] = useState<Bundle | null>(null);
+  const [creatingBundle, setCreatingBundle] = useState(false);
   // ★ 2026-05-11: URL'den ?cat=frames gibi parametre okur — eski cerceveler/giris-efektleri
   //   sayfalarından redirect olunca filter otomatik açılır.
   const [categoryFilter, setCategoryFilter] = useState<string>(() => searchParams.get('cat') || 'all');
@@ -173,6 +176,33 @@ export default function StoreClient({
     }
   };
 
+  // ★ P0-3 (16 May 2026): Bundle silme
+  const handleBundleDelete = async (bundle: Bundle) => {
+    const ok = await dialog.confirm({
+      title: `"${bundle.name}" silinecek`,
+      message: 'Bu paket mağazadan kaldırılacak. İçindeki ürünler bağımsız kalmaya devam eder.',
+      confirmLabel: 'Sil',
+      danger: true,
+    });
+    if (!ok) return;
+    setBusyId(bundle.id);
+    try {
+      const res = await fetch(`/yonet/api/store/bundles/${bundle.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ delete: true }),
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j.error || 'Silinemedi');
+      setBundles(prev => prev.filter(b => b.id !== bundle.id));
+      startTransition(() => router.refresh());
+    } catch (e: any) {
+      await dialog.alert({ title: 'Hata', message: e.message, variant: 'error' });
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   return (
     <div>
       {/* Tabs */}
@@ -218,6 +248,18 @@ export default function StoreClient({
               </button>
             </>
           )}
+          {/* ★ P0-3 (16 May 2026): Paketler tab'ında "Yeni Paket" butonu eklendi —
+                önce sadece toggle vardı, yeni paket oluşturmak için DB SQL gerekiyordu. */}
+          {tab === 'bundles' && (
+            <button
+              type="button"
+              onClick={() => setCreatingBundle(true)}
+              className="px-5 py-2 rounded-lg bg-amber-500/20 border border-amber-500/50 text-amber-200 hover:bg-amber-500/30 text-sm font-bold flex items-center gap-2 transition-colors shadow-lg shadow-amber-500/10"
+              title="Yeni paket oluştur (isim + fiyat + içerik)"
+            >
+              <Plus className="w-4 h-4" /> Yeni Paket
+            </button>
+          )}
         </div>
       </div>
 
@@ -261,6 +303,9 @@ export default function StoreClient({
                   {c.label} ({counts.get(c.slug)})
                 </button>
               ))}
+              {/* ★ P0-1 (16 May 2026): gift kategorisi APK mağaza UI'da görünmüyor (oda içi
+                   pay-per-send paneli kullanıyor). Admin "kayıp ürün" derdine düşmesin diye
+                   bu kategoriye geçince info banner gösterilir. */}
               {unknown.map(slug => (
                 <button
                   type="button"
@@ -276,6 +321,29 @@ export default function StoreClient({
                 </button>
               ))}
             </div>
+
+            {/* ★ P0-1 (16 May 2026): Kategori-spesifik bilgilendirme banner'ları —
+                  admin "neden APK mağazada görünmüyor?" derdine düşmesin. */}
+            {categoryFilter === 'gift' && (
+              <div className="mb-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-2.5 text-xs">
+                <span className="text-base shrink-0">ℹ️</span>
+                <div className="text-amber-100/90 leading-relaxed">
+                  <strong className="text-amber-200">Hediye ürünleri APK mağaza listesinde gözükmez.</strong>{' '}
+                  Bunlar oda içi hediye panelinde (pay-per-send) kullanıcılara sunulur. Buradan eklediğin
+                  fiyat ve görsel ürünün odada gönderilirken kullanılır.
+                </div>
+              </div>
+            )}
+            {categoryFilter === 'sp' && (
+              <div className="mb-4 p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-start gap-2.5 text-xs">
+                <span className="text-base shrink-0">ℹ️</span>
+                <div className="text-cyan-100/90 leading-relaxed">
+                  <strong className="text-cyan-200">SP Paketleri burada yönetilir.</strong>{' '}
+                  APK mağazasında "SP Paketleri" sekmesinde kart olarak listelenir, kullanıcı gerçek para ile
+                  satın alır (Google Play / App Store IAP).
+                </div>
+              </div>
+            )}
 
         {/* Mobile: kart grid */}
         <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -546,20 +614,49 @@ export default function StoreClient({
                     )}
                   </td>
                   <td className="px-5 py-3 text-right">
-                    <button
-                      onClick={() => callBundleToggle(b.id, !b.active)}
-                      disabled={busyId === b.id}
-                      className="px-3 py-1.5 rounded-md text-xs font-semibold border bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 transition-colors"
-                    >
-                      {b.active ? 'Pasifleştir' : 'Aktifleştir'}
-                    </button>
+                    <div className="flex items-center justify-end gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => callBundleToggle(b.id, !b.active)}
+                        disabled={busyId === b.id}
+                        className="px-2 py-1.5 rounded-md text-[10px] font-semibold border bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 transition-colors flex items-center gap-1"
+                        title={b.active ? 'Pasifleştir' : 'Aktifleştir'}
+                      >
+                        {busyId === b.id ? <Loader2 className="w-3 h-3 animate-spin" /> : (b.active ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />)}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingBundle(b)}
+                        disabled={busyId === b.id}
+                        className="px-2 py-1.5 rounded-md text-[10px] font-semibold border bg-cyan-500/10 border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/20 transition-colors"
+                        title="Düzenle"
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleBundleDelete(b)}
+                        disabled={busyId === b.id}
+                        className="px-2 py-1.5 rounded-md text-[10px] font-semibold border bg-red-500/10 border-red-500/30 text-red-300 hover:bg-red-500/20 transition-colors"
+                        title="Sil"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
               {bundles.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-5 py-12 text-center text-slate-500 text-sm">
-                    Henüz paket yok.
+                  <td colSpan={5} className="px-5 py-12 text-center text-sm">
+                    <div className="text-slate-500 mb-3">Henüz paket yok.</div>
+                    <button
+                      type="button"
+                      onClick={() => setCreatingBundle(true)}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500/20 border border-amber-500/50 text-amber-200 text-sm font-bold hover:bg-amber-500/30 transition-colors"
+                    >
+                      <Plus className="w-4 h-4" /> İlk paketi oluştur
+                    </button>
                   </td>
                 </tr>
               )}
@@ -589,6 +686,22 @@ export default function StoreClient({
           onClose={() => setBulkOpen(false)}
           onUploaded={() => {
             // Sayfa yenile — yeni eklenen ürünleri Supabase'den taze çek
+            startTransition(() => router.refresh());
+          }}
+        />
+      )}
+
+      {/* ★ P0-3: Bundle oluştur/düzenle modal */}
+      {(editingBundle || creatingBundle) && (
+        <BundleEditModal
+          bundle={editingBundle}
+          allItems={items}
+          onClose={() => { setEditingBundle(null); setCreatingBundle(false); }}
+          onSaved={(saved, isNew) => {
+            if (isNew) setBundles(prev => [...prev, saved]);
+            else setBundles(prev => prev.map(b => b.id === saved.id ? saved : b));
+            setEditingBundle(null);
+            setCreatingBundle(false);
             startTransition(() => router.refresh());
           }}
         />
@@ -1661,6 +1774,353 @@ function Field({ label, children, full, disabled }: { label: string; children: R
         {label.toUpperCase()}
       </label>
       {childWithId}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ★ P0-3 (16 May 2026): BundleEditModal — cosmetic_bundles + bundle_items
+   ─────────────────────────────────────────────────────────────────────
+   Önce yoktu: paket toggle vardı ama oluşturma/düzenleme/silme yoktu,
+   içerik (paket ürünleri) DB'den SQL ile yönetiliyordu. Şimdi tam UI.
+   ═══════════════════════════════════════════════════════════════════ */
+function BundleEditModal({
+  bundle,
+  allItems,
+  onClose,
+  onSaved,
+}: {
+  bundle: Bundle | null;
+  allItems: Item[];
+  onClose: () => void;
+  onSaved: (saved: Bundle, isNew: boolean) => void;
+}) {
+  const dialog = useAdminDialog();
+  const isNew = !bundle;
+  const [form, setForm] = useState<Partial<Bundle>>(
+    bundle || {
+      id: '',
+      name: '',
+      tagline: '',
+      art_emoji: '🎁',
+      rarity: 'common',
+      total_price_sp: 500,
+      discount_pct: 10,
+      sort_order: 0,
+      active: true,
+    },
+  );
+  const [itemIds, setItemIds] = useState<string[]>([]);
+  const [loadingItems, setLoadingItems] = useState(!isNew);
+  const [saving, setSaving] = useState(false);
+  const [step, setStep] = useState<1 | 2>(1);
+
+  // Düzenleme modunda mevcut paket içeriğini çek
+  useEffect(() => {
+    if (isNew) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/yonet/api/store/bundles/${encodeURIComponent(bundle!.id)}`);
+        const j = await res.json();
+        if (!cancelled && Array.isArray(j.item_ids)) setItemIds(j.item_ids);
+      } catch {
+        /* sessiz geç */
+      } finally {
+        if (!cancelled) setLoadingItems(false);
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bundle?.id]);
+
+  // Sadece aktif kozmetik ürünler bundle'a eklenebilir (sp_packages, gift gibi şeyler değil)
+  const availableItems = allItems.filter(i => i.active);
+
+  const totalSPFromItems = itemIds
+    .map(id => availableItems.find(i => i.id === id)?.price_sp ?? 0)
+    .reduce((s, p) => s + p, 0);
+
+  const toggleItem = (itemId: string) => {
+    setItemIds(prev => prev.includes(itemId) ? prev.filter(i => i !== itemId) : [...prev, itemId]);
+  };
+
+  const handleSave = async () => {
+    if (!form.name?.trim()) {
+      await dialog.alert({ title: 'Geçersiz', message: 'Paket adı boş olamaz.', variant: 'error' });
+      return;
+    }
+    if (itemIds.length === 0) {
+      const ok = await dialog.confirm({
+        title: 'Paket boş',
+        message: 'Bu paket içinde hiç ürün yok. Yine de kaydedilsin mi?',
+        confirmLabel: 'Yine de kaydet',
+      });
+      if (!ok) return;
+    }
+
+    setSaving(true);
+    try {
+      let savedBundle: Bundle;
+      if (isNew) {
+        const res = await fetch('/yonet/api/store/bundles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ create: form, item_ids: itemIds }),
+        });
+        const j = await res.json();
+        if (!res.ok) throw new Error(j.error || 'Oluşturulamadı');
+        savedBundle = j.bundle;
+      } else {
+        const res = await fetch(`/yonet/api/store/bundles/${encodeURIComponent(bundle!.id)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ update: form }),
+        });
+        const j = await res.json();
+        if (!res.ok) throw new Error(j.error || 'Güncellenemedi');
+        // Ardından içerik sync
+        await fetch(`/yonet/api/store/bundles/${encodeURIComponent(bundle!.id)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ set_items: itemIds }),
+        });
+        savedBundle = j.bundle;
+      }
+      onSaved(savedBundle, isNew);
+    } catch (e: any) {
+      await dialog.alert({ title: 'Hata', message: e.message, variant: 'error' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <div className="w-full max-w-2xl max-h-[90vh] bg-gradient-to-b from-slate-900 to-slate-950 border border-white/10 rounded-2xl flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-bold text-slate-100">{isNew ? 'Yeni Paket' : 'Paket Düzenle'}</h2>
+            <div className="flex items-center gap-2 mt-1.5">
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className={`text-[10px] font-bold px-2 py-0.5 rounded ${step === 1 ? 'bg-amber-500/20 text-amber-200' : 'text-slate-500'}`}
+              >
+                1. Temel Bilgi
+              </button>
+              <span className="text-slate-600">→</span>
+              <button
+                type="button"
+                onClick={() => setStep(2)}
+                className={`text-[10px] font-bold px-2 py-0.5 rounded ${step === 2 ? 'bg-amber-500/20 text-amber-200' : 'text-slate-500'}`}
+              >
+                2. İçindeki Ürünler ({itemIds.length})
+              </button>
+            </div>
+          </div>
+          <button type="button" onClick={onClose} className="p-2 rounded-lg hover:bg-white/10 text-slate-400">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+          {step === 1 && (
+            <>
+              <div className="grid grid-cols-[80px_1fr] gap-3">
+                <div className="flex flex-col items-center">
+                  <input
+                    type="text"
+                    maxLength={3}
+                    value={form.art_emoji || ''}
+                    onChange={e => setForm(p => ({ ...p, art_emoji: e.target.value }))}
+                    className="w-20 h-20 rounded-2xl bg-black/30 border border-white/10 text-4xl text-center"
+                  />
+                  <div className="text-[9px] text-slate-500 mt-1">EMOJİ</div>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">Paket Adı</label>
+                    <input
+                      type="text"
+                      value={form.name || ''}
+                      onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
+                      placeholder="örn. Başlangıç Seti"
+                      className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-sm text-slate-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">Açıklama (kısa)</label>
+                    <input
+                      type="text"
+                      value={form.tagline || ''}
+                      onChange={e => setForm(p => ({ ...p, tagline: e.target.value }))}
+                      placeholder="örn. Yeni başlayanlar için indirimli set"
+                      className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-sm text-slate-100"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">Fiyat (SP)</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={form.total_price_sp ?? 0}
+                    onChange={e => setForm(p => ({ ...p, total_price_sp: parseInt(e.target.value, 10) || 0 }))}
+                    className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-sm text-amber-300 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">İndirim %</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={90}
+                    value={form.discount_pct ?? 0}
+                    onChange={e => setForm(p => ({ ...p, discount_pct: parseInt(e.target.value, 10) || 0 }))}
+                    className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-sm text-cyan-300 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">Sıralama</label>
+                  <input
+                    type="number"
+                    value={form.sort_order ?? 0}
+                    onChange={e => setForm(p => ({ ...p, sort_order: parseInt(e.target.value, 10) || 0 }))}
+                    className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-sm text-slate-100 font-mono"
+                  />
+                </div>
+              </div>
+
+              <label className="flex items-center gap-2 text-xs text-slate-300 px-3 py-2 rounded-lg bg-black/20 border border-white/10 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.active !== false}
+                  onChange={e => setForm(p => ({ ...p, active: e.target.checked }))}
+                />
+                Aktif (mağazada gözüksün)
+              </label>
+
+              {/* İçerik SP karşılaştırma */}
+              {itemIds.length > 0 && (
+                <div className="p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-xs">
+                  <div className="text-cyan-100/90">
+                    İçindeki ürünlerin toplam SP değeri: <strong className="text-cyan-200 font-mono">{totalSPFromItems.toLocaleString('tr-TR')}</strong>
+                  </div>
+                  {(form.total_price_sp ?? 0) < totalSPFromItems && (
+                    <div className="text-emerald-300 mt-1">
+                      Paket fiyatı %{Math.round((1 - (form.total_price_sp ?? 0) / totalSPFromItems) * 100)} daha ucuz — kullanıcı için cazip
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setStep(2)}
+                className="w-full px-4 py-2.5 rounded-lg bg-amber-500/20 border border-amber-500/50 text-amber-200 text-sm font-bold hover:bg-amber-500/30 transition-colors"
+              >
+                Devam → İçindeki Ürünleri Seç ({itemIds.length})
+              </button>
+            </>
+          )}
+
+          {step === 2 && (
+            <>
+              {loadingItems ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-cyan-400" />
+                </div>
+              ) : (
+                <>
+                  <div className="text-xs text-slate-400 mb-2">
+                    Pakete dahil edilecek ürünleri seç. Aktif kozmetik ürünleri listelenir.
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[400px] overflow-y-auto pr-1">
+                    {availableItems.map(it => {
+                      const checked = itemIds.includes(it.id);
+                      const catDef = getCategoryDef(it.category);
+                      return (
+                        <button
+                          key={it.id}
+                          type="button"
+                          onClick={() => toggleItem(it.id)}
+                          className={`text-left px-3 py-2 rounded-lg border transition-colors flex items-center gap-2 ${
+                            checked
+                              ? 'bg-amber-500/15 border-amber-500/50'
+                              : 'bg-white/5 border-white/10 hover:bg-white/10'
+                          }`}
+                        >
+                          <div
+                            className="w-9 h-9 rounded-lg flex items-center justify-center text-base shrink-0"
+                            style={{
+                              background: `linear-gradient(135deg, ${it.bg_gradient_start || '#1e293b'}, ${it.bg_gradient_end || '#0f172a'})`,
+                            }}
+                          >
+                            {it.art_emoji || catDef.emoji}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs font-semibold text-slate-100 truncate">{it.name}</div>
+                            <div className="text-[10px] text-slate-500 truncate">
+                              {catDef.label} · {it.price_sp.toLocaleString('tr-TR')} SP
+                            </div>
+                          </div>
+                          {checked && (
+                            <div className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center shrink-0">
+                              <span className="text-amber-950 text-[10px] font-bold">✓</span>
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                    {availableItems.length === 0 && (
+                      <div className="col-span-full text-center py-8 text-slate-500 text-sm">
+                        Aktif kozmetik ürün yok. Önce "Ürünler" tab'ından ekle.
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-4 border-t border-white/10 bg-black/20 flex items-center justify-between gap-2">
+          <button
+            type="button"
+            onClick={() => setStep(s => s === 2 ? 1 : 1)}
+            disabled={step === 1}
+            className="px-3 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:bg-white/10 disabled:opacity-30"
+          >
+            ← Geri
+          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={saving}
+              className="px-4 py-2 rounded-lg text-sm font-semibold text-slate-300 hover:bg-white/10"
+            >
+              İptal
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className="px-5 py-2 rounded-lg bg-amber-500/20 border border-amber-500/50 text-amber-200 hover:bg-amber-500/30 text-sm font-bold flex items-center gap-2 disabled:opacity-50"
+            >
+              {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              {isNew ? 'Paketi Oluştur' : 'Kaydet'}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

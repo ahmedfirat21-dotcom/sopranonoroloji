@@ -30,6 +30,9 @@ const NAV: NavGroup[] = [
   { href: '/yonet/magaza?cat=background', label: 'Arkaplanlar', icon: ImageIcon },
   { href: '/yonet/magaza?cat=emoji', label: 'Özel Emojiler', icon: Smile },
   { href: '/yonet/magaza?cat=badge', label: 'Rozetler', icon: Award },
+  // ★ P0-2 (16 May 2026): SP Paketleri kullanıcı gerçek para ile satın alır,
+  //   cosmetic_items'tan ayrı tablo (sp_packages). APK store.tsx "SP Paketleri" tab'ı buradan beslenir.
+  { href: '/yonet/sp-paketleri', label: 'SP Paketleri', icon: Coins },
 
   { type: 'group', label: 'Sistem' },
   // ★ Uygulama Teması — renk paleti + oda düzeni + sayfa-bazlı detaylar TEK YERDE
