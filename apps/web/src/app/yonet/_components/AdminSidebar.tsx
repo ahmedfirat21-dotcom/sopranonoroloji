@@ -6,8 +6,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import {
   LayoutDashboard, Flag, Users, Store, Home, MessageSquare,
   Coins, Bell, Crown, Settings as SettingsIcon, TrendingUp, Banknote, ScrollText,
-  ShieldAlert, UserPlus, Layout as LayoutIcon,
-  Image as ImageIcon, Sparkles, Award, Palette, Smile, Stars, MessageCircle, Frame, Gift,
+  ShieldAlert, UserPlus, Palette,
 } from 'lucide-react';
 import SopranoLogoMini, { SopranoLogoStyleTag } from './SopranoLogoMini';
 
@@ -20,18 +19,11 @@ const NAV: NavGroup[] = [
   { href: '/yonet/sikayetler', label: 'Şikayetler', icon: Flag },
   { href: '/yonet/kullanicilar', label: 'Kullanıcılar', icon: Users },
 
+  // ★ P1-5 (16 May 2026): 9 sidebar girişi → 2'ye indi. Mağaza sayfası kategori chip
+  //   filtresi zaten var, ayrıca her kategori için sidebar shortcut'a gerek yok.
+  //   SP Paketleri ayrı tablo (sp_packages) olduğu için kendi sayfası kalır.
   { type: 'group', label: 'Kozmetik (Mağaza)' },
-  { href: '/yonet/magaza', label: 'Mağaza (Tümü)', icon: Store },
-  { href: '/yonet/magaza?cat=frames', label: 'Çerçeveler', icon: Frame },
-  { href: '/yonet/magaza?cat=entry_effect', label: 'Giriş Animasyonları', icon: Sparkles },
-  { href: '/yonet/magaza?cat=gift', label: 'Hediyeler', icon: Gift },
-  { href: '/yonet/magaza?cat=glow_message', label: 'Parlak Mesajlar', icon: MessageCircle },
-  { href: '/yonet/magaza?cat=effect', label: 'Efektler', icon: Stars },
-  { href: '/yonet/magaza?cat=background', label: 'Arkaplanlar', icon: ImageIcon },
-  { href: '/yonet/magaza?cat=emoji', label: 'Özel Emojiler', icon: Smile },
-  { href: '/yonet/magaza?cat=badge', label: 'Rozetler', icon: Award },
-  // ★ P0-2 (16 May 2026): SP Paketleri kullanıcı gerçek para ile satın alır,
-  //   cosmetic_items'tan ayrı tablo (sp_packages). APK store.tsx "SP Paketleri" tab'ı buradan beslenir.
+  { href: '/yonet/magaza', label: 'Mağaza', icon: Store },
   { href: '/yonet/sp-paketleri', label: 'SP Paketleri', icon: Coins },
 
   { type: 'group', label: 'Sistem' },
