@@ -4,11 +4,12 @@ import React, { useState, useTransition, useId, useEffect, useRef } from 'react'
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus, Pencil, Trash2, Eye, EyeOff, Loader2, Star, Smartphone, X, Upload, Sliders, FileJson, Image as ImageIcon } from 'lucide-react';
-import { CATEGORIES, getCategoryDef } from './categories';
+import { CATEGORIES, getCategoryDef, DB_CATEGORIES_EMOJI_SET } from './categories';
 import MobilePreview from './MobilePreview';
 import BulkUploadModal from './BulkUploadModal';
 import { useAdminDialog } from '../../_components/AdminDialog';
-import ItemLottiePreview from '@/components/store/ItemLottiePreview';
+// ★ P2-7: ItemLottiePreview import KALDIRILDI — CategoryCoverMini'deki kategori-özel mock'lar
+//   silindi. MobilePreview kendi içinde lazy import edebilir gerekirse.
 
 // İnce ayar editörleri — sadece tab açılınca yüklensin (kod-bölme, ilk açılış hızı için)
 const FrameEditor = dynamic(() => import('../cerceveler/[id]/FrameEditor'), {
@@ -786,14 +787,17 @@ function ItemEditModal({
   const dialog = useAdminDialog();
   const router = useRouter();
   const isNew = !item;
+  // ★ P3-9 (16 May 2026): art_emoji artık kategoriye göre default — getCategoryDef ile.
+  //   Önce hardcode '✨' idi; rozet için 🏅, gift için 🎁 vs. olması gerekir. categories.ts'ten okur.
+  const initialCategory = defaultCategory || 'frames';
   const [form, setForm] = useState<Partial<Item>>(
     item || {
       id: '',
-      category: defaultCategory || 'frames',
+      category: initialCategory,
       rarity: 'common',
       name: '',
       tagline: '',
-      art_emoji: '✨',
+      art_emoji: getCategoryDef(initialCategory).emoji,
       art_color: '#fbbf24',
       bg_gradient_start: '#1e293b',
       bg_gradient_end: '#0f172a',
@@ -805,6 +809,21 @@ function ItemEditModal({
     }
   );
   const [saving, setSaving] = useState(false);
+
+  // ★ P3-9: Kategori değişince art_emoji'yi kategori default'una otomatik güncelle —
+  //   AMA sadece kullanıcı emoji'yi manuel değiştirmediyse (önceki kategori default'unda kalmışsa).
+  //   Bu sayede yeni Plus rozetinde 🏅, bg'de 🌌 otomatik gelir; admin emoji yazdıysa korunur.
+  useEffect(() => {
+    if (!isNew) return;
+    setForm(prev => {
+      const currentCat = prev.category;
+      if (!currentCat) return prev;
+      // Mevcut emoji başka bir kategori default'una eşit mi → o zaman değiştirmeye izin var
+      const isLeftoverDefault = DB_CATEGORIES_EMOJI_SET.has(prev.art_emoji || '');
+      if (!isLeftoverDefault && prev.art_emoji) return prev; // admin manuel girdiyse koru
+      return { ...prev, art_emoji: getCategoryDef(currentCat).emoji };
+    });
+  }, [form.category, isNew]);
 
   // ID stamp'i modal açıldığında bir kez üretilir — her tuşa basışta değişmesin.
   // (Bug'dı: her render Date.now() yeni → ID sürekli yenileniyordu.)
@@ -1592,6 +1611,13 @@ function CategoryCoverMini({ category, gradStart, gradEnd, padding = 0, scale = 
   thumbUrl?: string | null; assetUrl?: string | null; artEmoji?: string | null;
   formId?: string; size?: number;
 }) {
+  // ★ P2-7 (16 May 2026): SADE FALLBACK — eskiden kategoriye özel mock'lar (Lottie animation +
+  //   complex grid'ler) vardı. Liste performansı düşüyordu + bazı kategori Lottie, bazısı
+  //   emoji gösteriyordu → karman çorman görünüm. Şimdi:
+  //   1) thumb_url varsa onu göster (admin yüklediyse)
+  //   2) yoksa kategori gradient + art_emoji (veya kategori default emoji)
+  //   Detay/preview için zaten ayrı yerlerde Lottie render var.
+
   // Manuel ön kapak yüklenmişse onu göster (en yüksek öncelik)
   if (thumbUrl) {
     return (
@@ -1606,158 +1632,29 @@ function CategoryCoverMini({ category, gradStart, gradEnd, padding = 0, scale = 
     );
   }
 
-  // Kategori bazlı mock varsayılan
-  const inner = (() => {
-    const innerSize = size - padding * 2;
-    switch (category) {
-      case 'frames':
-      case 'atelier': {
-        // Mini avatar + çerçeve overlay
-        return (
-          <div className="relative" style={{ width: innerSize, height: innerSize }}>
-            {/* Varsayılan profil avatar */}
-            <div className="absolute rounded-full flex items-center justify-center"
-              style={{
-                inset: innerSize * 0.18,
-                background: 'linear-gradient(135deg, #F472B6, #A78BFA)',
-                fontSize: innerSize * 0.36,
-              }}>
-              👤
-            </div>
-            {/* Çerçeve overlay */}
-            <div className="absolute inset-0">
-              <ItemLottiePreview itemId={formId || 'preview'} assetUrl={assetUrl}
-                fallbackEmoji={artEmoji} size={innerSize} />
-            </div>
-          </div>
-        );
-      }
-      case 'badge': {
-        // Avatar + sağ alt rozet
-        return (
-          <div className="relative" style={{ width: innerSize, height: innerSize }}>
-            <div className="rounded-full" style={{
-              width: innerSize * 0.85, height: innerSize * 0.85,
-              background: 'linear-gradient(135deg, #F472B6, #A78BFA)',
-            }} />
-            <div className="absolute" style={{ bottom: 0, right: 0, width: innerSize * 0.42, height: innerSize * 0.42 }}>
-              <ItemLottiePreview itemId={formId || 'preview'} assetUrl={assetUrl}
-                fallbackEmoji={artEmoji || '✓'} size={innerSize * 0.42} />
-            </div>
-          </div>
-        );
-      }
-      case 'entry_effect': {
-        // Avatar + dans eden Lottie
-        return (
-          <div className="relative" style={{ width: innerSize, height: innerSize }}>
-            <div className="absolute rounded-full" style={{
-              inset: innerSize * 0.25,
-              background: 'linear-gradient(135deg, #14B8A6, #06B6D4)',
-            }} />
-            <div className="absolute inset-0">
-              <ItemLottiePreview itemId={formId || 'preview'} assetUrl={assetUrl}
-                fallbackEmoji={artEmoji || '✨'} size={innerSize} />
-            </div>
-          </div>
-        );
-      }
-      case 'glow_message': {
-        // Mini chat balon + glow
-        const glowColor = gradStart || '#14B8A6';
-        return (
-          <div style={{ width: innerSize, height: innerSize, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{
-              width: innerSize * 0.8, height: innerSize * 0.5,
-              borderRadius: innerSize * 0.18,
-              background: glowColor + '40',
-              border: `1px solid ${glowColor}80`,
-              boxShadow: `0 0 ${innerSize * 0.4}px ${glowColor}80`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: innerSize * 0.32, color: '#FFF',
-            }}>💬</div>
-          </div>
-        );
-      }
-      case 'gift': {
-        return (
-          <div className="relative" style={{ width: innerSize, height: innerSize, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <ItemLottiePreview itemId={formId || 'preview'} assetUrl={assetUrl}
-              fallbackEmoji={artEmoji || '🎁'} size={innerSize} />
-          </div>
-        );
-      }
-      case 'theme': {
-        // 4 renk paleti dot (gradient'lerden + accent + danger)
-        const colors = [gradStart, gradEnd, '#14B8A6', '#EF4444'];
-        return (
-          <div className="grid grid-cols-2 gap-0.5" style={{ width: innerSize, height: innerSize, padding: 2 }}>
-            {colors.map((c, i) => (
-              <div key={i} className="rounded" style={{ background: c, width: '100%', height: '100%' }} />
-            ))}
-          </div>
-        );
-      }
-      case 'emoji': {
-        // 4 emoji mini grid
-        const emojis = artEmoji?.split('') || ['😊', '🎵', '✨', '💎'];
-        const list = emojis.length >= 4 ? emojis.slice(0, 4) : [...emojis, '😊', '🎵', '✨'].slice(0, 4);
-        return (
-          <div className="grid grid-cols-2 gap-0" style={{ width: innerSize, height: innerSize, padding: 1 }}>
-            {list.map((e, i) => (
-              <div key={i} style={{
-                fontSize: innerSize * 0.36, display: 'flex',
-                alignItems: 'center', justifyContent: 'center',
-              }}>{e}</div>
-            ))}
-          </div>
-        );
-      }
-      case 'background': {
-        // Gradient bg + landscape emoji
-        return (
-          <div style={{
-            width: innerSize, height: innerSize, position: 'relative',
-            backgroundImage: `linear-gradient(135deg, ${gradStart}, ${gradEnd})`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <span style={{ fontSize: innerSize * 0.45 }}>{artEmoji || '🌌'}</span>
-          </div>
-        );
-      }
-      case 'effect': {
-        // Partikül emoji yıldız ışıltısı
-        return (
-          <div style={{ width: innerSize, height: innerSize, position: 'relative', overflow: 'hidden' }}>
-            <ItemLottiePreview itemId={formId || 'preview'} assetUrl={assetUrl}
-              fallbackEmoji={artEmoji || '✨'} size={innerSize} />
-            {/* Dekoratif yıldızlar */}
-            <span style={{ position: 'absolute', top: 2, right: 4, fontSize: innerSize * 0.18, opacity: 0.7 }}>✦</span>
-            <span style={{ position: 'absolute', bottom: 4, left: 4, fontSize: innerSize * 0.15, opacity: 0.5 }}>✦</span>
-          </div>
-        );
-      }
-      default:
-        return (
-          <ItemLottiePreview itemId={formId || 'preview'} assetUrl={assetUrl}
-            fallbackEmoji={artEmoji || '📦'} size={innerSize} />
-        );
-    }
-  })();
-
+  // Sade fallback — gradient zemin + kategori/ürün emoji
+  const catDef = getCategoryDef(category);
+  const displayEmoji = artEmoji || catDef.emoji;
+  const innerSize = size - padding * 2;
   return (
     <div className="rounded-lg flex items-center justify-center shrink-0 overflow-hidden relative"
       style={{ width: size, height: size, background: `linear-gradient(135deg, ${gradStart}, ${gradEnd})`, padding }}>
-      <div style={{
-        width: '100%', height: '100%',
-        transform: `scale(${scale})`, transformOrigin: 'center',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      <span style={{
+        fontSize: innerSize * 0.55,
+        transform: `scale(${scale})`,
+        lineHeight: 1,
       }}>
-        {inner}
-      </div>
+        {displayEmoji}
+      </span>
     </div>
   );
 }
+
+// ★ P2-7 (16 May 2026): ESKİ kategori-özel mock fallback'lar (her kategori için ayrı
+//   ItemLottiePreview + complex grid layout) tamamen kaldırıldı. Performans yüksekti
+//   (her kart Lottie spawn ediyordu) + bazı kategori Lottie, bazısı statik View → liste
+//   karman çorman görünüyordu. Şimdi tek sade fallback: gradient + emoji (yukarıda).
+//   Detay/preview için ayrı yerlerde Lottie render var (MobilePreview, item detail).
 
 function Field({ label, children, full, disabled }: { label: string; children: React.ReactNode; full?: boolean; disabled?: boolean }) {
   const id = useId();

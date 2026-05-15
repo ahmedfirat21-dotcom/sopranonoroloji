@@ -70,15 +70,69 @@ export default function MobilePreview({ item, themeConfig, badgeConfig, glowConf
               {item.category === 'theme' && <ThemePreviewMock item={item} themeConfig={themeConfig} />}
               {item.category === 'badge' && <BadgePreviewMock item={item} badgeConfig={badgeConfig} accent={accent} />}
               {item.category === 'background' && <BackgroundPreviewMock item={item} bgConfig={bgConfig} grad={grad} accent={accent} />}
-              {!['frames', 'entry_effect', 'gift', 'glow_message', 'theme', 'badge', 'background'].includes(item.category) && (
+              {/* ★ P2-8 (16 May 2026): 'emoji' ve 'effect' kategorileri eksikti — DefaultPreview'a düşüyordu. */}
+              {item.category === 'emoji' && <EmojiPreviewMock item={item} grad={grad} accent={accent} />}
+              {item.category === 'effect' && <EffectPreviewMock item={item} grad={grad} accent={accent} />}
+              {!['frames', 'entry_effect', 'gift', 'glow_message', 'theme', 'badge', 'background', 'emoji', 'effect'].includes(item.category) && (
                 <DefaultPreview item={item} grad={grad} accent={accent} />
               )}
             </div>
           </div>
         </div>
-        <p className="text-center text-[10px] text-slate-500 mt-3">
+        {/* ★ P2-8: Önizleme yaklaşıktır uyarısı — admin "burada şöyleydi APK'da farklı" derdine düşmesin. */}
+        <p className="text-center text-[10px] text-slate-500 mt-3 leading-relaxed">
           Kullanıcılar bu ürünü mağazadan satın alıp profilde / sohbette aktifleştirir.
+          <br />
+          <span className="text-amber-400/70">⚠ Bu yaklaşık bir önizlemedir. Final görünüm APK'da test edilmelidir.</span>
         </p>
+      </div>
+    </div>
+  );
+}
+
+/* ★ P2-8: Eksik kategori mock'ları — emoji ve effect için mini preview */
+function EmojiPreviewMock({ item, grad, accent }: { item: Item; grad: string; accent: string }) {
+  const emoji = item.art_emoji || '😎';
+  return (
+    <div className="flex flex-col items-center justify-center h-full px-4" style={{ background: grad }}>
+      <div className="text-[10px] text-white/70 mb-3">Özel Emoji</div>
+      <div
+        className="w-24 h-24 rounded-2xl flex items-center justify-center shadow-2xl"
+        style={{ background: 'rgba(255,255,255,0.08)', border: `2px solid ${accent}`, fontSize: 56 }}
+      >
+        {emoji}
+      </div>
+      <div className="mt-4 px-3 py-1.5 rounded-full text-[10px] text-white/80" style={{ background: 'rgba(0,0,0,0.4)' }}>
+        Sohbette `:shortcode:` ile gönderilir
+      </div>
+    </div>
+  );
+}
+
+function EffectPreviewMock({ item, grad, accent }: { item: Item; grad: string; accent: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center h-full px-4 relative overflow-hidden" style={{ background: grad }}>
+      {/* Dekoratif partiküller */}
+      <div className="absolute inset-0 pointer-events-none">
+        {[0, 1, 2, 3, 4, 5].map(i => (
+          <div
+            key={i}
+            className="absolute rounded-full"
+            style={{
+              top: `${(i * 17) % 80 + 10}%`,
+              left: `${(i * 23) % 80 + 10}%`,
+              width: 8 + (i % 3) * 4,
+              height: 8 + (i % 3) * 4,
+              background: accent,
+              opacity: 0.4 + (i % 3) * 0.2,
+              filter: 'blur(4px)',
+            }}
+          />
+        ))}
+      </div>
+      <div className="text-[10px] text-white/70 mb-3 relative z-10">Görsel Efekt</div>
+      <div className="text-5xl relative z-10" style={{ filter: `drop-shadow(0 0 16px ${accent})` }}>
+        {item.art_emoji || '🌟'}
       </div>
     </div>
   );

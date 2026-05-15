@@ -37,3 +37,10 @@ export function getCategoryDef(slug: string | null | undefined): CategoryDef {
     description: '',
   };
 }
+
+/**
+ * Kategori default emoji'leri seti — ItemEditModal'da art_emoji'nin "manuel girilmiş mi
+ * yoksa kategori default mu" kontrolü için. Admin önceki kategorinin emojisini bırakmışsa
+ * yeni kategoriye geçince otomatik güncellenmesini sağlar (P3-9).
+ */
+export const DB_CATEGORIES_EMOJI_SET = new Set(CATEGORIES.map(c => c.emoji));
