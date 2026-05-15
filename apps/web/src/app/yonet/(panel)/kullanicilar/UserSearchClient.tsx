@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, Ban, ShieldCheck, Coins, Loader2, Crown, Trash2, AlertTriangle, Backpack } from 'lucide-react';
+import { Search, Ban, ShieldCheck, Coins, Loader2, Crown, Trash2, AlertTriangle, Backpack, X, Check } from 'lucide-react';
 import InventoryModal from './InventoryModal';
 import { useAdminDialog } from '../../_components/AdminDialog';
 
@@ -15,12 +15,24 @@ type User = {
   is_admin: boolean | null;
   is_banned: boolean | null;
   is_verified: boolean | null;
+  active_badge_id: string | null;
   system_points: number | null;
   created_at: string;
   last_seen: string | null;
   last_active_at: string | null;
   is_online: boolean | null;
   lifetime_sp_donated: number | null;
+};
+
+type BadgeItem = {
+  id: string;
+  name: string;
+  art_emoji: string | null;
+  bg_gradient_start: string | null;
+  bg_gradient_mid: string | null;
+  bg_gradient_end: string | null;
+  rarity: string | null;
+  active: boolean | null;
 };
 
 // ★ 7 May 2026: Tarih/süre format yardımcıları
@@ -69,6 +81,7 @@ export default function UserSearchClient({ initialUsers, initialQuery }: {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [inventoryFor, setInventoryFor] = useState<{ id: string; name: string } | null>(null);
+  const [badgePickerFor, setBadgePickerFor] = useState<User | null>(null);
   const [, startTransition] = useTransition();
 
   const filteredUsers = users.filter(u => {
@@ -285,15 +298,16 @@ export default function UserSearchClient({ initialUsers, initialQuery }: {
               <div className="grid grid-cols-3 gap-1.5">
                 <button
                   type="button"
-                  onClick={() => callAction(u.id, { update: { is_verified: !u.is_verified } })}
+                  onClick={() => setBadgePickerFor(u)}
                   disabled={isBusy}
                   className={`px-2 py-2 rounded-md text-[10px] font-semibold border transition-colors flex items-center justify-center gap-1 ${
-                    u.is_verified
+                    u.active_badge_id
                       ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-200'
                       : 'bg-white/5 border-white/10 text-slate-300'
                   }`}
+                  title="Rozet ata / kaldır"
                 >
-                  ✓ TİK
+                  ✓ ROZET
                 </button>
                 <button
                   type="button"
@@ -462,18 +476,18 @@ export default function UserSearchClient({ initialUsers, initialQuery }: {
                     </td>
                     <td className="px-5 py-3">
                       <div className="flex items-center justify-end gap-1.5">
-                        {/* Verify toggle */}
+                        {/* Rozet ata / kaldır */}
                         <button
-                          onClick={() => callAction(u.id, { update: { is_verified: !u.is_verified } })}
+                          onClick={() => setBadgePickerFor(u)}
                           disabled={isBusy}
                           className={`px-2 py-1.5 rounded-md text-[10px] font-semibold border transition-colors ${
-                            u.is_verified
+                            u.active_badge_id
                               ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-200'
                               : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
                           }`}
-                          title={u.is_verified ? 'Tikiyi kaldır' : 'Tikiyi ver'}
+                          title={u.active_badge_id ? 'Rozeti değiştir / kaldır' : 'Rozet ata'}
                         >
-                          ✓ TİK
+                          ✓ ROZET
                         </button>
                         {/* Ban toggle */}
                         <button
@@ -567,6 +581,188 @@ export default function UserSearchClient({ initialUsers, initialQuery }: {
           }}
         />
       )}
+
+      {badgePickerFor && (
+        <BadgePickerModal
+          user={badgePickerFor}
+          onClose={() => setBadgePickerFor(null)}
+          onPick={async (badgeId) => {
+            const uid = badgePickerFor.id;
+            await callAction(uid, {
+              update: {
+                active_badge_id: badgeId,
+                is_verified: !!badgeId,
+              },
+            });
+            setBadgePickerFor(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════
+   BadgePickerModal — kullanıcıya rozet ürünü ata
+   ═══════════════════════════════════════════════════ */
+function BadgePickerModal({
+  user,
+  onClose,
+  onPick,
+}: {
+  user: User;
+  onClose: () => void;
+  onPick: (badgeId: string | null) => void;
+}) {
+  const [badges, setBadges] = useState<BadgeItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/yonet/api/store/items/bulk');
+        const json = await res.json();
+        if (cancelled) return;
+        const items: BadgeItem[] = (json.items || [])
+          .filter((it: any) => it.category === 'badge' && it.active)
+          .map((it: any) => ({
+            id: it.id,
+            name: it.name,
+            art_emoji: it.art_emoji,
+            bg_gradient_start: it.bg_gradient_start,
+            bg_gradient_mid: it.bg_gradient_mid,
+            bg_gradient_end: it.bg_gradient_end,
+            rarity: it.rarity,
+            active: it.active,
+          }));
+        setBadges(items);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const handlePick = async (badgeId: string | null) => {
+    setBusy(true);
+    try {
+      await onPick(badgeId);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <div className="w-full max-w-2xl max-h-[85vh] bg-gradient-to-b from-slate-900 to-slate-950 border border-white/10 rounded-2xl flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-bold text-slate-100">Rozet Ata</h2>
+            <p className="text-xs text-slate-400 mt-0.5">{user.display_name}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-white/10 transition-colors text-slate-400"
+            aria-label="Kapat"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto p-5">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-cyan-400" />
+            </div>
+          ) : (
+            <>
+              {/* "Rozet yok" seçeneği */}
+              <button
+                type="button"
+                onClick={() => handlePick(null)}
+                disabled={busy}
+                className={`w-full mb-3 px-4 py-3 rounded-xl border transition-colors flex items-center justify-between ${
+                  !user.active_badge_id
+                    ? 'bg-slate-500/20 border-slate-500/50'
+                    : 'bg-white/5 border-white/10 hover:bg-white/10'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-slate-500">
+                    <X className="w-4 h-4" />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-sm font-semibold text-slate-200">Rozet yok</div>
+                    <div className="text-[10px] text-slate-500">İsmin yanında rozet gösterme</div>
+                  </div>
+                </div>
+                {!user.active_badge_id && <Check className="w-4 h-4 text-slate-300" />}
+              </button>
+
+              {/* Badge listesi */}
+              {badges.length === 0 ? (
+                <div className="text-center py-8 text-slate-500 text-sm">
+                  Henüz aktif rozet ürünü yok.
+                  <div className="text-[11px] text-slate-600 mt-1">
+                    Yönet → Rozetler bölümünden yeni rozet oluştur.
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {badges.map(b => {
+                    const isActive = user.active_badge_id === b.id;
+                    const grad = `linear-gradient(135deg, ${b.bg_gradient_start || '#1e293b'}, ${b.bg_gradient_mid || b.bg_gradient_end || b.bg_gradient_start || '#0f172a'}, ${b.bg_gradient_end || '#0f172a'})`;
+                    return (
+                      <button
+                        key={b.id}
+                        type="button"
+                        onClick={() => handlePick(b.id)}
+                        disabled={busy}
+                        className={`relative px-3 py-3 rounded-xl border transition-all flex flex-col items-center gap-2 ${
+                          isActive
+                            ? 'bg-cyan-500/10 border-cyan-500/60 ring-2 ring-cyan-500/30'
+                            : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                        }`}
+                      >
+                        {isActive && (
+                          <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-cyan-500 flex items-center justify-center">
+                            <Check className="w-3 h-3 text-white" />
+                          </div>
+                        )}
+                        <div
+                          className="w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-lg"
+                          style={{ background: grad }}
+                        >
+                          {b.art_emoji || '🏷️'}
+                        </div>
+                        <div className="text-[11px] font-semibold text-slate-200 text-center line-clamp-2">
+                          {b.name}
+                        </div>
+                        {b.rarity && b.rarity !== 'common' && (
+                          <div className="text-[9px] uppercase tracking-wider text-amber-300/80">
+                            {b.rarity}
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-3 border-t border-white/10 bg-black/20 flex items-center justify-between text-[11px] text-slate-500">
+          <span>Seçim anında uygulanır.</span>
+          {busy && <Loader2 className="w-3 h-3 animate-spin text-cyan-400" />}
+        </div>
+      </div>
     </div>
   );
 }
