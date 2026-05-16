@@ -65,6 +65,8 @@ export default function MessagesClient({
   const dialog = useAdminDialog();
   const [tab, setTab] = useState<Tab>('reported');
   const [busyId, setBusyId] = useState<string | null>(null);
+  // ★ F-4 (16 May 2026): Şikayet durumu filtresi (pending/resolved/dismissed/banned/all)
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'resolved' | 'dismissed' | 'banned'>('all');
   const [, startTransition] = useTransition();
 
   const callDelete = async (messageId: string) => {
@@ -125,13 +127,48 @@ export default function MessagesClient({
         </button>
       </div>
 
-      {tab === 'reported' && (
+      {tab === 'reported' && (() => {
+        // ★ F-4 (16 May 2026): Status filter
+        const filtered = statusFilter === 'all'
+          ? reportedMessages
+          : reportedMessages.filter(r => r.status === statusFilter);
+        return (
         <div className="space-y-3">
-          {reportedMessages.length === 0 ? (
+          {/* Status filtre chip'leri */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+            {([
+              { k: 'all',       l: 'Tümü',     c: '#94A3B8' },
+              { k: 'pending',   l: 'Bekleyen', c: '#FBBF24' },
+              { k: 'resolved',  l: 'Çözülen',  c: '#34D399' },
+              { k: 'dismissed', l: 'Reddedilen', c: '#94A3B8' },
+              { k: 'banned',    l: 'Banlanan', c: '#F87171' },
+            ] as const).map(s => {
+              const count = s.k === 'all' ? reportedMessages.length : reportedMessages.filter(r => r.status === s.k).length;
+              const active = statusFilter === s.k;
+              return (
+                <button
+                  key={s.k}
+                  type="button"
+                  onClick={() => setStatusFilter(s.k as any)}
+                  className="shrink-0 px-3 py-1.5 rounded-full text-[11px] font-semibold border transition-colors"
+                  style={{
+                    background: active ? `${s.c}20` : 'rgba(255,255,255,0.04)',
+                    borderColor: active ? `${s.c}60` : 'rgba(255,255,255,0.1)',
+                    color: active ? s.c : '#94A3B8',
+                  }}
+                >
+                  {s.l} ({count})
+                </button>
+              );
+            })}
+          </div>
+          {filtered.length === 0 ? (
             <div className="bg-white/5 border border-white/10 rounded-2xl p-12 text-center text-slate-500 text-sm">
-              Şikayet edilen mesaj yok.
+              {statusFilter === 'all'
+                ? 'Şikayet edilen mesaj yok.'
+                : `"${statusFilter}" durumunda şikayet yok.`}
             </div>
-          ) : reportedMessages.map(r => (
+          ) : filtered.map(r => (
             <div key={r.id} className="bg-white/5 border border-white/10 rounded-2xl p-4">
               <div className="flex items-start gap-3">
                 <div className="flex-1 min-w-0">
@@ -211,7 +248,8 @@ export default function MessagesClient({
             </div>
           ))}
         </div>
-      )}
+        );
+      })()}
 
       {tab === 'recent' && (
         <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">

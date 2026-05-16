@@ -968,6 +968,10 @@ function ItemEditModal({
       : null;
   const showFineTab = !isNew && !!fineEditorType;
   const [activeTab, setActiveTab] = useState<'general' | 'fine'>('general');
+  // ★ F-2 (16 May 2026): Form içinde 3 alt-tab — Temel / Görsel / Ayarlar.
+  //   ItemEditModal devasa form → kullanıcı 800+ satır scroll ediyordu. Section'lar tab'lara
+  //   dağıtıldı, mevcut form düzeni KORUNDU (sadece koşullu render). Risk düşük.
+  const [formSection, setFormSection] = useState<'basic' | 'visual' | 'settings'>('basic');
   // Yeni ürüne dönülünce veya kategori değişince tab'ı sıfırla
   useEffect(() => {
     if (!showFineTab && activeTab === 'fine') setActiveTab('general');
@@ -1023,6 +1027,31 @@ function ItemEditModal({
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-0">
           {/* SOL — form */}
           <div className="p-5 space-y-5 max-h-[75vh] overflow-y-auto">
+            {/* ★ F-2 (16 May 2026): Form tab navigator — Temel / Görsel / Ayarlar */}
+            <div className="flex items-center gap-1.5 sticky -top-5 -mt-5 -mx-5 px-5 py-2.5 bg-slate-900/95 backdrop-blur-sm border-b border-white/10 z-10">
+              {([
+                { k: 'basic',    l: 'Temel',  i: '📝' },
+                { k: 'visual',   l: 'Görsel', i: '🎨' },
+                { k: 'settings', l: 'Ayarlar', i: '⚙️' },
+              ] as const).map(t => (
+                <button
+                  key={t.k}
+                  type="button"
+                  onClick={() => setFormSection(t.k)}
+                  className={`flex-1 px-3 py-1.5 rounded-md text-xs font-semibold border transition-colors flex items-center justify-center gap-1.5 ${
+                    formSection === t.k
+                      ? 'bg-amber-500/20 border-amber-500/50 text-amber-200'
+                      : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
+                  }`}
+                >
+                  <span>{t.i}</span> {t.l}
+                </button>
+              ))}
+            </div>
+
+            {/* ★ F-2: TAB=basic — Kategori bölümü */}
+            {formSection === 'basic' && (
+            <>
             {/* 1) Kategori — yeni ürün ise chip seçici, mevcut ürün ise readonly badge */}
             {isNew ? (
               <div>
@@ -1063,7 +1092,12 @@ function ItemEditModal({
                 })()}
               </div>
             )}
+            </>
+            )}
 
+            {/* ★ F-2: TAB=visual — Asset upload + Cover ayarları */}
+            {formSection === 'visual' && (
+            <>
             {/* 2) Asset upload — kategoriye özel format ipucu (sadece needsAsset olan kategoriler için) */}
             {!needsAsset ? (
               <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-3.5 flex items-start gap-2.5">
@@ -1341,6 +1375,12 @@ function ItemEditModal({
             </div>
             )}
 
+            </>
+            )}
+
+            {/* ★ F-2: TAB=basic — Temel bilgiler (isim/tagline/fiyat/rarity) */}
+            {formSection === 'basic' && (
+            <>
             {/* 3) Temel bilgiler */}
             <div>
               <label className="block text-[10px] font-bold tracking-wider text-amber-300 mb-2">
@@ -1408,6 +1448,12 @@ function ItemEditModal({
               </div>
             </div>
 
+            </>
+            )}
+
+            {/* ★ F-2: TAB=visual — Renk / Gradient */}
+            {formSection === 'visual' && (
+            <>
             {/* 4) Renk / Gradient */}
             <div>
               <label className="block text-[10px] font-bold tracking-wider text-amber-300 mb-2">
@@ -1457,6 +1503,12 @@ function ItemEditModal({
               </div>
             </div>
 
+            </>
+            )}
+
+            {/* ★ F-2: TAB=settings — Durum + Toggle'lar */}
+            {formSection === 'settings' && (
+            <>
             {/* 5) Durum + Toggle'lar */}
             <div>
               <label className="block text-[10px] font-bold tracking-wider text-amber-300 mb-2">
@@ -1550,6 +1602,9 @@ function ItemEditModal({
                 <span className="text-lg">→</span>
               </button>
             )}
+            </>
+            )}
+            {/* ★ F-2: 3 tab kapanışı (basic/visual/settings) */}
           </div>
 
           {/* SAĞ — canlı mobil önizleme */}
