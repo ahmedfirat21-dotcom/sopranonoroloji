@@ -60,28 +60,37 @@ export const DEFAULT_LAYOUT: RoomLayoutConfig = {
     micActiveColor: '#10B981', micMutedColor: '#475569', leaveButtonColor: '#EF4444',
     iconColor: '#E2E8F0', iconSize: 22,
   },
-  speakers_advanced: {
-    cameraTileEnabled: true, cameraAspectRatio: '1:1', cameraTileBorderRadius: 16,
-    singleCameraFullWidth: true, spotlightEnabled: false, spotlightScale: 1.20,
-    ownerScale: 1.0, micIconColor: '#10B981', micIconOffsetY: -2, mutedAvatarGrayscale: 0.0,
-  },
   listeners_advanced: {
     maxVisibleSmallScreen: 10, maxVisibleDefault: 14,
     overflowBadgeText: '+{N} Seyirci', overflowBadgeColor: 'rgba(20,184,166,0.16)', overflowBadgeTextColor: '#5EEAD4',
     showHandRaiseBadge: true, handRaiseBadgePosition: 'topLeft', showMicRequestPulse: true,
   },
-  name_advanced: {
-    textShadowEnabled: true, textShadowColor: 'rgba(0,0,0,0.7)', textShadowOffsetY: 1, textShadowRadius: 2,
-    strokeEnabled: false, strokeColor: 'rgba(0,0,0,0.5)', strokeWidth: 0.5,
-    letterSpacing: 0.0, lineHeight: 1.2,
-  },
 };
+
+// ★ v289 (16 May 2026): Nested deep merge — sizePresets gibi iç içe obj'ler için.
+//   Sığ spread'te DB'ye `{sizePresets: {small: 60}}` yazılırsa medium/large kaybolur.
+function mergeNested(defaults: any, raw: any): any {
+  if (raw === null || raw === undefined) return defaults;
+  if (typeof raw !== 'object' || typeof defaults !== 'object') return raw;
+  if (Array.isArray(defaults) || Array.isArray(raw)) return raw;
+  const out: any = { ...defaults };
+  for (const k of Object.keys(raw)) {
+    const dv = defaults[k];
+    const rv = raw[k];
+    if (dv && typeof dv === 'object' && !Array.isArray(dv)) {
+      out[k] = mergeNested(dv, rv);
+    } else {
+      out[k] = rv;
+    }
+  }
+  return out;
+}
 
 export function mergeWithDefaults(raw: any): RoomLayoutConfig {
   if (!raw || typeof raw !== 'object') return DEFAULT_LAYOUT;
   const merged: any = {};
   for (const k of Object.keys(DEFAULT_LAYOUT) as (keyof RoomLayoutConfig)[]) {
-    merged[k] = { ...(DEFAULT_LAYOUT as any)[k], ...(raw[k] || {}) };
+    merged[k] = mergeNested((DEFAULT_LAYOUT as any)[k], raw[k]);
   }
   return merged as RoomLayoutConfig;
 }

@@ -1,9 +1,9 @@
 "use client";
 import React from 'react';
 import { Section, Slider, Toggle, ColorField, SelectField, TextField,
-  SHAPE_OPTS, WEIGHT_OPTS, ENTER_OPTS,
+  SHAPE_OPTS, WEIGHT_OPTS,
 } from './controls';
-import type { RoomLayoutConfig, AvatarShape, EnterTransition } from './types';
+import type { RoomLayoutConfig, AvatarShape } from './types';
 
 type C = RoomLayoutConfig;
 
@@ -181,6 +181,11 @@ export function EffectsPanel({
         <ColorField label="El Kaldırma Rengi" value={accents.handRaiseColor} onChange={v => updateAccents({ handRaiseColor: v })} />
       </Section>
 
+      <Section title="Dinleyici Grid Limiti" hint="Grid'de aynı anda kaç dinleyici görünür — fazlası overflow rozetine düşer (tıkla → tüm liste)" mobile="ok">
+        <Slider label="Küçük Ekran (&lt; 360dp)" min={4} max={20} step={1} value={listenersAdv.maxVisibleSmallScreen} onChange={v => updateListenersAdv({ maxVisibleSmallScreen: v })} display={`${listenersAdv.maxVisibleSmallScreen} kişi`} />
+        <Slider label="Normal Ekran (≥ 360dp)" min={4} max={30} step={1} value={listenersAdv.maxVisibleDefault} onChange={v => updateListenersAdv({ maxVisibleDefault: v })} display={`${listenersAdv.maxVisibleDefault} kişi`} />
+      </Section>
+
       <Section title="Seyirci Overflow Rozeti" hint="Listenerda görüntülenmeyen seyirci sayısı '+N' pill" mobile="ok">
         <TextField label="Şablon ('{N}' yerine sayı)" value={listenersAdv.overflowBadgeText} onChange={v => updateListenersAdv({ overflowBadgeText: v })} placeholder="+{N} Seyirci" />
         <ColorField label="Pill Arka Plan" value={listenersAdv.overflowBadgeColor} onChange={v => updateListenersAdv({ overflowBadgeColor: v })} />
@@ -192,11 +197,13 @@ export function EffectsPanel({
         <ColorField label="Ayraç Rengi" value={stage.dividerColor} onChange={v => updateStage({ dividerColor: v })} />
       </Section>
 
-      <Section title="Etkileşim & Geçişler" hint="Avatar tıklama feedback + yeni katılan kullanıcı animasyonu" mobile="ok">
+      <Section title="Etkileşim & Erişilebilirlik" hint="Avatar tıklama feedback + hareket azaltma (a11y)" mobile="ok">
         <Slider label="Avatar Tıklama Scale (basılı tut feedback)" min={0.85} max={1} step={0.01} value={anims.avatarTapScale} onChange={v => updateAnims({ avatarTapScale: v })} display={`${anims.avatarTapScale.toFixed(2)}x`} />
-        <SelectField label="Yeni Katılım Animasyonu" value={anims.enterTransition} options={ENTER_OPTS} onChange={v => updateAnims({ enterTransition: v as EnterTransition })} />
-        <Slider label="Animasyon Süresi" min={100} max={1500} step={50} value={anims.enterDurationMs} onChange={v => updateAnims({ enterDurationMs: v })} display={`${anims.enterDurationMs}ms`} />
-        <Toggle label="Hareket Azaltma (Reduce Motion)" checked={anims.reduceMotion} onChange={v => updateAnims({ reduceMotion: v })} />
+        <Toggle label="Hareket Azaltma (tüm pulse/halo/tap animasyonlarını kapat)" checked={anims.reduceMotion} onChange={v => updateAnims({ reduceMotion: v })} />
+        {/* ★ v289 (16 May 2026): enterTransition + enterDurationMs admin'den KALDIRILDI.
+            Memory: "v107.41 Reanimated entering/exiting kaldırıldı — kullanıcı zıplama
+            istemiyor". Bu iki alan defaults'ta hayalet kalıyor (geriye uyum) ama UI'da
+            kullanıcı görmesin — sahte ayar yok. */}
       </Section>
     </div>
   );

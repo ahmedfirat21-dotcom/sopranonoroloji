@@ -81,19 +81,12 @@ export interface RoomLayoutConfig {
     micActiveColor: string; micMutedColor: string; leaveButtonColor: string;
     iconColor: string; iconSize: number;
   };
-  speakers_advanced: {
-    cameraTileEnabled: boolean; cameraAspectRatio: CameraAspect; cameraTileBorderRadius: number;
-    singleCameraFullWidth: boolean; spotlightEnabled: boolean; spotlightScale: number;
-    ownerScale: number; micIconColor: string; micIconOffsetY: number; mutedAvatarGrayscale: number;
-  };
+  // ★ v289 (16 May 2026): speakers_advanced + name_advanced KALDIRILDI (19 alan,
+  //   admin UI yok, mobile usage yok). Geriye uyum için mergeWithDefaults yeni
+  //   şemada eski alanları görmezden gelir.
   listeners_advanced: {
     maxVisibleSmallScreen: number; maxVisibleDefault: number;
     overflowBadgeText: string; overflowBadgeColor: string; overflowBadgeTextColor: string;
     showHandRaiseBadge: boolean; handRaiseBadgePosition: CornerPosition; showMicRequestPulse: boolean;
-  };
-  name_advanced: {
-    textShadowEnabled: boolean; textShadowColor: string; textShadowOffsetY: number; textShadowRadius: number;
-    strokeEnabled: boolean; strokeColor: string; strokeWidth: number;
-    letterSpacing: number; lineHeight: number;
   };
 }
