@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { Section, Slider, Toggle, ColorField, SelectField,
+import { Section, Slider, Toggle, ColorField, SelectField, TextField,
   SHAPE_OPTS, WEIGHT_OPTS, ENTER_OPTS,
 } from './controls';
 import type { RoomLayoutConfig, AvatarShape, EnterTransition } from './types';
@@ -34,6 +34,8 @@ export function HostPanel({ cfg, update }: { cfg: C['host']; update: (p: Partial
 }
 
 /* ═══════════════════════════════ SPEAKERS ═══════════════════════════════ */
+import { NAME_POS_OPTS } from './controls';
+import type { NamePosition } from './types';
 export function SpeakersPanel({ cfg, updateCfg }:
   { cfg: C['speakers']; updateCfg: (p: Partial<C['speakers']>) => void }) {
   return (
@@ -41,6 +43,17 @@ export function SpeakersPanel({ cfg, updateCfg }:
       <Section title="Konuşmacı Avatarı" hint="Mikrofon sahibi katılımcıların avatar görünümü" mobile="ok">
         <SelectField label="Şekil" value={cfg.avatarShape} options={SHAPE_OPTS} onChange={v => updateCfg({ avatarShape: v as AvatarShape })} />
         <Slider label="Köşe Yuvarlaması (kare şekilde)" min={0} max={48} step={1} value={cfg.borderRadius} onChange={v => updateCfg({ borderRadius: v })} display={`${cfg.borderRadius}dp`} />
+      </Section>
+
+      <Section title="Halka (Border Ring)" hint="Avatar etrafındaki çevre çizgisi" mobile="ok">
+        <Slider label="Kalınlık" min={0} max={6} step={1} value={cfg.ringWidth} onChange={v => updateCfg({ ringWidth: v })} display={`${cfg.ringWidth}dp`} />
+        <ColorField label="Halka Rengi" value={cfg.ringColor} onChange={v => updateCfg({ ringColor: v })} />
+      </Section>
+
+      <Section title="İsim Yazısı" hint="Konuşmacı altındaki ad — boyut/kesim/konum" mobile="ok">
+        <SelectField label="Konum" value={cfg.namePosition} options={NAME_POS_OPTS} onChange={v => updateCfg({ namePosition: v as NamePosition })} />
+        <Slider label="Font Boyutu" min={8} max={22} step={1} value={cfg.nameFontSize} onChange={v => updateCfg({ nameFontSize: v })} display={`${cfg.nameFontSize}sp`} />
+        <Slider label="Maks Karakter (0 = sınırsız)" min={0} max={24} step={1} value={cfg.nameMaxChars} onChange={v => updateCfg({ nameMaxChars: v })} display={cfg.nameMaxChars === 0 ? '∞' : `${cfg.nameMaxChars} hf`} />
       </Section>
     </div>
   );
@@ -63,8 +76,10 @@ export function ListenersPanel({ cfg, accents, updateCfg, updateAccents }:
         <ColorField label="Halka Rengi" value={cfg.ringColor} onChange={v => updateCfg({ ringColor: v })} />
       </Section>
 
-      <Section title="İsim" hint="Avatar altında dinleyicinin adı görünür mü" mobile="ok">
+      <Section title="İsim" hint="Avatar altında dinleyicinin adı — gizle veya boyut/kesim ayarla" mobile="ok">
         <Toggle label="İsim Göster" checked={cfg.showName} onChange={v => updateCfg({ showName: v })} />
+        <Slider label="Font Boyutu" min={6} max={16} step={1} value={cfg.nameFontSize} onChange={v => updateCfg({ nameFontSize: v })} display={`${cfg.nameFontSize}sp`} />
+        <Slider label="Maks Karakter (0 = sınırsız)" min={0} max={16} step={1} value={cfg.nameMaxChars} onChange={v => updateCfg({ nameMaxChars: v })} display={cfg.nameMaxChars === 0 ? '∞' : `${cfg.nameMaxChars} hf`} />
       </Section>
 
       <Section title="Oda Sahibi (Owner) Vurgusu" hint="Listede oda sahibinin nasıl ayırt edileceği" mobile="ok">
@@ -107,17 +122,22 @@ export function HeaderControlsPanel({ global, header, controls, updateGlobal, up
   );
 }
 
-/* ═══════════════════════════════ EFFECTS (Animations + Shadows + Indicators) ═══════════════════════════════ */
+/* ═══════════════════════════════ EFFECTS (Animations + Shadows + Indicators + Accents + Stage) ═══════════════════════════════ */
+import { CORNER_OPTS, DIVIDER_OPTS } from './controls';
+import type { CornerPosition, StageDivider } from './types';
 export function EffectsPanel({
-  anims, accents, indicators, shadows, speakersCfg,
-  updateAnims, updateAccents, updateIndicators, updateShadows, updateSpeakers,
+  anims, accents, indicators, shadows, speakersCfg, listenersAdv, stage,
+  updateAnims, updateAccents, updateIndicators, updateShadows, updateSpeakers, updateListenersAdv, updateStage,
 }: {
   anims: C['animations']; accents: C['accents']; indicators: C['indicators']; shadows: C['shadows']; speakersCfg: C['speakers'];
+  listenersAdv: C['listeners_advanced']; stage: C['stage'];
   updateAnims: (p: Partial<C['animations']>) => void;
   updateAccents: (p: Partial<C['accents']>) => void;
   updateIndicators: (p: Partial<C['indicators']>) => void;
   updateShadows: (p: Partial<C['shadows']>) => void;
   updateSpeakers: (p: Partial<C['speakers']>) => void;
+  updateListenersAdv: (p: Partial<C['listeners_advanced']>) => void;
+  updateStage: (p: Partial<C['stage']>) => void;
 }) {
   return (
     <div className="space-y-3">
@@ -151,6 +171,24 @@ export function EffectsPanel({
       <Section title="Online Noktası" hint="Çevrimiçi kullanıcıların avatar köşesindeki yeşil nokta" mobile="ok">
         <Toggle label="Online Noktası Göster" checked={indicators.onlineDotEnabled} onChange={v => updateIndicators({ onlineDotEnabled: v })} />
         <ColorField label="Online Nokta Rengi" value={indicators.onlineDotColor} onChange={v => updateIndicators({ onlineDotColor: v })} />
+        <SelectField label="Konum" value={indicators.onlineDotPosition} options={CORNER_OPTS} onChange={v => updateIndicators({ onlineDotPosition: v as CornerPosition })} />
+      </Section>
+
+      <Section title="Moderatör & El Kaldırma" hint="Moderatör avatar halkası rengi + el kaldıran dinleyici rozeti" mobile="ok">
+        <ColorField label="Moderatör Halka Rengi" value={accents.moderatorHighlight} onChange={v => updateAccents({ moderatorHighlight: v })} />
+        <Toggle label="El Kaldırma Rozeti Aktif" checked={accents.handRaiseEnabled} onChange={v => updateAccents({ handRaiseEnabled: v })} />
+        <ColorField label="El Kaldırma Rengi" value={accents.handRaiseColor} onChange={v => updateAccents({ handRaiseColor: v })} />
+      </Section>
+
+      <Section title="Seyirci Overflow Rozeti" hint="Listenerda görüntülenmeyen seyirci sayısı '+N' pill" mobile="ok">
+        <TextField label="Şablon ('{N}' yerine sayı)" value={listenersAdv.overflowBadgeText} onChange={v => updateListenersAdv({ overflowBadgeText: v })} placeholder="+{N} Seyirci" />
+        <ColorField label="Pill Arka Plan" value={listenersAdv.overflowBadgeColor} onChange={v => updateListenersAdv({ overflowBadgeColor: v })} />
+        <ColorField label="Pill Yazı Rengi" value={listenersAdv.overflowBadgeTextColor} onChange={v => updateListenersAdv({ overflowBadgeTextColor: v })} />
+      </Section>
+
+      <Section title="Sahne Ayracı" hint="Konuşmacı ve dinleyici grid'i arasındaki çizgi" mobile="ok">
+        <SelectField label="Stil" value={stage.dividerStyle} options={DIVIDER_OPTS} onChange={v => updateStage({ dividerStyle: v as StageDivider })} />
+        <ColorField label="Ayraç Rengi" value={stage.dividerColor} onChange={v => updateStage({ dividerColor: v })} />
       </Section>
 
       <Section title="Etkileşim & Geçişler" hint="Avatar tıklama feedback + yeni katılan kullanıcı animasyonu" mobile="ok">

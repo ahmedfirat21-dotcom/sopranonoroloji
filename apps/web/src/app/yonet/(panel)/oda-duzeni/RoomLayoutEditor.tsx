@@ -106,9 +106,11 @@ export default function RoomLayoutEditor({ initial }: { initial: any }) {
             <EffectsPanel
               anims={cfg.animations} accents={cfg.accents} indicators={cfg.indicators}
               shadows={cfg.shadows} speakersCfg={cfg.speakers}
+              listenersAdv={cfg.listeners_advanced} stage={cfg.stage}
               updateAnims={upd('animations')} updateAccents={upd('accents')}
               updateIndicators={upd('indicators')} updateShadows={upd('shadows')}
               updateSpeakers={upd('speakers')}
+              updateListenersAdv={upd('listeners_advanced')} updateStage={upd('stage')}
             />
           )}
         </div>
