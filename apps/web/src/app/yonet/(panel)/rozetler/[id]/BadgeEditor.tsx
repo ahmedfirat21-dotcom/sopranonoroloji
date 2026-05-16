@@ -399,12 +399,54 @@ function PositionPanel({ cfg, upd }: any) {
   );
 }
 function TierPanel({ cfg, upd }: any) {
-  // ★ P0 (16 May 2026): Tier paneli sadeleştirildi — eski auto_assign_tier + tier_label_override
-  //   + hide_for_free_users + Plus/Pro şablon butonları kaldırıldı (eski koddan kalma).
-  //   Şimdi: TEK TOGGLE → "Bu rozeti göster". Kapalıysa APK'da hiçbir yerde render edilmez.
-  //   (Detay görünürlük — profil/inline — Genel sekmesinde.)
+  // ★ P0 (16 May 2026): Tier paneli sadeleştirildi — eski hızlı şablonlar + tier_label_override
+  //   + hide_for_free_users kaldırıldı. Görsel ayarlar (şekil/glow/renk) Şekil/Görsel/Glow
+  //   sekmelerinden gelir — bu rozet ürününün ANA AYARI'dır.
+  //
+  //   Tier sekmesi şimdi 2 sade şey:
+  //   1. "Üyelik Atama" — Plus/Pro/GoldMember kullanıcılarına otomatik atansın mı?
+  //   2. "Bu rozeti göster" — toggle (visible_on_avatar)
+  const TIER_META: Record<string, { label: string; color: string; emoji: string }> = {
+    Plus:       { label: 'Plus üyeler',       color: '#7DFCE0', emoji: '🚀' },
+    Pro:        { label: 'Pro üyeler',        color: '#FBBF24', emoji: '👑' },
+    GoldMember: { label: 'Gold Member üyeler', color: '#F472B6', emoji: '🏵' },
+  };
   return (
     <div className="space-y-3">
+      <Section
+        title="Üyelik Atama"
+        hint="Bu rozet hangi üyelik seviyesindeki kullanıcılara OTOMATİK atansın? (Görsel ayarlar Şekil/Görsel/Glow sekmelerinden gelir.)"
+      >
+        <SelectField label="Atanacak Üyelik" value={cfg.auto_assign_tier || 'none'} options={[
+          { value: 'none',        label: 'Yok (yalnızca manuel atama)' },
+          { value: 'Plus',        label: '🚀 Plus üyeler' },
+          { value: 'Pro',         label: '👑 Pro üyeler' },
+          { value: 'GoldMember',  label: '🏵 Gold Member üyeler' },
+        ]} onChange={(v: any) => upd({ auto_assign_tier: v })} />
+        {cfg.auto_assign_tier && cfg.auto_assign_tier !== 'none' && TIER_META[cfg.auto_assign_tier] && (
+          <div
+            className="rounded-lg p-3 border mt-2"
+            style={{
+              background: TIER_META[cfg.auto_assign_tier].color + '15',
+              borderColor: TIER_META[cfg.auto_assign_tier].color + '40',
+            }}
+          >
+            <div
+              className="text-xs font-semibold flex items-center gap-1.5"
+              style={{ color: TIER_META[cfg.auto_assign_tier].color }}
+            >
+              <span>{TIER_META[cfg.auto_assign_tier].emoji}</span>
+              Bu rozet {TIER_META[cfg.auto_assign_tier].label}e otomatik atanır.
+            </div>
+            <div className="text-[10px] text-slate-400 mt-1 leading-relaxed">
+              APK'da: Kullanıcının manuel rozeti varsa o öncelikli; yoksa bu rozet gösterilir.
+              <br/>Aynı tier için BİRDEN FAZLA rozet varsa en son oluşturulan kullanılır
+              (tek tier-rozet öneririz).
+            </div>
+          </div>
+        )}
+      </Section>
+
       <Section title="Rozet Görünürlüğü">
         <Toggle
           label="Bu rozeti göster"
@@ -412,8 +454,7 @@ function TierPanel({ cfg, upd }: any) {
           onChange={(v: boolean) => upd({ visible_on_avatar: v })}
         />
         <div className="text-[10px] text-slate-400 mt-1.5 leading-relaxed">
-          Açık ise: Bu rozeti atanan kullanıcılar avatar üzerinde rozetiyle gözükür.<br/>
-          Kapalı ise: Hiçbir yerde gösterilmez (envantere atansa da görünmez).
+          Kapalıysa: bu rozet hiçbir yerde gözükmez (envantere atansa veya tier-atama olsa da).
         </div>
       </Section>
     </div>

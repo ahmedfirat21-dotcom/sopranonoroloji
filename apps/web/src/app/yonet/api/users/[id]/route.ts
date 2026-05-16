@@ -18,6 +18,7 @@ const ALLOWED_FIELDS = new Set([
   'is_admin',
   'subscription_tier',
   'display_name',
+  'active_badge_id',
 ]);
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -101,6 +102,30 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   for (const k of Object.keys(update)) {
     if (ALLOWED_FIELDS.has(k)) safe[k] = update[k];
   }
+
+  // ★ v280: is_verified değiştiğinde active_badge_id'yi otomatik eşle.
+  //   Admin "TİK" butonuna bastığında, DB'deki ilk badge kategorisindeki
+  //   rozet ürününü kullanıcıya ata (APK'da CosmeticBadge render için).
+  if ('is_verified' in safe && !('active_badge_id' in safe)) {
+    if (safe.is_verified) {
+      // Doğrulama veriliyor → ilk badge ürünü bul ve ata
+      const { data: badgeItem } = await supabaseAdmin
+        .from('cosmetic_items')
+        .select('id')
+        .eq('category', 'badge')
+        .eq('active', true)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (badgeItem?.id) {
+        safe.active_badge_id = badgeItem.id;
+      }
+    } else {
+      // Doğrulama kaldırılıyor → rozeti de kaldır
+      safe.active_badge_id = null;
+    }
+  }
+
   if (Object.keys(safe).length === 0) {
     // SP delta uygulanmış olabilir — boş gövde başarı sayılır
     return NextResponse.json({ ok: true });
