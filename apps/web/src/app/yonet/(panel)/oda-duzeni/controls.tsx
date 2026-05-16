@@ -11,8 +11,10 @@ export function Section({ title, children, hint, mobile }: {
   title: string; children: React.ReactNode; hint?: string;
   mobile?: 'ok' | 'partial' | 'none';
 }) {
-  const badge = mobile === 'ok' ? { label: 'APK ✓', cls: 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300' }
-              : mobile === 'partial' ? { label: 'APK kısmi ⚠', cls: 'bg-amber-500/15 border-amber-500/40 text-amber-300' }
+  // ★ v286: 'ok' rozetini gizliyoruz — sayfanın üstünde 'Tek vücut' banner'ı zaten
+  //   her ayarın APK'ya yansıdığını söylüyor; her section'da tekrar yeşil rozet
+  //   görsel gürültü olur. Rozet sadece uyarı amaçlı kalsın (partial/none).
+  const badge = mobile === 'partial' ? { label: 'APK kısmi ⚠', cls: 'bg-amber-500/15 border-amber-500/40 text-amber-300' }
               : mobile === 'none' ? { label: 'APK yansımaz ✗', cls: 'bg-rose-500/15 border-rose-500/40 text-rose-300' }
               : null;
   return (
