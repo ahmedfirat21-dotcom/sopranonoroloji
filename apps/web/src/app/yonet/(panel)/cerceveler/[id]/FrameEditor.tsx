@@ -57,15 +57,9 @@ interface FrameConfig {
   name_color: string;
   name_size: number;            // % avatar boyutuna göre font (6-25)
   name_bold: boolean;
-  // ★ Tier etiketi (Plus/Pro/Free badge)
-  // Tier rozet — sade model: aç/kapat + 8 nokta ana konum + ince ayar offset.
-  // ★ v1.3.64: tier_badge_offset_x/y — 8 noktayı ana referans alıp üstüne pixel-ince
-  //   ayar yapabilmek için. % avatar boyutuna göre orantılı (her boyutta tutarlı).
-  tier_badge_enabled: boolean;
-  tier_badge_position: 'tl' | 'tc' | 'tr' | 'ml' | 'mr' | 'bl' | 'bc' | 'br';
-  tier_badge_offset_x: number;  // % avatar boyutu (-50..+50) yatay ince ayar
-  tier_badge_offset_y: number;  // % avatar boyutu (-50..+50) dikey ince ayar
-  tier_badge_scale: number;     // 0.5..2.0 — rozeti büyüt/küçült (default 1.0)
+  // ★ v283 (16 May 2026): tier_badge_* KALDIRILDI — rozet ayarları artık
+  //   Mağaza → Rozetler → [id] → Konum sekmesinde yönetiliyor.
+  //   Çift kontrol kalktı, tek kaynak: cosmetic_items.editor_config.badge_config.
   // ★ 2026-05-11 — EK animasyon paleti
   // Avatar
   avatar_shake: boolean;        // hızlı titreşim (bildirim hissi)
@@ -159,11 +153,7 @@ const DEFAULT_CONFIG: FrameConfig = {
   name_color: '#f8fafc',
   name_size: 14,      // % avatar boyutu (60px avatar→8px, 200px avatar→28px)
   name_bold: true,
-  tier_badge_enabled: false,
-  tier_badge_position: 'br',
-  tier_badge_offset_x: 0,
-  tier_badge_offset_y: 0,
-  tier_badge_scale: 1.0,
+  // ★ v283: tier_badge_* default'ları kaldırıldı (artık rozet ürününde yönetilir)
   // Ek animasyon paleti — default kapalı (opsiyonel zenginlik)
   avatar_shake: false,
   avatar_swing: false,
@@ -712,12 +702,13 @@ export default function FrameEditor({ item }: { item: any }) {
               <Lottie animationData={lottieData} loop autoplay speed={cfg.lottie_speed}
                 style={{ width: '100%', height: '100%' }} />
               {/* APK LottieFrame renkli overlay simülasyonu — hue/brightness/saturation */}
+              {/* ★ v275: opacity'ler 0.25/0.4 → 0.45/0.6/0.55 (mobile parite + görünür) */}
               {cfg.lottie_hue_rotate !== 0 && (
                 <div style={{
                   position: 'absolute', top: 0, left: 0,
                   width: '100%', height: '100%',
                   backgroundColor: `hsl(${cfg.lottie_hue_rotate}, 70%, 50%)`,
-                  opacity: 0.25, borderRadius: '50%', pointerEvents: 'none',
+                  opacity: 0.45, borderRadius: '50%', pointerEvents: 'none',
                 }} />
               )}
               {cfg.lottie_brightness !== 1 && (
@@ -725,7 +716,7 @@ export default function FrameEditor({ item }: { item: any }) {
                   position: 'absolute', top: 0, left: 0,
                   width: '100%', height: '100%',
                   backgroundColor: cfg.lottie_brightness > 1 ? 'white' : 'black',
-                  opacity: Math.min(0.5, Math.abs(cfg.lottie_brightness - 1) * 0.4),
+                  opacity: Math.min(0.7, Math.abs(cfg.lottie_brightness - 1) * 0.6),
                   borderRadius: '50%', pointerEvents: 'none',
                 }} />
               )}
@@ -734,7 +725,7 @@ export default function FrameEditor({ item }: { item: any }) {
                   position: 'absolute', top: 0, left: 0,
                   width: '100%', height: '100%',
                   backgroundColor: 'rgba(128,128,128,1)',
-                  opacity: (1 - cfg.lottie_saturation) * 0.4,
+                  opacity: (1 - cfg.lottie_saturation) * 0.55,
                   borderRadius: '50%', pointerEvents: 'none',
                 }} />
               )}
@@ -864,116 +855,13 @@ export default function FrameEditor({ item }: { item: any }) {
                letterSpacing 0.7, radius 8.5, gradient #FCD34D→#B45309 (LinearGradient
                start 0,0 → end 1,1 = CSS 135deg), shadow rgba(251,191,36,0.65) blur 5.
                Shimmer loop: opacity 0.85↔1, scale 1↔1.04, 1.6s ease-in-out. */}
-          {cfg.tier_badge_enabled && (() => {
-            const pos = BADGE_POSITIONS[cfg.tier_badge_position];
-            // ★ v1.3.64: 8 nokta ana konum + ince ayar offset (% avatar boyutu).
-            //   ?? 0/1.0 fallback — eski DB kayıtlarında bu alanlar undefined,
-            //   Next.js hot reload state'inde de eski rawCfg olabilir.
-            const offsetX = cfg.tier_badge_offset_x ?? 0;
-            const offsetY = cfg.tier_badge_offset_y ?? 0;
-            const badgeScale = cfg.tier_badge_scale ?? 1.0;
-            const fineOffsetX = (offsetX / 100) * avatarSize;
-            const fineOffsetY = (offsetY / 100) * avatarSize;
-            const badgeX = stageCenter + pos.x * avatarSize + fineOffsetX;
-            const badgeY = stageCenter + pos.y * avatarSize + fineOffsetY;
-            return (
-              <div
-                style={{
-                  position: 'absolute',
-                  left: badgeX,
-                  top: badgeY,
-                  // ★ v1.3.64: tier_badge_scale — kullanıcı sliderı 0.5..2.0 ile
-                  //   rozeti büyütüp küçültür. translate(-50%,-50%) ile ortalı kalır.
-                  //   APK: StatusAvatar wrapper static transform [translate + scale],
-                  //   TierBadge component içinde shimmer scale ayrıca uygulanır.
-                  //   Web'de iki katman: outer=static scale, inner=shimmer animation.
-                  transform: `translate(-50%, -50%) scale(${badgeScale})`,
-                  transformOrigin: 'center',
-                  zIndex: 5,
-                  pointerEvents: 'none',
-                }}
-              >
-                <div style={{
-                  // İç katman — APK TierBadge component shimmer animation paritesi.
-                  // opacity 0.85↔1, scale 1↔1.04, 1.6s × 2 (round-trip 3.2s).
-                  animation: 'tier-badge-shimmer-inner 3.2s ease-in-out infinite',
-                  transformOrigin: 'center',
-                }}>
-                {(() => {
-                  // ★ v265: TierBadge dinamik render — previewTier (Plus/Pro/GM) +
-                  //   editingSize'a göre tierBadgeSize (xs/sm/md). APK parite.
-                  const tcfg = TIER_PREVIEW[previewTier];
-                  const badgeSizeKey = badgeSizeForEditingSize(editingSize);
-                  const bs = TIER_BADGE_SIZE[badgeSizeKey];
-                  return (
-                    <div style={{
-                      background: tcfg.gradient,
-                      color: tcfg.textColor,
-                      height: bs.height,
-                      padding: `0 ${bs.paddingH}px`,
-                      fontSize: bs.fontSize,
-                      fontWeight: 900,
-                      letterSpacing: bs.letterSpacing,
-                      borderRadius: bs.radius,
-                      boxShadow: `0 0 5px ${tcfg.glow}, 0 0 10px ${tcfg.glow.replace(/[0-9.]+\)/, '0.45)')}, 0 1px 2px rgba(0,0,0,0.2)`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: bs.showLabel ? 3 : 0,
-                      textShadow: '0 1px 1px rgba(0,0,0,0.25)',
-                      overflow: 'hidden',
-                      fontFamily: 'system-ui, -apple-system, sans-serif',
-                      lineHeight: 1,
-                    }}>
-                      <span style={{ fontSize: bs.iconSize, lineHeight: 1, display: 'inline-flex', alignItems: 'center' }}>{tcfg.iconChar}</span>
-                      {bs.showLabel && <span style={{ lineHeight: 1 }}>{tcfg.label}</span>}
-                    </div>
-                  );
-                })()}
-                </div>
-              </div>
-            );
-          })()}
+          {/* ★ v283 (16 May 2026): Tier rozet preview KALDIRILDI — rozet ayarları artık
+              Mağaza → Rozetler menüsünden yönetiliyor, çerçeve editöründe yer almıyor. */}
         </div>
         <p className="text-xs text-slate-500">
           Avatar görsel sabit. Frame ölçeği avatara göre büyür/küçülür.
         </p>
 
-        {/* ★ v265 (13 May 2026): Tier rozet önizleme seçici — APK'da kullanıcının
-            subscription_tier'ına göre TierBadge farklı render eder (Plus=teal diamond,
-            Pro=altın star, GM=pembe sparkles). Admin burada toggle ile hepsini görür. */}
-        {cfg.tier_badge_enabled && (
-          <div className="mt-3 p-2.5 rounded-lg bg-slate-900/60 border border-slate-700/40">
-            <div className="text-[10px] uppercase tracking-wider text-slate-400 mb-1.5 font-semibold">
-              Tier Rozet Önizleme
-            </div>
-            <div className="flex gap-1.5">
-              {(['Plus', 'Pro', 'GodMaster'] as const).map((t) => {
-                const tcfg = TIER_PREVIEW[t];
-                const sel = previewTier === t;
-                return (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setPreviewTier(t)}
-                    className={`flex-1 px-2 py-1.5 rounded-md text-[10px] font-bold transition border ${
-                      sel
-                        ? 'border-amber-500 bg-amber-500/15 text-amber-200'
-                        : 'border-slate-700 bg-slate-800/40 text-slate-400 hover:bg-slate-800'
-                    }`}
-                  >
-                    <span style={{ marginRight: 4 }}>{tcfg.iconChar}</span>
-                    {tcfg.label}
-                  </button>
-                );
-              })}
-            </div>
-            <p className="text-[10px] text-slate-500 mt-1.5 leading-snug">
-              Önizlemedeki rozet sadece görsel kontrol içindir. APK'da kullanıcının gerçek tier'ı
-              gösterilir (Free → rozet gizli).
-            </p>
-          </div>
-        )}
       </div>
 
       {/* SAĞ — config panel */}
@@ -1158,7 +1046,11 @@ export default function FrameEditor({ item }: { item: any }) {
           <SubBlock title="Frame Davranışı">
             <Toggle label="Frame nefes alır (yavaş büyür-küçülür)" checked={cfg.frame_breathe} onChange={v => update('frame_breathe', v)} />
             <Toggle label="Glow nefes (parlaklık dalgalanır)" checked={cfg.glow_pulse} onChange={v => update('glow_pulse', v)} />
-            <p className="text-[10px] text-slate-500">Glow nefes için yukarıdaki Glow aktif olmalı.</p>
+            <p className="text-[10px] text-slate-500 leading-snug">
+              Avatar etrafındaki parlaklık halkası <strong>~1.5 saniye periyotla yumuşak yanar-söner</strong>
+              (opacity 0.7 ↔ 1.0). "Nefes alır gibi" canlı, dikkat çekici efekt. <br />
+              ⚠️ <strong>Önce yukarıdaki "Parlaklık (avatar)" aktif olmalı</strong>, yoksa görünmez.
+            </p>
             <Toggle label="Shimmer (üzerinden ışık süpürmesi)" checked={cfg.frame_shimmer} onChange={v => update('frame_shimmer', v)} />
             {cfg.frame_shimmer && (
               <div className="space-y-2 pl-2 border-l-2 border-cyan-500/30">
@@ -1283,7 +1175,8 @@ export default function FrameEditor({ item }: { item: any }) {
                     <option value="circle">○ Dairesel (avatar etrafında)</option>
                   </select>
                 </label>
-                <Slider label="Mesafe (% avatar yarıçapı)" min={-30} max={80} step={5} value={cfg.name_offset} onChange={v => update('name_offset', v)} display={`%${cfg.name_offset}`} />
+                {/* ★ v278: max 80 → 30 (profil sayfası kart metinleriyle çakışmayı önler) */}
+                <Slider label="Mesafe (% avatar yarıçapı)" min={-30} max={30} step={5} value={cfg.name_offset} onChange={v => update('name_offset', v)} display={`%${cfg.name_offset}`} />
                 <Slider label="Eğim" min={-90} max={90} step={5} value={cfg.name_rotation} onChange={v => update('name_rotation', v)} display={`${cfg.name_rotation}°`} />
                 <Slider label="Boyut (% avatar)" min={6} max={18} step={1} value={cfg.name_size} onChange={v => update('name_size', v)} display={`%${cfg.name_size}`} />
                 <ColorInput label="Renk" value={cfg.name_color} onChange={v => update('name_color', v)} />
@@ -1329,118 +1222,9 @@ export default function FrameEditor({ item }: { item: any }) {
               </>
             )}
           </SubBlock>
-          <SubBlock title="Tier Etiketi (Plus / Pro)">
-            <Toggle label="Tier rozetini göster" checked={cfg.tier_badge_enabled} onChange={v => update('tier_badge_enabled', v)} />
-            {cfg.tier_badge_enabled && (
-              <>
-                <label className="block">
-                  <div className="text-xs text-slate-400 mb-1">Konum</div>
-                  <div className="grid grid-cols-3 gap-1">
-                    {(['tl','tc','tr','ml','mr','bl','bc','br'] as const).map(p => {
-                      // ortadaki center kutucuğu boş — sadece avatar
-                      if (p === 'mr') {
-                        return (
-                          <React.Fragment key={p}>
-                            <button
-                              type="button"
-                              onClick={() => update('tier_badge_position', 'ml')}
-                              className={`px-2 py-1.5 text-[10px] rounded border ${cfg.tier_badge_position === 'ml' ? 'bg-cyan-500/20 border-cyan-500/60 text-cyan-200' : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'}`}
-                              title={BADGE_POSITIONS.ml.label}
-                            >{BADGE_POSITIONS.ml.label}</button>
-                            <div className="px-2 py-1.5 text-[10px] rounded border border-dashed border-slate-700 text-slate-600 text-center">●</div>
-                            <button
-                              type="button"
-                              onClick={() => update('tier_badge_position', 'mr')}
-                              className={`px-2 py-1.5 text-[10px] rounded border ${cfg.tier_badge_position === 'mr' ? 'bg-cyan-500/20 border-cyan-500/60 text-cyan-200' : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'}`}
-                              title={BADGE_POSITIONS.mr.label}
-                            >{BADGE_POSITIONS.mr.label}</button>
-                          </React.Fragment>
-                        );
-                      }
-                      if (p === 'ml') return null; // ml zaten yukarıdaki Fragment'te render edildi
-                      return (
-                        <button
-                          key={p}
-                          type="button"
-                          onClick={() => update('tier_badge_position', p)}
-                          className={`px-2 py-1.5 text-[10px] rounded border ${cfg.tier_badge_position === p ? 'bg-cyan-500/20 border-cyan-500/60 text-cyan-200' : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'}`}
-                          title={BADGE_POSITIONS[p].label}
-                        >
-                          {BADGE_POSITIONS[p].label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </label>
-                {/* ★ v1.3.64: 8 nokta ana referans + ince ayar slider'ları.
-                    8 nokta kaba konum verir, slider'lar %-50..+50 arası pixel-ince
-                    sürükleme. Yüzdelik bazlı (her avatar boyutunda orantılı). */}
-                <div className="pt-2 border-t border-slate-700/40 space-y-2">
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    🎯 İnce Ayar — Serbest Konum & Boyut
-                  </div>
-                  <p className="text-[10px] text-slate-500 leading-snug">
-                    8 nokta ana referans. Yatay/dikey slider'lar rozetin konumunu
-                    %-50..+50 avatar boyutuna oranla kaydırır. Boyut slider'ı 0.5×–2.0×
-                    arası büyütüp küçültür.
-                  </p>
-                  {(() => {
-                    // ★ v1.3.64: ?? fallback — eski DB kayıtları + hot reload state
-                    //   bu alanları undefined bırakabilir; UI çökmesin diye localize.
-                    const offX = cfg.tier_badge_offset_x ?? 0;
-                    const offY = cfg.tier_badge_offset_y ?? 0;
-                    const scl = cfg.tier_badge_scale ?? 1.0;
-                    return (
-                      <>
-                        <Slider
-                          label="Yatay İnce Ayar (X)"
-                          min={-50} max={50} step={1}
-                          value={offX}
-                          onChange={(v: number) => update('tier_badge_offset_x', v)}
-                          display={`${offX > 0 ? '+' : ''}${offX}%`}
-                        />
-                        <Slider
-                          label="Dikey İnce Ayar (Y)"
-                          min={-50} max={50} step={1}
-                          value={offY}
-                          onChange={(v: number) => update('tier_badge_offset_y', v)}
-                          display={`${offY > 0 ? '+' : ''}${offY}%`}
-                        />
-                        <Slider
-                          label="Boyut (Büyüt / Küçült)"
-                          min={0.5} max={2.0} step={0.05}
-                          value={scl}
-                          onChange={(v: number) => update('tier_badge_scale', v)}
-                          display={`${scl.toFixed(2)}×`}
-                        />
-                        {(offX !== 0 || offY !== 0 || scl !== 1.0) && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              update('tier_badge_offset_x', 0);
-                              update('tier_badge_offset_y', 0);
-                              update('tier_badge_scale', 1.0);
-                            }}
-                            className="px-2 py-1 text-[10px] rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700"
-                          >
-                            ↺ İnce ayarı sıfırla
-                          </button>
-                        )}
-                      </>
-                    );
-                  })()}
-                </div>
-                <p className="text-[10px] text-slate-500 leading-relaxed mt-1">
-                  Rozetin görünüm tasarımı (PLUS / PRO / GM gradient + glow) sabittir.
-                  Burada sadece <strong>aç/kapat</strong>, <strong>konum</strong> ve
-                  <strong> ince ayar</strong> kontrol edilir.
-                </p>
-              </>
-            )}
-          </SubBlock>
-          <p className="text-[10px] text-cyan-300/70 leading-relaxed">
-            💡 Önizleme örnek isim ve örnek tier ile gösterir. Mobilde gerçek kullanıcı adı + gerçek tier yansır.
-          </p>
+          {/* ★ v283 (16 May 2026): "Tier Etiketi" SubBlock'u tamamen kaldırıldı.
+              Rozet ayarları artık Mağaza → Rozetler menüsünden yönetiliyor —
+              tek kaynak, tek yer. Çerçeve editörü çerçeve ayarlarıyla sınırlı. */}
         </Section>
 
         <details className="text-xs">
