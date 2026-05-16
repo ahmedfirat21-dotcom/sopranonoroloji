@@ -57,7 +57,7 @@ interface BadgeConfig {
   z_index: number;
   // ★ v119 (13 May 2026): Tier'a otomatik atama — Plus/Pro üyelik alındığında
   //   bu rozet otomatik active_badge_id olarak set edilir (manuel satın alma gerekmez)
-  auto_assign_tier: 'none' | 'plus' | 'pro' | 'gm' | 'free';
+  auto_assign_tier: 'none' | 'Plus' | 'Pro' | 'GoldMember';
   tier_label_override: string;   // Rozet üzerindeki yazı (örn "PLUS" / "PRO")
   tier_label_color: string;
   tier_label_font_size: number;
@@ -399,68 +399,21 @@ function PositionPanel({ cfg, upd }: any) {
   );
 }
 function TierPanel({ cfg, upd }: any) {
-  const tierColors: Record<string, string> = {
-    free: '#94A3B8', plus: '#A78BFA', pro: '#FBBF24', gm: '#EF4444',
-  };
-  const tierLabels: Record<string, string> = {
-    none: '— Üyelikten Bağımsız', free: 'Free (Ücretsiz)',
-    plus: 'Plus (Üst Üyelik)', pro: 'Pro (Premium)', gm: 'GM (Yönetici)',
-  };
+  // ★ P0 (16 May 2026): Tier paneli sadeleştirildi — eski auto_assign_tier + tier_label_override
+  //   + hide_for_free_users + Plus/Pro şablon butonları kaldırıldı (eski koddan kalma).
+  //   Şimdi: TEK TOGGLE → "Bu rozeti göster". Kapalıysa APK'da hiçbir yerde render edilmez.
+  //   (Detay görünürlük — profil/inline — Genel sekmesinde.)
   return (
     <div className="space-y-3">
-      <Section title="Otomatik Tier Ataması" hint="Bu rozet hangi üyelik seviyesine satın alma olmadan otomatik verilsin">
-        <SelectField label="Üyelik Tipi" value={cfg.auto_assign_tier} options={[
-          { value: 'none', label: 'Yok (Sadece Mağazadan)' },
-          { value: 'free', label: '🆓 Free (Herkese)' },
-          { value: 'plus', label: '💜 Plus (Plus aboneleri)' },
-          { value: 'pro',  label: '👑 Pro (Pro aboneleri)' },
-          { value: 'gm',   label: '🛡 GM (Yöneticiler)' },
-        ]} onChange={(v: any) => upd({ auto_assign_tier: v })} />
-        {cfg.auto_assign_tier !== 'none' && (
-          <div className="rounded-lg p-3 border" style={{ background: tierColors[cfg.auto_assign_tier] + '15', borderColor: tierColors[cfg.auto_assign_tier] + '40' }}>
-            <div className="text-xs font-semibold" style={{ color: tierColors[cfg.auto_assign_tier] }}>
-              Bu rozet {tierLabels[cfg.auto_assign_tier]} kullanıcılarına otomatik atanır.
-            </div>
-            <div className="text-[10px] text-slate-400 mt-1">
-              Mobile profile_active_badge_id otomatik bu rozet olur (kullanıcı manuel değiştirebilir).
-            </div>
-          </div>
-        )}
-      </Section>
-
-      <Section title="Tier Etiketi (Rozet Üzeri Yazı)" hint="Örn: PLUS / PRO / VIP">
-        <TextField label="Yazı (boş = ikon)" value={cfg.tier_label_override} onChange={(v: string) => upd({ tier_label_override: v })} placeholder="PRO" />
-        {cfg.tier_label_override && (<>
-          <ColorField label="Yazı Rengi" value={cfg.tier_label_color} onChange={(v: string) => upd({ tier_label_color: v })} />
-          <Slider label="Yazı Boyutu" min={6} max={18} step={1} value={cfg.tier_label_font_size} onChange={(v: number) => upd({ tier_label_font_size: v })} display={`${cfg.tier_label_font_size}px`} />
-        </>)}
-      </Section>
-
-      <Section title="Görünürlük Kuralları">
-        <Toggle label="Free kullanıcılardan gizle" checked={cfg.hide_for_free_users} onChange={(v: boolean) => upd({ hide_for_free_users: v })} />
-        <Toggle label="Abonelik ekranında öne çıkar" checked={cfg.show_in_subscription_screen} onChange={(v: boolean) => upd({ show_in_subscription_screen: v })} />
-      </Section>
-
-      <Section title="Hızlı Şablonlar" hint="Plus/Pro standart rozeti için tek tıkla">
-        <div className="grid grid-cols-2 gap-2">
-          <button type="button" onClick={() => upd({
-            auto_assign_tier: 'plus', tier_label_override: 'PLUS', tier_label_color: '#FFFFFF',
-            tier_label_font_size: 9, shape: 'rounded-square', bg_color: '#A78BFA', bg_gradient_enabled: true,
-            bg_gradient_from: '#A78BFA', bg_gradient_to: '#7C3AED', glow_enabled: true, glow_color: '#A78BFA',
-            glow_intensity: 0.6, hide_for_free_users: false, show_in_subscription_screen: true,
-          })} className="rounded-lg p-3 border border-purple-500/40 bg-purple-500/10 hover:bg-purple-500/20 text-left">
-            <div className="text-purple-300 font-bold">💜 Plus Şablonu</div>
-            <div className="text-[10px] text-slate-400 mt-1">Mor gradient, PLUS yazılı yuvarlatılmış kare</div>
-          </button>
-          <button type="button" onClick={() => upd({
-            auto_assign_tier: 'pro', tier_label_override: 'PRO', tier_label_color: '#0F172A',
-            tier_label_font_size: 10, shape: 'rounded-square', bg_color: '#FBBF24', bg_gradient_enabled: true,
-            bg_gradient_from: '#FBBF24', bg_gradient_to: '#F59E0B', glow_enabled: true, glow_color: '#FBBF24',
-            glow_intensity: 0.8, glow_pulse: true, hide_for_free_users: false, show_in_subscription_screen: true,
-          })} className="rounded-lg p-3 border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-left">
-            <div className="text-amber-300 font-bold">👑 Pro Şablonu</div>
-            <div className="text-[10px] text-slate-400 mt-1">Altın gradient, PRO yazılı, glow pulse</div>
-          </button>
+      <Section title="Rozet Görünürlüğü">
+        <Toggle
+          label="Bu rozeti göster"
+          checked={cfg.visible_on_avatar !== false}
+          onChange={(v: boolean) => upd({ visible_on_avatar: v })}
+        />
+        <div className="text-[10px] text-slate-400 mt-1.5 leading-relaxed">
+          Açık ise: Bu rozeti atanan kullanıcılar avatar üzerinde rozetiyle gözükür.<br/>
+          Kapalı ise: Hiçbir yerde gösterilmez (envantere atansa da görünmez).
         </div>
       </Section>
     </div>
