@@ -50,7 +50,7 @@ export default function RoomLayoutEditor({ initial }: { initial: any }) {
   //   tüm slider/toggle/renkleri sıfırdan kurulan değerlere çeker. Kaydet butonuna
   //   bastığında DB'ye yazılır → mobile'a anında uygulanır.
   const handleReset = () => {
-    if (!confirm('Tüm ayarlar fabrika varsayılanına dönecek. Kaydet'e basana kadar DB değişmez. Emin misin?')) return;
+    if (!confirm("Tüm ayarlar fabrika varsayılanına dönecek. Kaydet'e basana kadar DB değişmez. Emin misin?")) return;
     dispatch({ reset: true, value: mergeWithDefaults(undefined) });
   };
 
