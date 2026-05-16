@@ -40,6 +40,8 @@ const NAV: NavGroup[] = [
   { href: '/yonet/davetler', label: 'Davetler', icon: UserPlus },
   { href: '/yonet/guvenlik', label: 'Güvenlik', icon: ShieldAlert },
   { href: '/yonet/audit', label: 'İşlem Kayıtları', icon: ScrollText },
+  // ★ F-1 (16 May 2026): Sistem ayarları — bakım modu, banner, feature flags
+  { href: '/yonet/sistem-ayarlari', label: 'Sistem Ayarları', icon: ShieldAlert },
   { href: '/yonet/ayarlar', label: 'Yönetici Şifresi', icon: SettingsIcon },
 ];
 
