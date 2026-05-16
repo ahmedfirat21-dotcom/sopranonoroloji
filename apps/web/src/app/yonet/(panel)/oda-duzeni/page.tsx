@@ -1,9 +1,10 @@
 /**
  * Oda Düzeni Editörü — Server Page (auth gated)
  * ════════════════════════════════════════════════════════════════════
- * v115 (13 May 2026) — Mobile app'in oda layout'unu (host/speakers/listeners/
- * stage/global) JSON config olarak yönetir. Frame editor mimarisi gibi:
- * DB → web admin slider → DB → mobile realtime apply.
+ * v286 (16 May 2026): "Tek vücut" temizliği — sadece APK'da gerçekten
+ * render edilen ayarlar panelde gösterilir. 21 disconnected section
+ * gizlendi (types/defaults DB schema dokunulmadı, post-launch tekrar
+ * açılabilir). Artık her slider/toggle anında mobile'a yansır.
  */
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import RoomLayoutEditor from './RoomLayoutEditor';
@@ -30,20 +31,21 @@ export default async function OdaDuzeniPage() {
             Mobile odanın görsel düzenini DB'den ince ayarla.
           </span>
         </div>
-        {/* APK senkron bilgi banner */}
-        <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-teal-500/5 border border-teal-500/20 text-[11px] text-teal-200/90">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 mt-0.5 shrink-0">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 16v-4M12 8h.01" />
+
+        {/* ★ Tek vücut banner — kaydedilen her şey anında APK'ya yansır */}
+        <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/30 text-[11px] text-emerald-100">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 mt-0.5 shrink-0 text-emerald-400">
+            <path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><path d="M22 4L12 14.01l-3-3" />
           </svg>
           <div className="leading-relaxed">
-            <span className="font-medium text-teal-100">Anında yansır:</span>{' '}
-            Kaydet butonuna basınca <span className="font-mono text-cyan-200">room_layout_config</span> tablosu güncellenir,
-            tüm mobil kullanıcılara Supabase realtime üzerinden anlık iletilir. Odada olan biri varsa görsel ayarlar yenilenir
-            (yeniden başlatma gerekmez).
+            <span className="font-semibold text-emerald-200">Tek vücut — her ayar anında APK'da görünür.</span>{' '}
+            Bu paneldeki tüm slider/toggle/renk seçici mobil oda render'ına bağlı.
+            <span className="font-mono text-cyan-200"> Kaydet</span> → <span className="font-mono text-cyan-200">room_layout_config</span> tablosu güncellenir,
+            Supabase realtime ile odadaki tüm kullanıcılara saniyeler içinde iletilir (uygulamayı yeniden başlatmaya gerek yok).
           </div>
         </div>
-        {/* Ekosistem ilişkisi banner — kullanıcının "frame ile çakışma" sorusunun cevabı */}
+
+        {/* Frame ↔ Layout öncelik kuralı — kullanıcının "çakışma" sorusunun cevabı */}
         <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-amber-500/5 border border-amber-500/20 text-[11px] text-amber-200/90">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 mt-0.5 shrink-0">
             <path d="M12 9v4M12 17h.01" /><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
@@ -51,46 +53,28 @@ export default async function OdaDuzeniPage() {
           <div className="leading-relaxed">
             <span className="font-medium text-amber-100">Çakışma yok — öncelik mantığı:</span>{' '}
             Bu paneldeki ayarlar <span className="font-medium">tüm odalar için varsayılan (global default)</span>.
-            Kullanıcının taktığı <span className="font-mono text-orange-200">çerçeve</span> (Mağaza → Çerçeveler) kendi
-            avatar şekli/halo/pulse/isim ayarlarını taşırsa <span className="font-medium">o ayarlar ezer</span> —
-            çerçeve sahibi kişi için. Çerçeve yoksa veya çerçevede o ayar tanımlı değilse buradaki değerler devreye girer.
-            Bu sayede tek bir kullanıcının cosmetic seçimi diğer kullanıcıların görüntüsünü etkilemez, ama panel ayarı
-            sadece "boş kanvas" üzerinde çalışır.
+            Kullanıcı kendi <span className="font-mono text-orange-200">çerçevesini</span> (Mağaza → Çerçeveler) taktıysa,
+            çerçeve içindeki ayarlar (avatar şekli, halo, isim göster) <span className="font-medium">o kişi için</span> bu varsayılanı ezer.
           </div>
         </div>
-        {/* APK rozet sistemi — her Section başlığının yanında etiket var */}
-        <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-slate-900/40 border border-slate-700/40 text-[11px] text-slate-300">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 mt-0.5 shrink-0">
-            <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
-          </svg>
-          <div className="leading-relaxed">
-            <span className="font-medium text-slate-100">Bölüm rozetleri — okuma:</span>{' '}
-            <span className="text-emerald-300 font-semibold">APK ✓</span> = tüm slider/toggle render'a bağlı, mobile'da değişiklik görülür.
-            {' '}<span className="text-amber-300 font-semibold">APK kısmi ⚠</span> = bazı alanlar bağlı, bazıları DB'de tutulur ama render etmez.
-            {' '}<span className="text-rose-300 font-semibold">APK yansımaz ✗</span> = bu bölüm post-launch — değiştirsen DB güncellenir, mobile şu an kullanmaz.
-            Audit kaynağı: <span className="font-mono text-cyan-300">services/roomLayoutConfig.ts</span> ↔ <span className="font-mono text-cyan-300">components/room/*</span> grep (16 May 2026).
-          </div>
-        </div>
+
+        {/* Post-launch panel kapsamı — şeffaflık */}
         <details className="rounded-lg bg-slate-900/40 border border-slate-700/40 text-[11px]">
           <summary className="cursor-pointer select-none px-3 py-2 text-slate-300 font-medium hover:bg-white/5">
-            Detaylı eşleşme — hangi alan hangi mobil componente bağlı? (tıkla)
+            Bu panel hangi mobile component'lere bağlı? (tıkla)
           </summary>
           <div className="px-3 pb-3 pt-1 text-slate-400 leading-relaxed grid sm:grid-cols-2 gap-x-4 gap-y-1">
-            <div><span className="text-emerald-400 font-mono">✓</span> Speakers/Listeners — avatarShape, borderRadius → SpeakerSection, ListenerGrid</div>
-            <div><span className="text-emerald-400 font-mono">✓</span> Listeners — ringWidth, ringColor, showName, ownerCrownEnabled → ListenerGrid</div>
-            <div><span className="text-emerald-400 font-mono">✓</span> Header — title*, showLiveIndicator, liveDotColor, showListenerCount, headerBg/Border → RoomInfoHeader</div>
-            <div><span className="text-emerald-400 font-mono">✓</span> Controls — buttonSize, iconSize, iconColor → RoomControlBar</div>
-            <div><span className="text-emerald-400 font-mono">✓</span> Accents — ownerHighlight → ListenerGrid</div>
-            <div><span className="text-emerald-400 font-mono">✓</span> Global — horizontalPadding → app/room/[id].tsx</div>
-            <div><span className="text-amber-400 font-mono">~</span> Host — avatarShape, borderRadius bağlı; size/padding/ring/halo/name/badge bağlı değil</div>
-            <div><span className="text-rose-400 font-mono">✗</span> Stage (TÜMÜ) — backgroundColor/padding/gap/divider DB'de tutulur, render'da yok</div>
-            <div><span className="text-rose-400 font-mono">✗</span> Global bg — background/bgColor/bgGradient/bgImageUrl bağlı değil (sadece padding aktif)</div>
-            <div><span className="text-rose-400 font-mono">✗</span> Animations — pulse/transition/reduceMotion (10 alan ölü)</div>
-            <div><span className="text-rose-400 font-mono">✗</span> Indicators — online dot, mute, camera, verified (11 alan ölü)</div>
-            <div><span className="text-rose-400 font-mono">✗</span> Shadows — host/speaker/listener gölgeleri (11 alan ölü)</div>
-            <div><span className="text-rose-400 font-mono">✗</span> Speakers advanced — kamera tile, spotlight (10 alan ölü)</div>
-            <div><span className="text-rose-400 font-mono">✗</span> Listeners advanced — overflow badge, mic request pulse (8 alan ölü)</div>
-            <div><span className="text-rose-400 font-mono">✗</span> Name advanced — text shadow, stroke, letter-spacing (9 alan ölü)</div>
+            <div><span className="text-emerald-400 font-mono">→</span> Host avatar → <span className="font-mono">SpeakerSection</span></div>
+            <div><span className="text-emerald-400 font-mono">→</span> Konuşmacı avatarı → <span className="font-mono">SpeakerSection</span></div>
+            <div><span className="text-emerald-400 font-mono">→</span> Dinleyici avatar/halka/isim → <span className="font-mono">ListenerGrid</span></div>
+            <div><span className="text-emerald-400 font-mono">→</span> Owner taç + vurgu → <span className="font-mono">ListenerGrid</span></div>
+            <div><span className="text-emerald-400 font-mono">→</span> Oda başlığı → <span className="font-mono">RoomInfoHeader</span></div>
+            <div><span className="text-emerald-400 font-mono">→</span> Alt bar buton/ikon → <span className="font-mono">RoomControlBar</span></div>
+            <div><span className="text-emerald-400 font-mono">→</span> Sayfa padding → <span className="font-mono">app/room/[id].tsx</span></div>
+            <div className="sm:col-span-2 text-slate-500 pt-1 border-t border-slate-700/40 mt-1">
+              <span className="text-slate-400">Henüz açık değil (post-launch):</span> Stage/Animations/Shadows/Indicators/Speakers&Listeners advanced/Name advanced.
+              Bu bölümler types.ts'te + DB'de durur, mobile bağlama yapıldığında tek satır eklenerek panele geri döner.
+            </div>
           </div>
         </details>
       </div>

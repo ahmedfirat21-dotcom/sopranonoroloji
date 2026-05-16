@@ -7,14 +7,14 @@
  * State: tek üst seviye reducer, functional update — stale closure yok.
  */
 import React, { useReducer, useTransition } from 'react';
-import { Save, RotateCcw, Crown, Mic, Users, Layers, Sparkles, Palette, Loader2 } from 'lucide-react';
+import { Save, RotateCcw, Crown, Mic, Users, LayoutPanelTop, Loader2 } from 'lucide-react';
 import { saveRoomLayout } from './actions';
-import { HostPanel, SpeakersPanel, ListenersPanel, StageGlobalPanel, EffectsPanel, AccentsIndicatorsPanel } from './panels';
+import { HostPanel, SpeakersPanel, ListenersPanel, HeaderControlsPanel } from './panels';
 import { RoomPreview } from './preview';
 import { mergeWithDefaults } from './defaults';
 import type { RoomLayoutConfig } from './types';
 
-type Tab = 'host' | 'speakers' | 'listeners' | 'stage' | 'effects' | 'accents';
+type Tab = 'host' | 'speakers' | 'listeners' | 'chrome';
 
 // ── Reducer: tek action tipi, group + partial patch ──
 type Group = keyof RoomLayoutConfig;
@@ -51,12 +51,10 @@ export default function RoomLayoutEditor({ initial }: { initial: any }) {
   };
 
   const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
-    { key: 'host',      label: 'Host',         icon: <Crown   className="w-3.5 h-3.5" /> },
-    { key: 'speakers',  label: 'Konuşmacılar', icon: <Mic     className="w-3.5 h-3.5" /> },
-    { key: 'listeners', label: 'Dinleyiciler', icon: <Users   className="w-3.5 h-3.5" /> },
-    { key: 'stage',     label: 'Sahne & Genel',icon: <Layers  className="w-3.5 h-3.5" /> },
-    { key: 'effects',   label: 'Etki & Gölge', icon: <Sparkles className="w-3.5 h-3.5" /> },
-    { key: 'accents',   label: 'Vurgu',        icon: <Palette className="w-3.5 h-3.5" /> },
+    { key: 'host',      label: 'Host',         icon: <Crown className="w-3.5 h-3.5" /> },
+    { key: 'speakers',  label: 'Konuşmacılar', icon: <Mic className="w-3.5 h-3.5" /> },
+    { key: 'listeners', label: 'Dinleyiciler', icon: <Users className="w-3.5 h-3.5" /> },
+    { key: 'chrome',    label: 'Başlık & Bar', icon: <LayoutPanelTop className="w-3.5 h-3.5" /> },
   ];
 
   return (
@@ -85,25 +83,19 @@ export default function RoomLayoutEditor({ initial }: { initial: any }) {
         {/* Tab içerik */}
         <div className="pb-20">
           {tab === 'host' && (
-            <HostPanel cfg={cfg.host} host_advanced={cfg.shadows} update={upd('host')} updateNameAdv={upd('name_advanced')} nameAdv={cfg.name_advanced} />
+            <HostPanel cfg={cfg.host} update={upd('host')} />
           )}
           {tab === 'speakers' && (
-            <SpeakersPanel cfg={cfg.speakers} adv={cfg.speakers_advanced} updateCfg={upd('speakers')} updateAdv={upd('speakers_advanced')} />
+            <SpeakersPanel cfg={cfg.speakers} updateCfg={upd('speakers')} />
           )}
           {tab === 'listeners' && (
-            <ListenersPanel cfg={cfg.listeners} adv={cfg.listeners_advanced} updateCfg={upd('listeners')} updateAdv={upd('listeners_advanced')} />
+            <ListenersPanel cfg={cfg.listeners} accents={cfg.accents} updateCfg={upd('listeners')} updateAccents={upd('accents')} />
           )}
-          {tab === 'stage' && (
-            <StageGlobalPanel
-              stage={cfg.stage} global={cfg.global} header={cfg.header} controls={cfg.controls}
-              updateStage={upd('stage')} updateGlobal={upd('global')} updateHeader={upd('header')} updateControls={upd('controls')}
+          {tab === 'chrome' && (
+            <HeaderControlsPanel
+              global={cfg.global} header={cfg.header} controls={cfg.controls}
+              updateGlobal={upd('global')} updateHeader={upd('header')} updateControls={upd('controls')}
             />
-          )}
-          {tab === 'effects' && (
-            <EffectsPanel anims={cfg.animations} shadows={cfg.shadows} updateAnims={upd('animations')} updateShadows={upd('shadows')} />
-          )}
-          {tab === 'accents' && (
-            <AccentsIndicatorsPanel accents={cfg.accents} indicators={cfg.indicators} updateAccents={upd('accents')} updateIndicators={upd('indicators')} />
           )}
         </div>
 
