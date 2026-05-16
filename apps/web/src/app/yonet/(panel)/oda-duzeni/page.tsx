@@ -66,16 +66,16 @@ export default async function OdaDuzeniPage() {
           <div className="px-3 pb-3 pt-1 text-slate-400 leading-relaxed grid sm:grid-cols-2 gap-x-4 gap-y-1">
             <div><span className="text-emerald-400 font-mono">✓</span> Host — avatarShape, avatarSize, borderRadius, ring*, badgePosition</div>
             <div><span className="text-emerald-400 font-mono">✓</span> Speakers — avatarShape, maxCols, sizePresets, ring*, name*, mic icon</div>
-            <div><span className="text-emerald-400 font-mono">✓</span> Listeners — avatarShape, maxCols, sizePresets, ownerCrown, ring*</div>
+            <div><span className="text-emerald-400 font-mono">✓</span> Listeners — avatarShape, maxCols, sizePresets, ownerCrown, ring*, showName</div>
             <div><span className="text-emerald-400 font-mono">✓</span> Stage — backgroundColor, padding, gap</div>
-            <div><span className="text-emerald-400 font-mono">✓</span> Global — bg (solid/gradient/image), bgGradient, bgColor, bgImageUrl</div>
-            <div><span className="text-emerald-400 font-mono">✓</span> Header — title font/color, showListenerCount, headerBorder</div>
+            <div><span className="text-emerald-400 font-mono">✓</span> Global — bg (solid/gradient/image), bgGradient, bgColor, bgImageUrl, horizontalPadding</div>
+            <div><span className="text-emerald-400 font-mono">✓</span> Header — title font/color, showListenerCount, headerBorder, headerBgOpacity, showLiveIndicator, liveDotColor</div>
             <div><span className="text-emerald-400 font-mono">✓</span> Accents — ownerHighlight, ownerCrown</div>
-            <div><span className="text-amber-400 font-mono">○</span> Controls — buton boyutu/renkleri (sonraki güncelleme)</div>
-            <div><span className="text-amber-400 font-mono">○</span> Animations — pulse/transition (sonraki güncelleme)</div>
-            <div><span className="text-amber-400 font-mono">○</span> Shadows — gölge ayarları (sonraki güncelleme)</div>
-            <div><span className="text-amber-400 font-mono">○</span> Indicators — online dot, mute indicator (sonraki güncelleme)</div>
-            <div><span className="text-amber-400 font-mono">○</span> Name advanced — text shadow, stroke (sonraki güncelleme)</div>
+            <div><span className="text-emerald-400 font-mono">~</span> Controls — hook hazır, iconColor/buttonSize bağlama partial (render path detayları post-launch)</div>
+            <div><span className="text-amber-400 font-mono">○</span> Animations — pulse/transition (frame priority var, layout pulse henüz no-op)</div>
+            <div><span className="text-amber-400 font-mono">○</span> Shadows — gölge ayarları (mevcut hardcoded, bağlama post-launch)</div>
+            <div><span className="text-amber-400 font-mono">○</span> Indicators — online dot, mute indicator pozisyon (StatusAvatar şu an default)</div>
+            <div><span className="text-amber-400 font-mono">○</span> Name advanced — text shadow, stroke (mevcut hardcoded)</div>
           </div>
         </details>
       </div>
