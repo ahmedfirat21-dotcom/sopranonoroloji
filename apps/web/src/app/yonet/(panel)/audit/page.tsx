@@ -1,9 +1,10 @@
 /**
  * Audit Log — admin işlemlerinin geçmişi.
  * Kim, ne zaman, hangi kullanıcıya ne yaptı.
+ * ★ P2-7 (16 May 2026): Filtre UI AuditClient'a taşındı (action tipi/admin/tarih).
  */
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { ScrollText, AlertTriangle } from 'lucide-react';
+import AuditClient from './AuditClient';
 
 const ACTION_LABEL: Record<string, { label: string; color: string }> = {
   // Kullanıcı
@@ -39,10 +40,6 @@ const ACTION_LABEL: Record<string, { label: string; color: string }> = {
   logout: { label: 'Çıkış', color: '#94A3B8' },
   ip_lock_clear: { label: 'IP kilidi açıldı', color: '#5EEAD4' },
 };
-
-function fmtDate(iso: string): string {
-  return new Date(iso).toLocaleString('tr-TR', { day: '2-digit', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' });
-}
 
 const PAYLOAD_KEY_LABEL: Record<string, string> = {
   ip: 'IP',
@@ -83,23 +80,6 @@ const PAYLOAD_KEY_LABEL: Record<string, string> = {
   link: 'Bağlantı',
 };
 
-function payloadToText(payload: any): { label: string; value: string }[] {
-  if (!payload || typeof payload !== 'object') return [];
-  const out: { label: string; value: string }[] = [];
-  for (const k of Object.keys(payload)) {
-    const v = (payload as any)[k];
-    if (v === undefined || v === null || v === '') continue;
-    const label = PAYLOAD_KEY_LABEL[k] || k;
-    let text: string;
-    if (typeof v === 'boolean') text = v ? 'Evet' : 'Hayır';
-    else if (typeof v === 'object') text = JSON.stringify(v);
-    else text = String(v);
-    if (text.length > 80) text = text.slice(0, 77) + '…';
-    out.push({ label, value: text });
-  }
-  return out;
-}
-
 async function loadLogs() {
   const { data } = await supabaseAdmin
     .from('admin_audit_log')
@@ -111,105 +91,11 @@ async function loadLogs() {
 
 export default async function AuditPage() {
   const logs = await loadLogs();
-
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-          <ScrollText className="w-6 h-6 text-cyan-400" /> Admin İşlem Kayıtları
-        </h1>
-        <p className="text-sm text-slate-400 mt-1">
-          Son {logs.length} işlem · Yönetici aksiyonlarının kalıcı kaydı
-        </p>
-      </div>
-
-      {logs.length === 0 ? (
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 flex gap-3">
-          <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-          <div className="text-sm">
-            <div className="font-bold text-amber-300 mb-1">Henüz kayıt yok</div>
-            <div className="text-slate-400">
-              Admin işlemleri (ban, sil, SP grant, cashout, push) bu listede otomatik görünür.
-              {' '}İşlem yapıldığında <code className="bg-black/40 px-1 rounded">admin_audit_log</code> tablosuna eklenir.
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-white/[0.02] text-[10px] tracking-wider text-slate-400">
-                <tr>
-                  <th className="text-left px-4 py-3">TARİH</th>
-                  <th className="text-left px-3 py-3">ADMIN</th>
-                  <th className="text-left px-3 py-3">İŞLEM</th>
-                  <th className="text-left px-3 py-3">HEDEF</th>
-                  <th className="text-left px-3 py-3">DETAY</th>
-                  <th className="text-left px-3 py-3">IP</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {logs.map((log: any) => {
-                  const meta = ACTION_LABEL[log.action] || { label: log.action, color: '#94A3B8' };
-                  return (
-                    <tr key={log.id} className="hover:bg-white/[0.02]">
-                      <td className="px-4 py-2.5 text-xs text-slate-300 font-mono whitespace-nowrap">
-                        {fmtDate(log.created_at)}
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <span className="text-xs font-semibold text-cyan-300">{log.admin_username || '—'}</span>
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <span
-                          className="px-2 py-0.5 rounded-full text-[10px] font-bold border"
-                          style={{
-                            background: `${meta.color}1a`,
-                            borderColor: `${meta.color}40`,
-                            color: meta.color,
-                          }}
-                        >
-                          {meta.label}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2.5 text-xs">
-                        {log.target_type ? (
-                          <div>
-                            <div className="text-slate-400 text-[10px]">{log.target_type}</div>
-                            <div className="text-slate-200 font-mono text-[11px] truncate max-w-[180px]">
-                              {log.target_id || '—'}
-                            </div>
-                          </div>
-                        ) : (
-                          <span className="text-slate-600">—</span>
-                        )}
-                      </td>
-                      <td className="px-3 py-2.5 text-[11px] text-slate-400 max-w-md">
-                        {(() => {
-                          const items = payloadToText(log.payload);
-                          if (items.length === 0) return <span className="text-slate-600">—</span>;
-                          return (
-                            <div className="space-y-0.5">
-                              {items.map((it, i) => (
-                                <div key={i} className="flex gap-1.5">
-                                  <span className="text-slate-500 shrink-0">{it.label}:</span>
-                                  <span className="text-slate-200 truncate">{it.value}</span>
-                                </div>
-                              ))}
-                            </div>
-                          );
-                        })()}
-                      </td>
-                      <td className="px-3 py-2.5 text-[10px] font-mono text-slate-500">
-                        {log.ip || '—'}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-    </div>
+    <AuditClient
+      logs={logs as any}
+      actionMeta={ACTION_LABEL}
+      payloadKeyLabel={PAYLOAD_KEY_LABEL}
+    />
   );
 }

@@ -1,9 +1,15 @@
 /**
  * SopranoChat Admin — Ekonomi
  * SP üretimi, harcama, tier dağılımı, mağaza alımları, hediye hacmi.
+ * ★ P2-8 (16 May 2026): URL ?range= parametresi ile zaman aralığı seçilir (7d/30d/90d/all).
  */
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import Link from 'next/link';
 import { TrendingUp, TrendingDown, Coins, ShoppingBag, Gift, Crown, Users, Repeat } from 'lucide-react';
+
+type RangeKey = '7d' | '30d' | '90d' | 'all';
+const RANGE_DAYS: Record<RangeKey, number> = { '7d': 7, '30d': 30, '90d': 90, 'all': 365 };
+const RANGE_LABEL: Record<RangeKey, string> = { '7d': '7 gün', '30d': '30 gün', '90d': '90 gün', 'all': 'Tümü (1y)' };
 
 const TYPE_LABELS: Record<string, string> = {
   daily_login: 'Günlük giriş',
@@ -35,17 +41,17 @@ const TYPE_LABELS: Record<string, string> = {
   web_admin_grant: 'Admin (web)',
 };
 
-async function loadEconomyData() {
+async function loadEconomyData(rangeDays: number) {
   const now = Date.now();
-  const since30d = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const sinceRange = new Date(now - rangeDays * 24 * 60 * 60 * 1000).toISOString();
   const since7d = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-  // Tüm 30 gün işlemler
-  const { data: tx30 } = await supabaseAdmin
+  // Range içindeki işlemler (default 30d, admin URL ile değiştirebilir)
+  const { data: txRange } = await supabaseAdmin
     .from('sp_transactions')
     .select('amount, type, created_at')
-    .gte('created_at', since30d);
-  const txs = tx30 || [];
+    .gte('created_at', sinceRange);
+  const txs = txRange || [];
 
   // Profile + tier dağılımı + total SP stoğu
   const { data: profiles } = await supabaseAdmin
@@ -126,37 +132,62 @@ async function loadEconomyData() {
   };
 }
 
-export default async function EkonomiPage() {
-  const d = await loadEconomyData();
+export default async function EkonomiPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ range?: string }>;
+}) {
+  const params = await searchParams;
+  const rangeKey: RangeKey = (params.range as RangeKey) in RANGE_DAYS ? (params.range as RangeKey) : '30d';
+  const rangeDays = RANGE_DAYS[rangeKey];
+  const d = await loadEconomyData(rangeDays);
   const maxDailyVal = Math.max(1, ...d.dailySeries.map(x => Math.max(x.in, x.out)));
   const totalSubscribers = d.activeSubscribers;
   const subscriberRate = d.totalUsers > 0 ? ((totalSubscribers / d.totalUsers) * 100).toFixed(1) : '0';
 
   return (
     <div className="space-y-6 max-w-7xl">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-          <TrendingUp className="w-6 h-6 text-emerald-400" /> Ekonomi
-        </h1>
-        <p className="text-sm text-slate-400 mt-1">
-          Son 30 günde {d.typeRows.reduce((s, r) => s + r.count, 0)} işlem ·{' '}
-          <span className="text-emerald-300">+{d.total30dIn.toLocaleString('tr-TR')}</span> üretim ·{' '}
-          <span className="text-red-300">−{d.total30dOut.toLocaleString('tr-TR')}</span> harcama
-        </p>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <TrendingUp className="w-6 h-6 text-emerald-400" /> Ekonomi
+          </h1>
+          <p className="text-sm text-slate-400 mt-1">
+            Son {RANGE_LABEL[rangeKey].toLowerCase()} içinde {d.typeRows.reduce((s, r) => s + r.count, 0)} işlem ·{' '}
+            <span className="text-emerald-300">+{d.total30dIn.toLocaleString('tr-TR')}</span> üretim ·{' '}
+            <span className="text-red-300">−{d.total30dOut.toLocaleString('tr-TR')}</span> harcama
+          </p>
+        </div>
+        {/* ★ P2-8: Zaman aralığı seçici */}
+        <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-lg p-1">
+          {(Object.keys(RANGE_DAYS) as RangeKey[]).map(k => (
+            <Link
+              key={k}
+              href={k === '30d' ? '/yonet/ekonomi' : `/yonet/ekonomi?range=${k}`}
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                rangeKey === k
+                  ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-200'
+                  : 'text-slate-400 hover:bg-white/5'
+              }`}
+            >
+              {RANGE_LABEL[k]}
+            </Link>
+          ))}
+        </div>
       </div>
 
       {/* KPI Kartları */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Kpi
           icon={<TrendingUp className="w-4 h-4" />}
-          label="30g SP Üretimi"
+          label={`${RANGE_LABEL[rangeKey]} SP Üretimi`}
           value={d.total30dIn}
           accent="#10b981"
           sub={`+${d.total7dIn.toLocaleString('tr-TR')} (7g)`}
         />
         <Kpi
           icon={<TrendingDown className="w-4 h-4" />}
-          label="30g SP Harcaması"
+          label={`${RANGE_LABEL[rangeKey]} SP Harcaması`}
           value={d.total30dOut}
           accent="#ef4444"
           sub={`−${d.total7dOut.toLocaleString('tr-TR')} (7g)`}
