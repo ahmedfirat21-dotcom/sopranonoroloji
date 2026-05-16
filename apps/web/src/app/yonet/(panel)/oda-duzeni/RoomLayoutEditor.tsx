@@ -59,10 +59,6 @@ export default function RoomLayoutEditor({ initial }: { initial: any }) {
     { key: 'accents',   label: 'Vurgu',        icon: <Palette className="w-3.5 h-3.5" /> },
   ];
 
-  // ★ DEBUG: state değişimini görsel olarak göstermek için cfg key sayısı
-  //   ve birkaç değer izlenir. Kullanıcı slider çekince bunlar değişmeli.
-  const debugTrace = `host.shape=${cfg.host.avatarShape} | host.size=${cfg.host.avatarSize} | speakers.cols=${cfg.speakers.maxCols} | listeners.shape=${cfg.listeners.avatarShape} | bg=${cfg.global.background}`;
-
   return (
     <div className="flex flex-col xl:flex-row gap-4 items-start">
       {/* SOL: Ayar paneli — esnek genişlik */}
@@ -147,43 +143,6 @@ export default function RoomLayoutEditor({ initial }: { initial: any }) {
           <div className="text-xs text-slate-300 mb-2 flex items-center justify-between">
             <span className="font-medium">Canlı Önizleme</span>
             <span className="text-[10px] text-slate-500">Mobile-eş hesap</span>
-          </div>
-          {/* DEBUG izleme — slider çekince bu satır anlık değişmeli */}
-          <div className="mb-2 px-2 py-1.5 rounded bg-amber-500/10 border border-amber-500/30 text-[10px] font-mono text-amber-200 break-all">
-            {debugTrace}
-          </div>
-          {/* DEBUG manuel test butonları */}
-          <div className="mb-2 flex gap-1.5 flex-wrap">
-            <button
-              type="button"
-              onClick={() => {
-                console.log('[oda-duzeni] manuel test → host.avatarSize=140');
-                dispatch({ group: 'host', patch: { avatarSize: 140 } });
-              }}
-              className="px-2 py-1 rounded bg-purple-500/20 border border-purple-500/40 text-[10px] text-purple-200"
-            >
-              Host size→140
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                console.log('[oda-duzeni] manuel test → listeners.avatarShape=square');
-                dispatch({ group: 'listeners', patch: { avatarShape: 'square' } });
-              }}
-              className="px-2 py-1 rounded bg-purple-500/20 border border-purple-500/40 text-[10px] text-purple-200"
-            >
-              Listener şekil→kare
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                console.log('[oda-duzeni] manuel test → bg=solid red');
-                dispatch({ group: 'global', patch: { background: 'solid', bgColor: '#7f1d1d' } });
-              }}
-              className="px-2 py-1 rounded bg-purple-500/20 border border-purple-500/40 text-[10px] text-purple-200"
-            >
-              BG kırmızı
-            </button>
           </div>
           <RoomPreview cfg={cfg} speakerCount={mockSpeakers} listenerCount={mockListeners} />
           {/* Mock kişi sayısı kontrolü — preset aralıkları için */}

@@ -23,11 +23,27 @@ export default async function OdaDuzeniPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-baseline gap-3">
-        <h1 className="text-xl font-semibold">Oda Düzeni</h1>
-        <span className="text-xs text-slate-500">
-          Mobile odanın görsel düzenini DB'den ince ayarla — değişiklikler kullanıcılara anında yansır.
-        </span>
+      <div className="flex flex-col gap-2">
+        <div className="flex items-baseline gap-3">
+          <h1 className="text-xl font-semibold">Oda Düzeni</h1>
+          <span className="text-xs text-slate-500">
+            Mobile odanın görsel düzenini DB'den ince ayarla.
+          </span>
+        </div>
+        {/* APK senkron bilgi banner — kullanıcı her ayarın nasıl yansıdığını bilsin */}
+        <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-teal-500/5 border border-teal-500/20 text-[11px] text-teal-200/90">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 mt-0.5 shrink-0">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 16v-4M12 8h.01" />
+          </svg>
+          <div className="leading-relaxed">
+            <span className="font-medium text-teal-100">Anında yansır:</span>{' '}
+            Kaydet butonuna basınca <span className="font-mono text-cyan-200">room_layout_config</span> tablosu güncellenir,
+            tüm mobil kullanıcılara Supabase realtime üzerinden anlık iletilir. Odada olan biri varsa görsel ayarlar yenilenir
+            (yeniden başlatma gerekmez). Konuşmacı/dinleyici grid, host avatar, header rengi, alt kontrol bar, global arka plan
+            — hepsi bu paneldeki ayarlardan beslenir.
+          </div>
+        </div>
       </div>
       <RoomLayoutEditor initial={safeInitial} />
     </div>
