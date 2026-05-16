@@ -6,7 +6,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import {
   LayoutDashboard, Flag, Users, Store, Home, MessageSquare,
   Coins, Bell, Crown, Settings as SettingsIcon, TrendingUp, Banknote, ScrollText,
-  ShieldAlert, UserPlus, Palette,
+  ShieldAlert, UserPlus, Palette, Layout as LayoutIcon,
 } from 'lucide-react';
 import SopranoLogoMini, { SopranoLogoStyleTag } from './SopranoLogoMini';
 
@@ -31,6 +31,8 @@ const NAV: NavGroup[] = [
   { href: '/yonet/tema-sistemi', label: 'Uygulama Teması', icon: Palette },
   { href: '/yonet/uyelik', label: 'Üyelik Planları', icon: Crown },
   { href: '/yonet/odalar', label: 'Odalar', icon: Home },
+  // ★ v283 (16 May 2026): Oda düzeni paneli sidebar'a eklendi — eskiden orphan'dı (klasör var, link yok)
+  { href: '/yonet/oda-duzeni', label: 'Oda Düzeni', icon: LayoutIcon },
   { href: '/yonet/mesajlar', label: 'Mesaj İncelemesi', icon: MessageSquare },
   { href: '/yonet/sp', label: 'SP İşlemleri', icon: Coins },
   { href: '/yonet/cashout', label: 'Para Çekme', icon: Banknote },
@@ -38,7 +40,7 @@ const NAV: NavGroup[] = [
   { href: '/yonet/davetler', label: 'Davetler', icon: UserPlus },
   { href: '/yonet/guvenlik', label: 'Güvenlik', icon: ShieldAlert },
   { href: '/yonet/audit', label: 'İşlem Kayıtları', icon: ScrollText },
-  { href: '/yonet/ayarlar', label: 'Ayarlar', icon: SettingsIcon },
+  { href: '/yonet/ayarlar', label: 'Yönetici Şifresi', icon: SettingsIcon },
 ];
 
 export default function AdminSidebar() {

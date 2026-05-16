@@ -1,8 +1,10 @@
 /**
- * SopranoChat Admin — Ayarlar
- * Şifre değiştirme + güvenlik bilgileri.
+ * SopranoChat Admin — Yönetici Şifresi
+ * ★ v283 (16 May 2026): Eski başlık "Ayarlar" idi; sadece yönetici şifresi içerdiği için
+ *   yanıltıcıydı. Net başlık: "Yönetici Şifresi". Sistem ayarları (bakım modu, feature flags)
+ *   ileride ayrı bir panele eklenecek.
  */
-import { Settings as SettingsIcon } from 'lucide-react';
+import { KeyRound } from 'lucide-react';
 import PasswordChangeForm from './PasswordChangeForm';
 
 export default function AyarlarPage() {
@@ -10,10 +12,10 @@ export default function AyarlarPage() {
     <div className="space-y-6 max-w-3xl">
       <div>
         <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-          <SettingsIcon className="w-6 h-6 text-cyan-400" /> Ayarlar
+          <KeyRound className="w-6 h-6 text-cyan-400" /> Yönetici Şifresi
         </h1>
         <p className="text-sm text-slate-400 mt-1">
-          Yönetici şifresi ve güvenlik
+          Panel giriş şifreni değiştir + güvenlik notları
         </p>
       </div>
 
