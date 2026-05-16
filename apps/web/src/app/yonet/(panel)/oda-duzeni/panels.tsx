@@ -77,12 +77,10 @@ export function HeaderControlsPanel({ global, header, controls, updateGlobal, up
   }) {
   return (
     <div className="space-y-3">
-      <Section title="Oda Başlığı" hint="Ekranın üstündeki oda adı + canlı göstergesi" mobile="ok">
+      <Section title="Oda Başlığı" hint="Ekranın üstündeki oda adı" mobile="ok">
         <Slider label="Başlık Font" min={12} max={28} step={1} value={header.titleFontSize} onChange={v => updateHeader({ titleFontSize: v })} display={`${header.titleFontSize}sp`} />
         <SelectField label="Başlık Kalınlık" value={header.titleFontWeight} options={WEIGHT_OPTS} onChange={v => updateHeader({ titleFontWeight: v })} />
         <ColorField label="Başlık Rengi" value={header.titleColor} onChange={v => updateHeader({ titleColor: v })} />
-        <Toggle label="CANLI Göstergesi" checked={header.showLiveIndicator} onChange={v => updateHeader({ showLiveIndicator: v })} />
-        <ColorField label="CANLI Nokta Rengi" value={header.liveDotColor} onChange={v => updateHeader({ liveDotColor: v })} />
         <Toggle label="Dinleyici Sayısı Göster" checked={header.showListenerCount} onChange={v => updateHeader({ showListenerCount: v })} />
         <Slider label="Header Arka Plan Opaklık" min={0} max={1} step={0.05} value={header.headerBgOpacity} onChange={v => updateHeader({ headerBgOpacity: v })} display={`${(header.headerBgOpacity * 100).toFixed(0)}%`} />
         <Toggle label="Alt Çizgi" checked={header.headerBorderBottom} onChange={v => updateHeader({ headerBorderBottom: v })} />
