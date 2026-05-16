@@ -2,19 +2,19 @@ import type { RoomLayoutConfig } from './types';
 
 export const DEFAULT_LAYOUT: RoomLayoutConfig = {
   host: {
-    avatarShape: 'circle', avatarSize: 96, borderRadius: 48, ringWidth: 3, ringColor: '#FBBF24',
+    avatarShape: 'circle', avatarSize: 140, borderRadius: 48, ringWidth: 3, ringColor: '#FBBF24',
     ringStyle: 'solid', namePosition: 'below', nameFontSize: 14, nameFontWeight: '700', nameColor: '#FFFFFF',
     badgePosition: 'topRight', haloEnabled: true, haloColor: '#FBBF24', haloOpacity: 0.45, haloBlur: 24,
     containerPadding: 12,
   },
   speakers: {
     avatarShape: 'circle', borderRadius: 50, maxCols: 4, colGap: 14, rowGap: 16, ringWidth: 2,
-    ringColor: '#14B8A6', speakingRingColor: '#10B981', namePosition: 'below', nameFontSize: 12, nameMaxChars: 10,
+    ringColor: '#14B8A6', speakingRingColor: '#10B981', namePosition: 'below', nameFontSize: 12, nameMaxChars: 0,
     showMicIcon: true, muteOpacity: 0.55, sizePresets: { small: 84, medium: 100, large: 110 },
   },
   listeners: {
     avatarShape: 'circle', borderRadius: 50, maxCols: 6, colGap: 10, rowGap: 12, showName: true,
-    nameFontSize: 10, nameMaxChars: 8, ringWidth: 0, ringColor: 'transparent', ownerCrownEnabled: true,
+    nameFontSize: 10, nameMaxChars: 0, ringWidth: 0, ringColor: 'transparent', ownerCrownEnabled: true,
     ownerScale: 1.10, sizePresets: { small: 42, medium: 50, large: 60 },
   },
   stage: {

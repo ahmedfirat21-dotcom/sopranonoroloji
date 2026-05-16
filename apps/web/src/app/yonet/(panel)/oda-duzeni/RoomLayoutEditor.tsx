@@ -6,7 +6,7 @@
  * Layout: SOL = ayar paneli (scroll), SAĞ = sticky preview.
  * State: tek üst seviye reducer, functional update — stale closure yok.
  */
-import React, { useReducer, useTransition } from 'react';
+import React, { useReducer, useTransition, useDeferredValue } from 'react';
 import { Save, RotateCcw, Crown, Mic, Users, LayoutPanelTop, Sparkles, Loader2 } from 'lucide-react';
 import { saveRoomLayout } from './actions';
 import { HostPanel, SpeakersPanel, ListenersPanel, HeaderControlsPanel, EffectsPanel } from './panels';
@@ -27,6 +27,10 @@ function reducer(state: RoomLayoutConfig, action: Action): RoomLayoutConfig {
 
 export default function RoomLayoutEditor({ initial }: { initial: any }) {
   const [cfg, dispatch] = useReducer(reducer, initial?.config, mergeWithDefaults);
+  // ★ v288 (16 May 2026): Slider drag fix — Preview re-render her tikte slider'ı bloke
+  //   ediyordu (özellikle yeni eklenen 22 alanlı sekmede). useDeferredValue React'e
+  //   "slider güncel cfg ile çalışsın, preview deferred olsun" diyor → drag akıcı.
+  const deferredCfg = useDeferredValue(cfg);
   const [tab, setTab] = React.useState<Tab>('host');
   const [saving, startSave] = useTransition();
   const [status, setStatus] = React.useState<string | null>(null);
@@ -152,7 +156,7 @@ export default function RoomLayoutEditor({ initial }: { initial: any }) {
             <span className="font-medium">Canlı Önizleme</span>
             <span className="text-[10px] text-slate-500">Mobile-eş hesap</span>
           </div>
-          <RoomPreview cfg={cfg} speakerCount={mockSpeakers} listenerCount={mockListeners} />
+          <RoomPreview cfg={deferredCfg} speakerCount={mockSpeakers} listenerCount={mockListeners} />
           {/* Mock kişi sayısı kontrolü — preset aralıkları için */}
           <div className="mt-3 pt-2 border-t border-slate-700/40 space-y-2">
             <div className="text-[10px] text-slate-400">Önizleme Mock</div>

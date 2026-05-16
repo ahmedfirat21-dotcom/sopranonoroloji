@@ -18,8 +18,9 @@ type C = RoomLayoutConfig;
 export function HostPanel({ cfg, update }: { cfg: C['host']; update: (p: Partial<C['host']>) => void }) {
   return (
     <div className="space-y-3">
-      <Section title="Host Avatarı" hint="Oda sahibinin avatar şekli ve köşe yuvarlaması" mobile="ok">
+      <Section title="Host Avatarı" hint="Oda sahibinin avatar şekli, boyutu ve köşe yuvarlaması" mobile="ok">
         <SelectField label="Şekil" value={cfg.avatarShape} options={SHAPE_OPTS} onChange={v => update({ avatarShape: v as AvatarShape })} />
+        <Slider label="Boyut" min={80} max={200} step={2} value={cfg.avatarSize} onChange={v => update({ avatarSize: v })} display={`${cfg.avatarSize}dp`} />
         <Slider label="Köşe Yuvarlaması (kare şekilde)" min={0} max={48} step={1} value={cfg.borderRadius} onChange={v => update({ borderRadius: v })} display={`${cfg.borderRadius}dp`} />
       </Section>
 
