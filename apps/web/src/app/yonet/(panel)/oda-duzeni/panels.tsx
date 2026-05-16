@@ -24,6 +24,11 @@ export function HostPanel({ cfg, update }: { cfg: C['host']; update: (p: Partial
         <Slider label="Köşe Yuvarlaması (kare şekilde)" min={0} max={48} step={1} value={cfg.borderRadius} onChange={v => update({ borderRadius: v })} display={`${cfg.borderRadius}dp`} />
       </Section>
 
+      <Section title="Halka (Border Ring)" hint="Host avatarın etrafındaki çevre çizgisi — kullanıcının çerçevesi varsa otomatik gizlenir (frame önceliği)" mobile="ok">
+        <Slider label="Kalınlık" min={0} max={6} step={1} value={cfg.ringWidth} onChange={v => update({ ringWidth: v })} display={`${cfg.ringWidth}dp`} />
+        <ColorField label="Halka Rengi" value={cfg.ringColor} onChange={v => update({ ringColor: v })} />
+      </Section>
+
       <Section title="Halo (Arkaplan Glow)" hint="Host avatarın arkasında renkli yumuşak ışıma — Skia ile cross-platform" mobile="ok">
         <Toggle label="Halo Aktif" checked={cfg.haloEnabled} onChange={v => update({ haloEnabled: v })} />
         <ColorField label="Halo Rengi" value={cfg.haloColor} onChange={v => update({ haloColor: v })} />

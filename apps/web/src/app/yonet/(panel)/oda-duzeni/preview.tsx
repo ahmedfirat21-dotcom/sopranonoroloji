@@ -287,11 +287,12 @@ function SpeakerTile({ size, cfg, isOwner, speaking, muted, isMod }:
   const radiusCfg = isOwner ? host.borderRadius : sp.borderRadius;
   // ★ v289: Host için avatarSize override (admin'in Boyut slider'ı)
   const renderSize = isOwner ? Math.min(host.avatarSize, size + 40) : size;
-  // ★ v289: Moderatör halka kalınlığı normal speaker'dan biraz daha kalın
-  const ringW = isMod ? Math.max(2, sp.ringWidth) : (isOwner ? 2 : sp.ringWidth);
+  // ★ v291 (16 May 2026): Host için admin halka (host.ringWidth/ringColor) artık etkin.
+  //   Önce sabit 2dp altın halka idi (kullanıcı kararı v283), şimdi admin'e geri geldi.
+  const ringW = isMod ? Math.max(2, sp.ringWidth) : (isOwner ? host.ringWidth : sp.ringWidth);
   const ringColor = isMod
     ? acc.moderatorHighlight
-    : isOwner ? acc.ownerHighlight : (speaking ? sp.speakingRingColor : sp.ringColor);
+    : isOwner ? (host.ringColor || acc.ownerHighlight) : (speaking ? sp.speakingRingColor : sp.ringColor);
   const radius = shapeRadius(shape, renderSize, radiusCfg);
   // ★ v289: Shadows (Skia) — host vs speaker ayrı config
   const shadowOpacity = isOwner ? host.haloOpacity * 0.6 : 0;
