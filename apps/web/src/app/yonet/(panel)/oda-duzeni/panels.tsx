@@ -1,9 +1,9 @@
 "use client";
 import React from 'react';
 import { Section, Slider, Toggle, ColorField, SelectField,
-  SHAPE_OPTS, WEIGHT_OPTS,
+  SHAPE_OPTS, WEIGHT_OPTS, ENTER_OPTS,
 } from './controls';
-import type { RoomLayoutConfig, AvatarShape } from './types';
+import type { RoomLayoutConfig, AvatarShape, EnterTransition } from './types';
 
 type C = RoomLayoutConfig;
 
@@ -21,6 +21,13 @@ export function HostPanel({ cfg, update }: { cfg: C['host']; update: (p: Partial
       <Section title="Host Avatarı" hint="Oda sahibinin avatar şekli ve köşe yuvarlaması" mobile="ok">
         <SelectField label="Şekil" value={cfg.avatarShape} options={SHAPE_OPTS} onChange={v => update({ avatarShape: v as AvatarShape })} />
         <Slider label="Köşe Yuvarlaması (kare şekilde)" min={0} max={48} step={1} value={cfg.borderRadius} onChange={v => update({ borderRadius: v })} display={`${cfg.borderRadius}dp`} />
+      </Section>
+
+      <Section title="Halo (Arkaplan Glow)" hint="Host avatarın arkasında renkli yumuşak ışıma — Skia ile cross-platform" mobile="ok">
+        <Toggle label="Halo Aktif" checked={cfg.haloEnabled} onChange={v => update({ haloEnabled: v })} />
+        <ColorField label="Halo Rengi" value={cfg.haloColor} onChange={v => update({ haloColor: v })} />
+        <Slider label="Opaklık" min={0} max={1} step={0.05} value={cfg.haloOpacity} onChange={v => update({ haloOpacity: v })} display={`${(cfg.haloOpacity * 100).toFixed(0)}%`} />
+        <Slider label="Bulanıklık (Blur)" min={0} max={60} step={1} value={cfg.haloBlur} onChange={v => update({ haloBlur: v })} display={`${cfg.haloBlur}px`} />
       </Section>
     </div>
   );
@@ -95,6 +102,62 @@ export function HeaderControlsPanel({ global, header, controls, updateGlobal, up
 
       <Section title="Sayfa Kenar Boşluğu" hint="Avatar gridinin yatay iç boşluğu" mobile="ok">
         <Slider label="Yatay Padding" min={0} max={32} step={1} value={global.horizontalPadding} onChange={v => updateGlobal({ horizontalPadding: v })} display={`${global.horizontalPadding}dp`} />
+      </Section>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════ EFFECTS (Animations + Shadows + Indicators) ═══════════════════════════════ */
+export function EffectsPanel({
+  anims, accents, indicators, shadows, speakersCfg,
+  updateAnims, updateAccents, updateIndicators, updateShadows, updateSpeakers,
+}: {
+  anims: C['animations']; accents: C['accents']; indicators: C['indicators']; shadows: C['shadows']; speakersCfg: C['speakers'];
+  updateAnims: (p: Partial<C['animations']>) => void;
+  updateAccents: (p: Partial<C['accents']>) => void;
+  updateIndicators: (p: Partial<C['indicators']>) => void;
+  updateShadows: (p: Partial<C['shadows']>) => void;
+  updateSpeakers: (p: Partial<C['speakers']>) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <Section title="Konuşma Pulse" hint="Birisi mikrofona konuştuğunda avatar etrafında dalgalanma halkaları" mobile="ok">
+        <Toggle label="Konuşma Pulse Aktif" checked={anims.speakingPulseEnabled} onChange={v => updateAnims({ speakingPulseEnabled: v })} />
+        <Slider label="Pulse Hızı" min={400} max={3000} step={100} value={anims.speakingPulseSpeed} onChange={v => updateAnims({ speakingPulseSpeed: v })} display={`${anims.speakingPulseSpeed}ms`} />
+        <Slider label="Halka Genişleme Çarpanı" min={1} max={2} step={0.05} value={anims.speakingRingExpand} onChange={v => updateAnims({ speakingRingExpand: v })} display={`${anims.speakingRingExpand.toFixed(2)}x`} />
+        <ColorField label="Konuşma Halka Rengi" value={speakersCfg.speakingRingColor} onChange={v => updateSpeakers({ speakingRingColor: v })} />
+      </Section>
+
+      <Section title="Halo Pulse (Host)" hint="Host avatar arkasındaki halonun nefes alma efekti" mobile="ok">
+        <Toggle label="Halo Pulse Aktif" checked={anims.haloPulseEnabled} onChange={v => updateAnims({ haloPulseEnabled: v })} />
+        <Slider label="Halo Pulse Hızı" min={500} max={5000} step={100} value={anims.haloPulseSpeed} onChange={v => updateAnims({ haloPulseSpeed: v })} display={`${anims.haloPulseSpeed}ms`} />
+        <Slider label="Pulse Genlik" min={0.05} max={0.5} step={0.05} value={anims.haloPulseAmplitude} onChange={v => updateAnims({ haloPulseAmplitude: v })} display={`${(anims.haloPulseAmplitude * 100).toFixed(0)}%`} />
+      </Section>
+
+      <Section title="Gölgeler (Skia)" hint="Avatarların arkasındaki yumuşak renkli gölge (cross-platform)" mobile="ok">
+        <ColorField label="Host Gölge Rengi" value={shadows.hostShadowColor} onChange={v => updateShadows({ hostShadowColor: v })} />
+        <Slider label="Host Gölge Bulanıklık" min={0} max={48} step={1} value={shadows.hostShadowBlur} onChange={v => updateShadows({ hostShadowBlur: v })} display={`${shadows.hostShadowBlur}px`} />
+        <Slider label="Host Gölge Opaklık" min={0} max={1} step={0.05} value={shadows.hostShadowOpacity} onChange={v => updateShadows({ hostShadowOpacity: v })} display={`${(shadows.hostShadowOpacity * 100).toFixed(0)}%`} />
+        <Toggle label="Konuşmacı Gölge" checked={shadows.speakerShadowEnabled} onChange={v => updateShadows({ speakerShadowEnabled: v })} />
+        <ColorField label="Konuşmacı Gölge Rengi" value={shadows.speakerShadowColor} onChange={v => updateShadows({ speakerShadowColor: v })} />
+        <Slider label="Konuşmacı Gölge Bulanıklık" min={0} max={32} step={1} value={shadows.speakerShadowBlur} onChange={v => updateShadows({ speakerShadowBlur: v })} display={`${shadows.speakerShadowBlur}px`} />
+        <Slider label="Konuşmacı Gölge Opaklık" min={0} max={1} step={0.05} value={shadows.speakerShadowOpacity} onChange={v => updateShadows({ speakerShadowOpacity: v })} display={`${(shadows.speakerShadowOpacity * 100).toFixed(0)}%`} />
+        <Toggle label="Dinleyici Gölge" checked={shadows.listenerShadowEnabled} onChange={v => updateShadows({ listenerShadowEnabled: v })} />
+        <ColorField label="Dinleyici Gölge Rengi" value={shadows.listenerShadowColor} onChange={v => updateShadows({ listenerShadowColor: v })} />
+        <Slider label="Dinleyici Gölge Bulanıklık" min={0} max={20} step={1} value={shadows.listenerShadowBlur} onChange={v => updateShadows({ listenerShadowBlur: v })} display={`${shadows.listenerShadowBlur}px`} />
+        <Slider label="Dinleyici Gölge Opaklık" min={0} max={1} step={0.05} value={shadows.listenerShadowOpacity} onChange={v => updateShadows({ listenerShadowOpacity: v })} display={`${(shadows.listenerShadowOpacity * 100).toFixed(0)}%`} />
+      </Section>
+
+      <Section title="Online Noktası" hint="Çevrimiçi kullanıcıların avatar köşesindeki yeşil nokta" mobile="ok">
+        <Toggle label="Online Noktası Göster" checked={indicators.onlineDotEnabled} onChange={v => updateIndicators({ onlineDotEnabled: v })} />
+        <ColorField label="Online Nokta Rengi" value={indicators.onlineDotColor} onChange={v => updateIndicators({ onlineDotColor: v })} />
+      </Section>
+
+      <Section title="Etkileşim & Geçişler" hint="Avatar tıklama feedback + yeni katılan kullanıcı animasyonu" mobile="ok">
+        <Slider label="Avatar Tıklama Scale (basılı tut feedback)" min={0.85} max={1} step={0.01} value={anims.avatarTapScale} onChange={v => updateAnims({ avatarTapScale: v })} display={`${anims.avatarTapScale.toFixed(2)}x`} />
+        <SelectField label="Yeni Katılım Animasyonu" value={anims.enterTransition} options={ENTER_OPTS} onChange={v => updateAnims({ enterTransition: v as EnterTransition })} />
+        <Slider label="Animasyon Süresi" min={100} max={1500} step={50} value={anims.enterDurationMs} onChange={v => updateAnims({ enterDurationMs: v })} display={`${anims.enterDurationMs}ms`} />
+        <Toggle label="Hareket Azaltma (Reduce Motion)" checked={anims.reduceMotion} onChange={v => updateAnims({ reduceMotion: v })} />
       </Section>
     </div>
   );

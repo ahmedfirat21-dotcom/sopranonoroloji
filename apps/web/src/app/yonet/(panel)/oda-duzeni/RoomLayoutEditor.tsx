@@ -7,14 +7,14 @@
  * State: tek üst seviye reducer, functional update — stale closure yok.
  */
 import React, { useReducer, useTransition } from 'react';
-import { Save, RotateCcw, Crown, Mic, Users, LayoutPanelTop, Loader2 } from 'lucide-react';
+import { Save, RotateCcw, Crown, Mic, Users, LayoutPanelTop, Sparkles, Loader2 } from 'lucide-react';
 import { saveRoomLayout } from './actions';
-import { HostPanel, SpeakersPanel, ListenersPanel, HeaderControlsPanel } from './panels';
+import { HostPanel, SpeakersPanel, ListenersPanel, HeaderControlsPanel, EffectsPanel } from './panels';
 import { RoomPreview } from './preview';
 import { mergeWithDefaults } from './defaults';
 import type { RoomLayoutConfig } from './types';
 
-type Tab = 'host' | 'speakers' | 'listeners' | 'chrome';
+type Tab = 'host' | 'speakers' | 'listeners' | 'chrome' | 'effects';
 
 // ── Reducer: tek action tipi, group + partial patch ──
 type Group = keyof RoomLayoutConfig;
@@ -59,6 +59,7 @@ export default function RoomLayoutEditor({ initial }: { initial: any }) {
     { key: 'speakers',  label: 'Konuşmacılar', icon: <Mic className="w-3.5 h-3.5" /> },
     { key: 'listeners', label: 'Dinleyiciler', icon: <Users className="w-3.5 h-3.5" /> },
     { key: 'chrome',    label: 'Başlık & Bar', icon: <LayoutPanelTop className="w-3.5 h-3.5" /> },
+    { key: 'effects',   label: 'Efektler',     icon: <Sparkles className="w-3.5 h-3.5" /> },
   ];
 
   return (
@@ -99,6 +100,15 @@ export default function RoomLayoutEditor({ initial }: { initial: any }) {
             <HeaderControlsPanel
               global={cfg.global} header={cfg.header} controls={cfg.controls}
               updateGlobal={upd('global')} updateHeader={upd('header')} updateControls={upd('controls')}
+            />
+          )}
+          {tab === 'effects' && (
+            <EffectsPanel
+              anims={cfg.animations} accents={cfg.accents} indicators={cfg.indicators}
+              shadows={cfg.shadows} speakersCfg={cfg.speakers}
+              updateAnims={upd('animations')} updateAccents={upd('accents')}
+              updateIndicators={upd('indicators')} updateShadows={upd('shadows')}
+              updateSpeakers={upd('speakers')}
             />
           )}
         </div>
