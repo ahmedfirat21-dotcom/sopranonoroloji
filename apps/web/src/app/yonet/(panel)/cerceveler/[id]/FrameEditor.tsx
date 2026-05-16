@@ -1022,10 +1022,25 @@ export default function FrameEditor({ item }: { item: any }) {
         </Section>
 
         <Section title="Lottie Renk Filtreleri" icon={<Sparkles className="w-4 h-4 text-pink-400" />}>
-          <Slider label="Renk Tonu (Hue)" min={0} max={360} step={5} value={cfg.lottie_hue_rotate} onChange={v => update('lottie_hue_rotate', v)} display={`${cfg.lottie_hue_rotate}°`} />
-          <Slider label="Parlaklık" min={0.3} max={2} step={0.05} value={cfg.lottie_brightness} onChange={v => update('lottie_brightness', v)} display={`${cfg.lottie_brightness.toFixed(2)}x`} />
-          <Slider label="Doygunluk" min={0} max={2} step={0.05} value={cfg.lottie_saturation} onChange={v => update('lottie_saturation', v)} display={`${cfg.lottie_saturation.toFixed(2)}x`} />
-          <Slider label="Animasyon Hızı" min={0.25} max={2} step={0.05} value={cfg.lottie_speed} onChange={v => update('lottie_speed', v)} display={`${cfg.lottie_speed.toFixed(2)}x`} />
+          {/* ★ v284: Mobil RN Lottie color filter desteklemiyor (mimari kısıt).
+              Slider'lar görsel önizleme için çalışır, web üzerinde tam renkli görünür,
+              fakat APK'da no-op — değiştirilse bile mobil görsel değişmez.
+              Animasyon Hızı tek istisna: Lottie speed prop RN tarafında da çalışır. */}
+          <div className="mb-3 flex items-start gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-200">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 mt-0.5 shrink-0">
+              <path d="M12 9v4M12 17h.01" /><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
+            <div className="leading-relaxed">
+              <span className="font-medium text-amber-100">Mobil kısıt:</span>{' '}
+              React Native Lottie renk filtresini doğrudan desteklemiyor (Hue/Parlaklık/Doygunluk). Bu slider'lar
+              web önizlemede çalışır ama APK'da görsel etki yapmaz — sadece <span className="font-mono">Animasyon Hızı</span> mobile uygulanır.
+              Renk değişikliği için frame asset'ini farklı tonlarda yeniden export etmek gerek (Lottie JSON'unu Skia ile re-render alternatifi post-launch işidir).
+            </div>
+          </div>
+          <Slider label="Renk Tonu (Hue) — sadece web preview" min={0} max={360} step={5} value={cfg.lottie_hue_rotate} onChange={v => update('lottie_hue_rotate', v)} display={`${cfg.lottie_hue_rotate}°`} />
+          <Slider label="Parlaklık — sadece web preview" min={0.3} max={2} step={0.05} value={cfg.lottie_brightness} onChange={v => update('lottie_brightness', v)} display={`${cfg.lottie_brightness.toFixed(2)}x`} />
+          <Slider label="Doygunluk — sadece web preview" min={0} max={2} step={0.05} value={cfg.lottie_saturation} onChange={v => update('lottie_saturation', v)} display={`${cfg.lottie_saturation.toFixed(2)}x`} />
+          <Slider label="Animasyon Hızı ✓ mobil destekli" min={0.25} max={2} step={0.05} value={cfg.lottie_speed} onChange={v => update('lottie_speed', v)} display={`${cfg.lottie_speed.toFixed(2)}x`} />
         </Section>
 
         {/* ★ 2026-05-11: Hareket & Efekt — opsiyonel canlandırıcı katmanlar */}
