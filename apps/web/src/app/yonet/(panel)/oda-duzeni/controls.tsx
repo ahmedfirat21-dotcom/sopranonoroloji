@@ -1,12 +1,36 @@
 "use client";
 import React from 'react';
 
-export function Section({ title, children, hint }: { title: string; children: React.ReactNode; hint?: string }) {
+/**
+ * ★ v285 (16 May 2026): mobile prop — admin ayarın APK'ya yansıyıp yansımadığını
+ *   gösterir. 'ok' yeşil ✓ (tüm field'lar render'a bağlı), 'partial' sarı ⚠
+ *   (bir kısmı bağlı), 'none' kırmızı ✗ (DB'ye yazılır ama mobile kullanmaz).
+ *   Audit: c:\SopranoChat services/roomLayoutConfig.ts ↔ components/room/* grep'i.
+ */
+export function Section({ title, children, hint, mobile }: {
+  title: string; children: React.ReactNode; hint?: string;
+  mobile?: 'ok' | 'partial' | 'none';
+}) {
+  const badge = mobile === 'ok' ? { label: 'APK ✓', cls: 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300' }
+              : mobile === 'partial' ? { label: 'APK kısmi ⚠', cls: 'bg-amber-500/15 border-amber-500/40 text-amber-300' }
+              : mobile === 'none' ? { label: 'APK yansımaz ✗', cls: 'bg-rose-500/15 border-rose-500/40 text-rose-300' }
+              : null;
   return (
-    <div className="rounded-xl border border-slate-700/40 bg-slate-900/30 p-4 space-y-3">
-      <div>
-        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-300">{title}</h3>
-        {hint && <p className="text-[10px] text-slate-500 mt-0.5">{hint}</p>}
+    <div className={`rounded-xl border p-4 space-y-3 ${
+      mobile === 'none' ? 'border-rose-500/30 bg-rose-500/[0.03]'
+      : mobile === 'partial' ? 'border-amber-500/30 bg-amber-500/[0.03]'
+      : 'border-slate-700/40 bg-slate-900/30'
+    }`}>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1">
+          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-300">{title}</h3>
+          {hint && <p className="text-[10px] text-slate-500 mt-0.5">{hint}</p>}
+        </div>
+        {badge && (
+          <span className={`shrink-0 text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded border ${badge.cls}`}>
+            {badge.label}
+          </span>
+        )}
       </div>
       <div className="space-y-3">{children}</div>
     </div>

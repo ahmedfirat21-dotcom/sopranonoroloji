@@ -16,34 +16,34 @@ export function HostPanel({ cfg, host_advanced, update, updateNameAdv, nameAdv }
   }) {
   return (
     <div className="space-y-3">
-      <Section title="Avatar Şekli & Boyut" hint="Host avatarının fiziksel görünümü">
+      <Section title="Avatar Şekli & Boyut" hint="Host avatarının fiziksel görünümü" mobile="partial">
         <SelectField label="Şekil" value={cfg.avatarShape} options={SHAPE_OPTS} onChange={v => update({ avatarShape: v as AvatarShape })} />
         <Slider label="Boyut" min={60} max={180} step={2} value={cfg.avatarSize} onChange={v => update({ avatarSize: v })} display={`${cfg.avatarSize}dp`} />
         <Slider label="Köşe Yuvarlaması (rounded için)" min={0} max={90} step={1} value={cfg.borderRadius} onChange={v => update({ borderRadius: v })} display={`${cfg.borderRadius}dp`} />
         <Slider label="Konteyner İç Boşluğu" min={0} max={40} step={1} value={cfg.containerPadding} onChange={v => update({ containerPadding: v })} display={`${cfg.containerPadding}dp`} />
       </Section>
 
-      <Section title="Halka (Border Ring)" hint="Avatar etrafında çevreleyen renkli çizgi">
+      <Section title="Halka (Border Ring)" hint="Avatar etrafında çevreleyen renkli çizgi" mobile="none">
         <Slider label="Kalınlık" min={0} max={14} step={1} value={cfg.ringWidth} onChange={v => update({ ringWidth: v })} display={`${cfg.ringWidth}dp`} />
         <ColorField label="Renk" value={cfg.ringColor} onChange={v => update({ ringColor: v })} />
         <SelectField label="Stil" value={cfg.ringStyle} options={RING_STYLE_OPTS} onChange={v => update({ ringStyle: v as RingStyle })} />
       </Section>
 
-      <Section title="Halo (Arkaplan Glow)" hint="Skia ile render edilen renkli yumuşak ışıma">
+      <Section title="Halo (Arkaplan Glow)" hint="Skia ile render edilen renkli yumuşak ışıma" mobile="none">
         <Toggle label="Halo Aktif" checked={cfg.haloEnabled} onChange={v => update({ haloEnabled: v })} />
         <ColorField label="Halo Rengi" value={cfg.haloColor} onChange={v => update({ haloColor: v })} />
         <Slider label="Opaklık" min={0} max={1} step={0.05} value={cfg.haloOpacity} onChange={v => update({ haloOpacity: v })} display={`${(cfg.haloOpacity * 100).toFixed(0)}%`} />
         <Slider label="Bulanıklık (Blur)" min={0} max={60} step={1} value={cfg.haloBlur} onChange={v => update({ haloBlur: v })} display={`${cfg.haloBlur}px`} />
       </Section>
 
-      <Section title="İsim Yazısı">
+      <Section title="İsim Yazısı" mobile="none">
         <SelectField label="Konum" value={cfg.namePosition} options={NAME_POS_OPTS} onChange={v => update({ namePosition: v as NamePosition })} />
         <Slider label="Font Boyutu" min={8} max={28} step={1} value={cfg.nameFontSize} onChange={v => update({ nameFontSize: v })} display={`${cfg.nameFontSize}sp`} />
         <SelectField label="Kalınlık" value={cfg.nameFontWeight} options={WEIGHT_OPTS} onChange={v => update({ nameFontWeight: v })} />
         <ColorField label="Yazı Rengi" value={cfg.nameColor} onChange={v => update({ nameColor: v })} />
       </Section>
 
-      <Section title="İsim Gelişmiş (Tüm Avatarlar)" hint="Gölge, stroke, harf aralığı — tüm avatar isimleri için">
+      <Section title="İsim Gelişmiş (Tüm Avatarlar)" hint="Gölge, stroke, harf aralığı — tüm avatar isimleri için" mobile="none">
         <Toggle label="Yazı Gölgesi" checked={nameAdv.textShadowEnabled} onChange={v => updateNameAdv({ textShadowEnabled: v })} />
         <ColorField label="Gölge Rengi" value={nameAdv.textShadowColor} onChange={v => updateNameAdv({ textShadowColor: v })} />
         <Slider label="Gölge Y Ofseti" min={0} max={6} step={1} value={nameAdv.textShadowOffsetY} onChange={v => updateNameAdv({ textShadowOffsetY: v })} display={`${nameAdv.textShadowOffsetY}px`} />
@@ -55,7 +55,7 @@ export function HostPanel({ cfg, host_advanced, update, updateNameAdv, nameAdv }
         <Slider label="Satır Yüksekliği" min={1} max={2} step={0.05} value={nameAdv.lineHeight} onChange={v => updateNameAdv({ lineHeight: v })} display={`${nameAdv.lineHeight.toFixed(2)}`} />
       </Section>
 
-      <Section title="Rozet (Tier / Verified)">
+      <Section title="Rozet (Tier / Verified)" mobile="none">
         <SelectField label="Rozet Konumu" value={cfg.badgePosition} options={BADGE_POS_OPTS} onChange={v => update({ badgePosition: v as BadgePosition })} />
       </Section>
     </div>
@@ -67,30 +67,30 @@ export function SpeakersPanel({ cfg, adv, updateCfg, updateAdv }:
   { cfg: C['speakers']; adv: C['speakers_advanced']; updateCfg: (p: Partial<C['speakers']>) => void; updateAdv: (p: Partial<C['speakers_advanced']>) => void }) {
   return (
     <div className="space-y-3">
-      <Section title="Avatar Şekli">
+      <Section title="Avatar Şekli" mobile="ok">
         <SelectField label="Şekil" value={cfg.avatarShape} options={SHAPE_OPTS} onChange={v => updateCfg({ avatarShape: v as AvatarShape })} />
         <Slider label="Köşe Yuvarlaması" min={0} max={60} step={1} value={cfg.borderRadius} onChange={v => updateCfg({ borderRadius: v })} display={`${cfg.borderRadius}dp`} />
       </Section>
 
-      <Section title="Grid Düzeni">
+      <Section title="Grid Düzeni" mobile="none">
         <Slider label="Maksimum Sütun" min={2} max={6} step={1} value={cfg.maxCols} onChange={v => updateCfg({ maxCols: v })} display={`${cfg.maxCols}`} />
         <Slider label="Yatay Boşluk" min={4} max={32} step={1} value={cfg.colGap} onChange={v => updateCfg({ colGap: v })} display={`${cfg.colGap}dp`} />
         <Slider label="Dikey Boşluk" min={4} max={32} step={1} value={cfg.rowGap} onChange={v => updateCfg({ rowGap: v })} display={`${cfg.rowGap}dp`} />
       </Section>
 
-      <Section title="Boyut Şablonları" hint="Kişi sayısına göre otomatik seçilir">
+      <Section title="Boyut Şablonları" hint="Kişi sayısına göre otomatik seçilir" mobile="none">
         <Slider label="Büyük (1-3 kişi)" min={70} max={180} step={2} value={cfg.sizePresets.large} onChange={v => updateCfg({ sizePresets: { ...cfg.sizePresets, large: v } })} display={`${cfg.sizePresets.large}dp`} />
         <Slider label="Orta (4-9 kişi)" min={60} max={160} step={2} value={cfg.sizePresets.medium} onChange={v => updateCfg({ sizePresets: { ...cfg.sizePresets, medium: v } })} display={`${cfg.sizePresets.medium}dp`} />
         <Slider label="Küçük (10+ kişi)" min={50} max={140} step={2} value={cfg.sizePresets.small} onChange={v => updateCfg({ sizePresets: { ...cfg.sizePresets, small: v } })} display={`${cfg.sizePresets.small}dp`} />
       </Section>
 
-      <Section title="Halka">
+      <Section title="Halka" mobile="none">
         <Slider label="Kalınlık" min={0} max={8} step={1} value={cfg.ringWidth} onChange={v => updateCfg({ ringWidth: v })} display={`${cfg.ringWidth}dp`} />
         <ColorField label="Halka Rengi" value={cfg.ringColor} onChange={v => updateCfg({ ringColor: v })} />
         <ColorField label="Konuşurken Halka Rengi" value={cfg.speakingRingColor} onChange={v => updateCfg({ speakingRingColor: v })} />
       </Section>
 
-      <Section title="İsim & Mikrofon">
+      <Section title="İsim & Mikrofon" mobile="none">
         <SelectField label="İsim Konumu" value={cfg.namePosition} options={NAME_POS_OPTS} onChange={v => updateCfg({ namePosition: v as NamePosition })} />
         <Slider label="Font Boyutu" min={8} max={22} step={1} value={cfg.nameFontSize} onChange={v => updateCfg({ nameFontSize: v })} display={`${cfg.nameFontSize}sp`} />
         <Slider label="Maks Karakter" min={4} max={24} step={1} value={cfg.nameMaxChars} onChange={v => updateCfg({ nameMaxChars: v })} display={`${cfg.nameMaxChars} hf`} />
@@ -98,7 +98,7 @@ export function SpeakersPanel({ cfg, adv, updateCfg, updateAdv }:
         <Slider label="Susturulduğunda Opaklık" min={0.2} max={1} step={0.05} value={cfg.muteOpacity} onChange={v => updateCfg({ muteOpacity: v })} display={`${(cfg.muteOpacity * 100).toFixed(0)}%`} />
       </Section>
 
-      <Section title="Kamera Tile (Gelişmiş)" hint="Kamera açan konuşmacı için ayrı tile davranışı">
+      <Section title="Kamera Tile (Gelişmiş)" hint="Kamera açan konuşmacı için ayrı tile davranışı" mobile="none">
         <Toggle label="Kamera Tile Aktif" checked={adv.cameraTileEnabled} onChange={v => updateAdv({ cameraTileEnabled: v })} />
         <SelectField label="Kamera Aspect Oranı" value={adv.cameraAspectRatio} options={CAMERA_OPTS} onChange={v => updateAdv({ cameraAspectRatio: v as CameraAspect })} />
         <Slider label="Kamera Köşe Yuvarlaması" min={0} max={40} step={1} value={adv.cameraTileBorderRadius} onChange={v => updateAdv({ cameraTileBorderRadius: v })} display={`${adv.cameraTileBorderRadius}dp`} />
@@ -118,40 +118,40 @@ export function ListenersPanel({ cfg, adv, updateCfg, updateAdv }:
   { cfg: C['listeners']; adv: C['listeners_advanced']; updateCfg: (p: Partial<C['listeners']>) => void; updateAdv: (p: Partial<C['listeners_advanced']>) => void }) {
   return (
     <div className="space-y-3">
-      <Section title="Avatar Şekli">
+      <Section title="Avatar Şekli" mobile="ok">
         <SelectField label="Şekil" value={cfg.avatarShape} options={SHAPE_OPTS} onChange={v => updateCfg({ avatarShape: v as AvatarShape })} />
         <Slider label="Köşe Yuvarlaması" min={0} max={50} step={1} value={cfg.borderRadius} onChange={v => updateCfg({ borderRadius: v })} display={`${cfg.borderRadius}dp`} />
       </Section>
 
-      <Section title="Grid Düzeni">
+      <Section title="Grid Düzeni" mobile="none">
         <Slider label="Maksimum Sütun" min={4} max={10} step={1} value={cfg.maxCols} onChange={v => updateCfg({ maxCols: v })} display={`${cfg.maxCols}`} />
         <Slider label="Yatay Boşluk" min={2} max={20} step={1} value={cfg.colGap} onChange={v => updateCfg({ colGap: v })} display={`${cfg.colGap}dp`} />
         <Slider label="Dikey Boşluk" min={2} max={20} step={1} value={cfg.rowGap} onChange={v => updateCfg({ rowGap: v })} display={`${cfg.rowGap}dp`} />
       </Section>
 
-      <Section title="Boyut Şablonları" hint="Dinleyici sayısı arttıkça küçülür">
+      <Section title="Boyut Şablonları" hint="Dinleyici sayısı arttıkça küçülür" mobile="none">
         <Slider label="Büyük (1-4)" min={40} max={90} step={1} value={cfg.sizePresets.large} onChange={v => updateCfg({ sizePresets: { ...cfg.sizePresets, large: v } })} display={`${cfg.sizePresets.large}dp`} />
         <Slider label="Orta (5-8)" min={36} max={80} step={1} value={cfg.sizePresets.medium} onChange={v => updateCfg({ sizePresets: { ...cfg.sizePresets, medium: v } })} display={`${cfg.sizePresets.medium}dp`} />
         <Slider label="Küçük (9+)" min={28} max={70} step={1} value={cfg.sizePresets.small} onChange={v => updateCfg({ sizePresets: { ...cfg.sizePresets, small: v } })} display={`${cfg.sizePresets.small}dp`} />
       </Section>
 
-      <Section title="İsim">
+      <Section title="İsim" mobile="partial">
         <Toggle label="İsim Göster" checked={cfg.showName} onChange={v => updateCfg({ showName: v })} />
         <Slider label="Font Boyutu" min={6} max={16} step={1} value={cfg.nameFontSize} onChange={v => updateCfg({ nameFontSize: v })} display={`${cfg.nameFontSize}sp`} />
         <Slider label="Maks Karakter" min={3} max={16} step={1} value={cfg.nameMaxChars} onChange={v => updateCfg({ nameMaxChars: v })} display={`${cfg.nameMaxChars} hf`} />
       </Section>
 
-      <Section title="Halka">
+      <Section title="Halka" mobile="ok">
         <Slider label="Kalınlık" min={0} max={4} step={1} value={cfg.ringWidth} onChange={v => updateCfg({ ringWidth: v })} display={`${cfg.ringWidth}dp`} />
         <ColorField label="Halka Rengi" value={cfg.ringColor} onChange={v => updateCfg({ ringColor: v })} />
       </Section>
 
-      <Section title="Oda Sahibi (Owner) Vurgusu">
+      <Section title="Oda Sahibi (Owner) Vurgusu" mobile="partial">
         <Toggle label="Taç Göster" checked={cfg.ownerCrownEnabled} onChange={v => updateCfg({ ownerCrownEnabled: v })} />
         <Slider label="Avatar Ölçeği" min={1} max={1.5} step={0.05} value={cfg.ownerScale} onChange={v => updateCfg({ ownerScale: v })} display={`${cfg.ownerScale.toFixed(2)}x`} />
       </Section>
 
-      <Section title="Overflow & El Kaldırma (Gelişmiş)">
+      <Section title="Overflow & El Kaldırma (Gelişmiş)" mobile="none">
         <Slider label="Maks Görünür (Küçük Ekran)" min={6} max={16} step={1} value={adv.maxVisibleSmallScreen} onChange={v => updateAdv({ maxVisibleSmallScreen: v })} display={`${adv.maxVisibleSmallScreen}`} />
         <Slider label="Maks Görünür (Normal)" min={8} max={24} step={1} value={adv.maxVisibleDefault} onChange={v => updateAdv({ maxVisibleDefault: v })} display={`${adv.maxVisibleDefault}`} />
         <TextField label="Overflow Badge Metni" value={adv.overflowBadgeText} onChange={v => updateAdv({ overflowBadgeText: v })} placeholder="+{N} Seyirci" />
@@ -174,19 +174,19 @@ export function StageGlobalPanel({ stage, global, header, controls,
   }) {
   return (
     <div className="space-y-3">
-      <Section title="Sahne Konteyneri">
+      <Section title="Sahne Konteyneri" mobile="none">
         <ColorField label="Arka Plan Rengi" value={stage.backgroundColor} onChange={v => updateStage({ backgroundColor: v })} />
         <Slider label="Köşe Yuvarlaması" min={0} max={48} step={1} value={stage.borderRadius} onChange={v => updateStage({ borderRadius: v })} display={`${stage.borderRadius}dp`} />
         <Slider label="İç Boşluk (Padding)" min={0} max={48} step={1} value={stage.padding} onChange={v => updateStage({ padding: v })} display={`${stage.padding}dp`} />
         <Slider label="Konuşmacı - Dinleyici Boşluğu" min={4} max={80} step={1} value={stage.gapBetweenSpeakersAndListeners} onChange={v => updateStage({ gapBetweenSpeakersAndListeners: v })} display={`${stage.gapBetweenSpeakersAndListeners}dp`} />
       </Section>
 
-      <Section title="Ayraç">
+      <Section title="Ayraç" mobile="none">
         <SelectField label="Stil" value={stage.dividerStyle} options={DIVIDER_OPTS} onChange={v => updateStage({ dividerStyle: v as StageDivider })} />
         <ColorField label="Ayraç Rengi" value={stage.dividerColor} onChange={v => updateStage({ dividerColor: v })} />
       </Section>
 
-      <Section title="Genel Arka Plan">
+      <Section title="Genel Arka Plan" mobile="none">
         <SelectField label="Tip" value={global.background} options={BG_TYPE_OPTS} onChange={v => updateGlobal({ background: v as GlobalBg })} />
         {global.background === 'solid' && <ColorField label="Düz Renk" value={global.bgColor} onChange={v => updateGlobal({ bgColor: v })} />}
         {global.background === 'gradient' && (<>
@@ -198,13 +198,13 @@ export function StageGlobalPanel({ stage, global, header, controls,
         )}
       </Section>
 
-      <Section title="Ekran Kenar Boşlukları (Safe Area)">
+      <Section title="Ekran Kenar Boşlukları (Safe Area)" mobile="partial">
         <Slider label="Üst" min={0} max={80} step={1} value={global.safePaddingTop} onChange={v => updateGlobal({ safePaddingTop: v })} display={`${global.safePaddingTop}dp`} />
         <Slider label="Alt" min={0} max={80} step={1} value={global.safePaddingBottom} onChange={v => updateGlobal({ safePaddingBottom: v })} display={`${global.safePaddingBottom}dp`} />
         <Slider label="Yatay" min={0} max={40} step={1} value={global.horizontalPadding} onChange={v => updateGlobal({ horizontalPadding: v })} display={`${global.horizontalPadding}dp`} />
       </Section>
 
-      <Section title="Oda Başlığı (Header)">
+      <Section title="Oda Başlığı (Header)" mobile="partial">
         <Slider label="Başlık Font" min={12} max={28} step={1} value={header.titleFontSize} onChange={v => updateHeader({ titleFontSize: v })} display={`${header.titleFontSize}sp`} />
         <SelectField label="Başlık Kalınlık" value={header.titleFontWeight} options={WEIGHT_OPTS} onChange={v => updateHeader({ titleFontWeight: v })} />
         <ColorField label="Başlık Rengi" value={header.titleColor} onChange={v => updateHeader({ titleColor: v })} />
@@ -219,7 +219,7 @@ export function StageGlobalPanel({ stage, global, header, controls,
         <ColorField label="Alt Çizgi Rengi" value={header.headerBorderColor} onChange={v => updateHeader({ headerBorderColor: v })} />
       </Section>
 
-      <Section title="Alt Kontrol Barı">
+      <Section title="Alt Kontrol Barı" mobile="partial">
         <ColorField label="Bar Arka Plan" value={controls.barBackground} onChange={v => updateControls({ barBackground: v })} />
         <Toggle label="Bar Blur" checked={controls.barBlurEnabled} onChange={v => updateControls({ barBlurEnabled: v })} />
         <Slider label="Bar Blur Yoğunluk" min={0} max={60} step={1} value={controls.barBlurIntensity} onChange={v => updateControls({ barBlurIntensity: v })} display={`${controls.barBlurIntensity}`} />
@@ -245,26 +245,26 @@ export function EffectsPanel({ anims, shadows, updateAnims, updateShadows }:
     updateAnims: (p: Partial<C['animations']>) => void; updateShadows: (p: Partial<C['shadows']>) => void }) {
   return (
     <div className="space-y-3">
-      <Section title="Konuşma Animasyonu" hint="Birisi konuştuğunda avatar etrafındaki dalgalanma">
+      <Section title="Konuşma Animasyonu" hint="Birisi konuştuğunda avatar etrafındaki dalgalanma" mobile="none">
         <Toggle label="Konuşma Pulse Aktif" checked={anims.speakingPulseEnabled} onChange={v => updateAnims({ speakingPulseEnabled: v })} />
         <Slider label="Pulse Hızı" min={400} max={3000} step={100} value={anims.speakingPulseSpeed} onChange={v => updateAnims({ speakingPulseSpeed: v })} display={`${anims.speakingPulseSpeed}ms`} />
         <Slider label="Halka Genişleme" min={1} max={2} step={0.05} value={anims.speakingRingExpand} onChange={v => updateAnims({ speakingRingExpand: v })} display={`${anims.speakingRingExpand.toFixed(2)}x`} />
       </Section>
 
-      <Section title="Halo Pulse" hint="Host halo'sunun nefes alma efekti">
+      <Section title="Halo Pulse" hint="Host halo'sunun nefes alma efekti" mobile="none">
         <Toggle label="Halo Pulse Aktif" checked={anims.haloPulseEnabled} onChange={v => updateAnims({ haloPulseEnabled: v })} />
         <Slider label="Halo Pulse Hızı" min={500} max={5000} step={100} value={anims.haloPulseSpeed} onChange={v => updateAnims({ haloPulseSpeed: v })} display={`${anims.haloPulseSpeed}ms`} />
         <Slider label="Pulse Genlik" min={0.05} max={0.5} step={0.05} value={anims.haloPulseAmplitude} onChange={v => updateAnims({ haloPulseAmplitude: v })} display={`${(anims.haloPulseAmplitude * 100).toFixed(0)}%`} />
       </Section>
 
-      <Section title="Etkileşim & Geçiş">
+      <Section title="Etkileşim & Geçiş" mobile="none">
         <Slider label="Tıklama Scale Feedback" min={0.85} max={1} step={0.01} value={anims.avatarTapScale} onChange={v => updateAnims({ avatarTapScale: v })} display={`${anims.avatarTapScale.toFixed(2)}x`} />
         <SelectField label="Giriş Geçişi" value={anims.enterTransition} options={ENTER_OPTS} onChange={v => updateAnims({ enterTransition: v as EnterTransition })} />
         <Slider label="Geçiş Süresi" min={100} max={1500} step={50} value={anims.enterDurationMs} onChange={v => updateAnims({ enterDurationMs: v })} display={`${anims.enterDurationMs}ms`} />
         <Toggle label="Hareket Azaltma (Reduce Motion)" checked={anims.reduceMotion} onChange={v => updateAnims({ reduceMotion: v })} />
       </Section>
 
-      <Section title="Gölgeler (Skia Render)" hint="Cross-platform yumuşak renkli gölge — Android'de de görünür">
+      <Section title="Gölgeler (Skia Render)" hint="Cross-platform yumuşak renkli gölge — Android'de de görünür" mobile="none">
         <ColorField label="Host Gölge Rengi" value={shadows.hostShadowColor} onChange={v => updateShadows({ hostShadowColor: v })} />
         <Slider label="Host Gölge Blur" min={0} max={48} step={1} value={shadows.hostShadowBlur} onChange={v => updateShadows({ hostShadowBlur: v })} display={`${shadows.hostShadowBlur}px`} />
         <Slider label="Host Gölge Opaklık" min={0} max={1} step={0.05} value={shadows.hostShadowOpacity} onChange={v => updateShadows({ hostShadowOpacity: v })} display={`${(shadows.hostShadowOpacity * 100).toFixed(0)}%`} />
@@ -287,7 +287,7 @@ export function AccentsIndicatorsPanel({ accents, indicators, updateAccents, upd
     updateAccents: (p: Partial<C['accents']>) => void; updateIndicators: (p: Partial<C['indicators']>) => void }) {
   return (
     <div className="space-y-3">
-      <Section title="Owner & Moderatör Vurgusu">
+      <Section title="Owner & Moderatör Vurgusu" mobile="partial">
         <ColorField label="Owner Vurgu Rengi" value={accents.ownerHighlight} onChange={v => updateAccents({ ownerHighlight: v })} />
         <Slider label="Owner Halka Kalınlığı" min={0} max={8} step={1} value={accents.ownerRingWidth} onChange={v => updateAccents({ ownerRingWidth: v })} display={`${accents.ownerRingWidth}dp`} />
         <Toggle label="Owner Halo Aktif" checked={accents.ownerHaloEnabled} onChange={v => updateAccents({ ownerHaloEnabled: v })} />
@@ -295,7 +295,7 @@ export function AccentsIndicatorsPanel({ accents, indicators, updateAccents, upd
         <Slider label="Moderatör Halka Kalınlığı" min={0} max={6} step={1} value={accents.moderatorRingWidth} onChange={v => updateAccents({ moderatorRingWidth: v })} display={`${accents.moderatorRingWidth}dp`} />
       </Section>
 
-      <Section title="El Kaldırma & Yeni Katılım">
+      <Section title="El Kaldırma & Yeni Katılım" mobile="none">
         <Toggle label="El Kaldırma Aktif" checked={accents.handRaiseEnabled} onChange={v => updateAccents({ handRaiseEnabled: v })} />
         <ColorField label="El Kaldırma Rengi" value={accents.handRaiseColor} onChange={v => updateAccents({ handRaiseColor: v })} />
         <ColorField label="Yeni Katılım Vurgu" value={accents.newJoinHighlight} onChange={v => updateAccents({ newJoinHighlight: v })} />
@@ -303,21 +303,21 @@ export function AccentsIndicatorsPanel({ accents, indicators, updateAccents, upd
         <ColorField label="Seçili Vurgu Rengi" value={accents.selectedHighlight} onChange={v => updateAccents({ selectedHighlight: v })} />
       </Section>
 
-      <Section title="Online Noktası">
+      <Section title="Online Noktası" mobile="none">
         <Toggle label="Online Noktası Göster" checked={indicators.onlineDotEnabled} onChange={v => updateIndicators({ onlineDotEnabled: v })} />
         <ColorField label="Renk" value={indicators.onlineDotColor} onChange={v => updateIndicators({ onlineDotColor: v })} />
         <Slider label="Boyut" min={4} max={16} step={1} value={indicators.onlineDotSize} onChange={v => updateIndicators({ onlineDotSize: v })} display={`${indicators.onlineDotSize}dp`} />
         <SelectField label="Konum" value={indicators.onlineDotPosition} options={CORNER_OPTS} onChange={v => updateIndicators({ onlineDotPosition: v as CornerPosition })} />
       </Section>
 
-      <Section title="Susturma Göstergesi">
+      <Section title="Susturma Göstergesi" mobile="none">
         <Toggle label="Sustur İkonu Göster" checked={indicators.muteIndicatorEnabled} onChange={v => updateIndicators({ muteIndicatorEnabled: v })} />
         <ColorField label="Renk" value={indicators.muteIndicatorColor} onChange={v => updateIndicators({ muteIndicatorColor: v })} />
         <Slider label="Boyut" min={12} max={28} step={1} value={indicators.muteIndicatorSize} onChange={v => updateIndicators({ muteIndicatorSize: v })} display={`${indicators.muteIndicatorSize}dp`} />
         <SelectField label="Konum" value={indicators.muteIndicatorPosition} options={CORNER_OPTS} onChange={v => updateIndicators({ muteIndicatorPosition: v as CornerPosition })} />
       </Section>
 
-      <Section title="Diğer Göstergeler">
+      <Section title="Diğer Göstergeler" mobile="none">
         <Toggle label="Kamera Göstergesi" checked={indicators.cameraIndicatorEnabled} onChange={v => updateIndicators({ cameraIndicatorEnabled: v })} />
         <ColorField label="Kamera Renk" value={indicators.cameraIndicatorColor} onChange={v => updateIndicators({ cameraIndicatorColor: v })} />
         <Toggle label="Doğrulama Tiki" checked={indicators.verifiedTickEnabled} onChange={v => updateIndicators({ verifiedTickEnabled: v })} />

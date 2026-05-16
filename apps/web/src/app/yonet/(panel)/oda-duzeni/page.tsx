@@ -58,24 +58,39 @@ export default async function OdaDuzeniPage() {
             sadece "boş kanvas" üzerinde çalışır.
           </div>
         </div>
-        {/* APK'da hangi alanlar aktif — şeffaflık için */}
+        {/* APK rozet sistemi — her Section başlığının yanında etiket var */}
+        <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-slate-900/40 border border-slate-700/40 text-[11px] text-slate-300">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 mt-0.5 shrink-0">
+            <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
+          </svg>
+          <div className="leading-relaxed">
+            <span className="font-medium text-slate-100">Bölüm rozetleri — okuma:</span>{' '}
+            <span className="text-emerald-300 font-semibold">APK ✓</span> = tüm slider/toggle render'a bağlı, mobile'da değişiklik görülür.
+            {' '}<span className="text-amber-300 font-semibold">APK kısmi ⚠</span> = bazı alanlar bağlı, bazıları DB'de tutulur ama render etmez.
+            {' '}<span className="text-rose-300 font-semibold">APK yansımaz ✗</span> = bu bölüm post-launch — değiştirsen DB güncellenir, mobile şu an kullanmaz.
+            Audit kaynağı: <span className="font-mono text-cyan-300">services/roomLayoutConfig.ts</span> ↔ <span className="font-mono text-cyan-300">components/room/*</span> grep (16 May 2026).
+          </div>
+        </div>
         <details className="rounded-lg bg-slate-900/40 border border-slate-700/40 text-[11px]">
           <summary className="cursor-pointer select-none px-3 py-2 text-slate-300 font-medium hover:bg-white/5">
-            APK'da hangi ayarlar şu an etkili? (tıkla)
+            Detaylı eşleşme — hangi alan hangi mobil componente bağlı? (tıkla)
           </summary>
           <div className="px-3 pb-3 pt-1 text-slate-400 leading-relaxed grid sm:grid-cols-2 gap-x-4 gap-y-1">
-            <div><span className="text-emerald-400 font-mono">✓</span> Host — avatarShape, avatarSize, borderRadius, ring*, badgePosition</div>
-            <div><span className="text-emerald-400 font-mono">✓</span> Speakers — avatarShape, maxCols, sizePresets, ring*, name*, mic icon</div>
-            <div><span className="text-emerald-400 font-mono">✓</span> Listeners — avatarShape, maxCols, sizePresets, ownerCrown, ring*, showName</div>
-            <div><span className="text-emerald-400 font-mono">✓</span> Stage — backgroundColor, padding, gap</div>
-            <div><span className="text-emerald-400 font-mono">✓</span> Global — bg (solid/gradient/image), bgGradient, bgColor, bgImageUrl, horizontalPadding</div>
-            <div><span className="text-emerald-400 font-mono">✓</span> Header — title font/color, showListenerCount, headerBorder, headerBgOpacity, showLiveIndicator, liveDotColor</div>
-            <div><span className="text-emerald-400 font-mono">✓</span> Accents — ownerHighlight, ownerCrown</div>
-            <div><span className="text-emerald-400 font-mono">~</span> Controls — hook hazır, iconColor/buttonSize bağlama partial (render path detayları post-launch)</div>
-            <div><span className="text-amber-400 font-mono">○</span> Animations — pulse/transition (frame priority var, layout pulse henüz no-op)</div>
-            <div><span className="text-amber-400 font-mono">○</span> Shadows — gölge ayarları (mevcut hardcoded, bağlama post-launch)</div>
-            <div><span className="text-amber-400 font-mono">○</span> Indicators — online dot, mute indicator pozisyon (StatusAvatar şu an default)</div>
-            <div><span className="text-amber-400 font-mono">○</span> Name advanced — text shadow, stroke (mevcut hardcoded)</div>
+            <div><span className="text-emerald-400 font-mono">✓</span> Speakers/Listeners — avatarShape, borderRadius → SpeakerSection, ListenerGrid</div>
+            <div><span className="text-emerald-400 font-mono">✓</span> Listeners — ringWidth, ringColor, showName, ownerCrownEnabled → ListenerGrid</div>
+            <div><span className="text-emerald-400 font-mono">✓</span> Header — title*, showLiveIndicator, liveDotColor, showListenerCount, headerBg/Border → RoomInfoHeader</div>
+            <div><span className="text-emerald-400 font-mono">✓</span> Controls — buttonSize, iconSize, iconColor → RoomControlBar</div>
+            <div><span className="text-emerald-400 font-mono">✓</span> Accents — ownerHighlight → ListenerGrid</div>
+            <div><span className="text-emerald-400 font-mono">✓</span> Global — horizontalPadding → app/room/[id].tsx</div>
+            <div><span className="text-amber-400 font-mono">~</span> Host — avatarShape, borderRadius bağlı; size/padding/ring/halo/name/badge bağlı değil</div>
+            <div><span className="text-rose-400 font-mono">✗</span> Stage (TÜMÜ) — backgroundColor/padding/gap/divider DB'de tutulur, render'da yok</div>
+            <div><span className="text-rose-400 font-mono">✗</span> Global bg — background/bgColor/bgGradient/bgImageUrl bağlı değil (sadece padding aktif)</div>
+            <div><span className="text-rose-400 font-mono">✗</span> Animations — pulse/transition/reduceMotion (10 alan ölü)</div>
+            <div><span className="text-rose-400 font-mono">✗</span> Indicators — online dot, mute, camera, verified (11 alan ölü)</div>
+            <div><span className="text-rose-400 font-mono">✗</span> Shadows — host/speaker/listener gölgeleri (11 alan ölü)</div>
+            <div><span className="text-rose-400 font-mono">✗</span> Speakers advanced — kamera tile, spotlight (10 alan ölü)</div>
+            <div><span className="text-rose-400 font-mono">✗</span> Listeners advanced — overflow badge, mic request pulse (8 alan ölü)</div>
+            <div><span className="text-rose-400 font-mono">✗</span> Name advanced — text shadow, stroke, letter-spacing (9 alan ölü)</div>
           </div>
         </details>
       </div>
