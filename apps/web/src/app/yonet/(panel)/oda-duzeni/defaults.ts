@@ -51,7 +51,7 @@ export const DEFAULT_LAYOUT: RoomLayoutConfig = {
     titleFontSize: 16, titleFontWeight: '700', titleColor: '#F1F5F9',
     subtitleFontSize: 11, subtitleColor: '#94A3B8',
     showLiveIndicator: true, liveDotColor: '#EF4444', liveDotPulse: true,
-    showListenerCount: true, headerBgOpacity: 0.0, headerBorderBottom: true, headerBorderColor: 'rgba(255,255,255,0.04)',
+    showListenerCount: true, headerBgOpacity: 0.0, headerBorderBottom: true, headerBorderColor: 'rgba(20,184,166,0.55)',
   },
   controls: {
     barBackground: 'rgba(15,25,38,0.85)', barBlurEnabled: true, barBlurIntensity: 28,
