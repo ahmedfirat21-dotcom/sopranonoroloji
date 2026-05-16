@@ -119,6 +119,7 @@ export function RoomPreview({ cfg, speakerCount = DEFAULT_SPEAKER_COUNT, listene
                 size={sM.cardW}
                 cfg={cfg}
                 isOwner={i === 0}
+                isMod={i === 3} /* ★ v289: 4. konuşmacı mod → mor halka */
                 speaking={i === 1}
                 muted={i === 2}
               />
@@ -126,26 +127,36 @@ export function RoomPreview({ cfg, speakerCount = DEFAULT_SPEAKER_COUNT, listene
           )}
         </div>
 
+        {/* ★ v289 (16 May 2026): Stage divider — admin'in stage.dividerStyle/Color */}
+        {listenerCount > 0 && <StageDividerLine cfg={cfg} />}
+
         {/* Listener grid */}
-        {listenerCount > 0 && (
-          <div
-            className="grid mt-3"
-            style={{
-              gridTemplateColumns: `repeat(${lM.cols}, 1fr)`,
-              gap: `${cfg.listeners.rowGap}px ${cfg.listeners.colGap}px`,
-              justifyItems: 'center',
-            }}
-          >
-            {Array.from({ length: Math.min(listenerCount, cfg.listeners_advanced.maxVisibleDefault) }).map((_, i) => (
-              <ListenerTile
-                key={i}
-                size={lM.avSize}
-                cfg={cfg}
-                isOwner={false}
-              />
-            ))}
-          </div>
-        )}
+        {listenerCount > 0 && (() => {
+          const max = cfg.listeners_advanced.maxVisibleDefault;
+          const shown = Math.min(listenerCount, max);
+          const overflow = Math.max(0, listenerCount - max);
+          return (
+            <div
+              className="grid mt-3"
+              style={{
+                gridTemplateColumns: `repeat(${lM.cols}, 1fr)`,
+                gap: `${cfg.listeners.rowGap}px ${cfg.listeners.colGap}px`,
+                justifyItems: 'center',
+              }}
+            >
+              {Array.from({ length: shown }).map((_, i) => (
+                <ListenerTile
+                  key={i}
+                  size={lM.avSize}
+                  cfg={cfg}
+                  isOwner={i === 0} /* ★ v289: ilk listener owner (crown + highlight) */
+                  handRaised={i === 2} /* ★ v289: 3. listener el kaldırmış */
+                />
+              ))}
+              {overflow > 0 && <OverflowBadge cfg={cfg} count={overflow} />}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Sahneye Çık CTA — APK'da host olmayanlar için görünür */}
@@ -260,21 +271,71 @@ function EmptyStage() {
   );
 }
 
-/* ══════════════ SPEAKER TILE — APK SpeakerSection ══════════════ */
-function SpeakerTile({ size, cfg, isOwner, speaking, muted }:
-  { size: number; cfg: RoomLayoutConfig; isOwner: boolean; speaking: boolean; muted: boolean }) {
+/* ══════════════ SPEAKER TILE — APK SpeakerSection ══════════════
+ * ★ v289 (16 May 2026): host.avatarSize + halo (haloEnabled/Color/Opacity/Blur)
+ * + speakers.nameFontSize + nameMaxChars + shadows (host/speaker) + isMod halka
+ * (accents.moderatorHighlight) + online dot (indicators.onlineDot*) preview'e
+ * bağlandı. Önceden bu 12+ alan slider'ı değiştirse de yansımıyordu. */
+function SpeakerTile({ size, cfg, isOwner, speaking, muted, isMod }:
+  { size: number; cfg: RoomLayoutConfig; isOwner: boolean; speaking: boolean; muted: boolean; isMod?: boolean }) {
   const sp = cfg.speakers;
   const host = cfg.host;
   const acc = cfg.accents;
+  const sh = cfg.shadows;
+  const ind = cfg.indicators;
   const shape = isOwner ? host.avatarShape : sp.avatarShape;
   const radiusCfg = isOwner ? host.borderRadius : sp.borderRadius;
-  const renderSize = size;
-  const ringW = isOwner ? 2 : (speaking ? sp.ringWidth : sp.ringWidth);
-  const ringColor = isOwner ? acc.ownerHighlight : (speaking ? sp.speakingRingColor : sp.ringColor);
+  // ★ v289: Host için avatarSize override (admin'in Boyut slider'ı)
+  const renderSize = isOwner ? Math.min(host.avatarSize, size + 40) : size;
+  // ★ v289: Moderatör halka kalınlığı normal speaker'dan biraz daha kalın
+  const ringW = isMod ? Math.max(2, sp.ringWidth) : (isOwner ? 2 : sp.ringWidth);
+  const ringColor = isMod
+    ? acc.moderatorHighlight
+    : isOwner ? acc.ownerHighlight : (speaking ? sp.speakingRingColor : sp.ringColor);
   const radius = shapeRadius(shape, renderSize, radiusCfg);
+  // ★ v289: Shadows (Skia) — host vs speaker ayrı config
+  const shadowOpacity = isOwner ? host.haloOpacity * 0.6 : 0;
+  const shadowColor = isOwner ? host.haloColor : '#000';
+  // Box-shadow string: halo (host) + Skia shadow (host/speaker)
+  const haloShadow = (isOwner && host.haloEnabled)
+    ? `0 0 ${host.haloBlur}px ${hexToRgba(host.haloColor, host.haloOpacity)}`
+    : '';
+  const skiaShadow = isOwner
+    ? `0 0 ${sh.hostShadowBlur}px ${hexToRgba(sh.hostShadowColor, sh.hostShadowOpacity)}`
+    : (sh.speakerShadowEnabled
+        ? `0 0 ${sh.speakerShadowBlur}px ${hexToRgba(sh.speakerShadowColor, sh.speakerShadowOpacity)}`
+        : '');
+  const combinedShadow = [haloShadow, skiaShadow].filter(Boolean).join(', ');
+  // ★ v289: Name kesim + font size + position (below/above/inside/hidden)
+  const nameFontSize = sp.nameFontSize || 11;
+  const fullName = isOwner ? 'Burak DENİZ' : (isMod ? 'Moderatör Ali' : 'Konuş.');
+  const displayName = sp.nameMaxChars > 0 ? fullName.slice(0, sp.nameMaxChars) : fullName;
+  const pos = sp.namePosition || 'below';
+  const nameColor = isOwner ? acc.ownerHighlight : (isMod ? acc.moderatorHighlight : '#e2e8f0');
+  const nameEl = pos === 'hidden' ? null : (
+    <div
+      className="text-center truncate"
+      style={{
+        fontSize: nameFontSize,
+        fontWeight: 700,
+        color: nameColor,
+        maxWidth: renderSize,
+        marginTop: pos === 'below' ? 6 : 0,
+        marginBottom: pos === 'above' ? 6 : 0,
+        ...(pos === 'inside' ? {
+          position: 'absolute', bottom: 4, left: 0, right: 0,
+          background: 'rgba(0,0,0,0.45)', borderRadius: 4, padding: '1px 4px',
+        } : {}),
+      }}
+    >
+      {displayName}
+    </div>
+  );
 
   return (
-    <div className="relative flex flex-col items-center" style={{ width: size }}>
+    <div className="relative flex flex-col items-center" style={{ width: Math.max(size, renderSize) }}>
+      {/* ★ v289: namePosition='above' isim avatardan ÖNCE */}
+      {pos === 'above' && nameEl}
       <div
         className="relative flex items-center justify-center"
         style={{
@@ -283,7 +344,7 @@ function SpeakerTile({ size, cfg, isOwner, speaking, muted }:
           borderRadius: radius,
           background: 'linear-gradient(135deg, #475569, #1e293b)',
           border: ringW > 0 ? `${ringW}px solid ${ringColor}` : 'none',
-          boxShadow: isOwner ? `0 0 16px ${hexToRgba(acc.ownerHighlight, 0.45)}` : 'none',
+          boxShadow: combinedShadow || 'none',
           opacity: muted ? sp.muteOpacity : 1,
         }}
       >
@@ -313,33 +374,62 @@ function SpeakerTile({ size, cfg, isOwner, speaking, muted }:
             <MicOff style={{ width: 10, height: 10, color: '#fff' }} />
           </div>
         )}
+        {/* ★ v289: Online dot — indicators.onlineDot* (sadece host hariç, yeşil nokta) */}
+        {!isOwner && ind.onlineDotEnabled && (
+          <div
+            className="absolute rounded-full"
+            style={{
+              ...positionStyle(ind.onlineDotPosition),
+              width: ind.onlineDotSize,
+              height: ind.onlineDotSize,
+              background: ind.onlineDotColor,
+              border: '2px solid rgba(15,25,38,1)',
+            }}
+          />
+        )}
+        {/* ★ v289: namePosition='inside' isim avatarın İÇİNDE (alt overlay) */}
+        {pos === 'inside' && nameEl}
       </div>
 
-      {/* Name — host için sarı (owner highlight rengi) */}
-      <div
-        className="text-center truncate mt-1.5"
-        style={{
-          fontSize: 11,
-          fontWeight: 700,
-          color: isOwner ? acc.ownerHighlight : '#e2e8f0',
-          maxWidth: size,
-        }}
-      >
-        {isOwner ? 'Burak DENİZ' : 'Konuş.'}
-      </div>
+      {/* ★ v289: namePosition='below' isim avatardan SONRA (default) */}
+      {pos === 'below' && nameEl}
     </div>
   );
 }
 
-/* ══════════════ LISTENER TILE — APK ListenerGrid ══════════════ */
-function ListenerTile({ size, cfg, isOwner }:
-  { size: number; cfg: RoomLayoutConfig; isOwner: boolean }) {
+// ★ v289: indicators.onlineDotPosition → CSS köşe konumu helper
+function positionStyle(pos: 'topRight' | 'topLeft' | 'bottomRight' | 'bottomLeft'): React.CSSProperties {
+  switch (pos) {
+    case 'topRight':    return { top: -1, right: -1 };
+    case 'topLeft':     return { top: -1, left: -1 };
+    case 'bottomLeft':  return { bottom: -1, left: -1 };
+    case 'bottomRight':
+    default:            return { bottom: -1, right: -1 };
+  }
+}
+
+/* ══════════════ LISTENER TILE — APK ListenerGrid ══════════════
+ * ★ v289 (16 May 2026): listeners.nameFontSize + nameMaxChars + listenerShadow*
+ * (Skia) + handRaise badge (accents) + ownerHighlight border (admin Vurgu Rengi)
+ * preview'e bağlandı. */
+function ListenerTile({ size, cfg, isOwner, handRaised }:
+  { size: number; cfg: RoomLayoutConfig; isOwner: boolean; handRaised?: boolean }) {
   const l = cfg.listeners;
   const acc = cfg.accents;
+  const sh = cfg.shadows;
   const renderSize = isOwner ? size * l.ownerScale : size;
   const radius = shapeRadius(l.avatarShape, renderSize, l.borderRadius);
-  const ringW = isOwner ? 2 : l.ringWidth;
+  // ★ v289: Owner için cfgOwnerHighlight override (mobile ListenerCell ile aynı pattern)
+  const ringW = isOwner ? Math.max(2, l.ringWidth) : l.ringWidth;
   const ringColor = isOwner ? acc.ownerHighlight : l.ringColor;
+  // ★ v289: Listener Skia shadow
+  const shadowCss = sh.listenerShadowEnabled
+    ? `0 0 ${sh.listenerShadowBlur}px ${hexToRgba(sh.listenerShadowColor, sh.listenerShadowOpacity)}`
+    : 'none';
+  // ★ v289: Name kesim
+  const nameFontSize = l.nameFontSize || 9;
+  const fullName = isOwner ? 'Burak D.' : 'Dinleyici';
+  const displayName = l.nameMaxChars > 0 ? fullName.slice(0, l.nameMaxChars) : fullName;
 
   return (
     <div className="flex flex-col items-center relative" style={{ width: size + 6 }}>
@@ -349,6 +439,7 @@ function ListenerTile({ size, cfg, isOwner }:
           width: renderSize, height: renderSize, borderRadius: radius,
           background: 'linear-gradient(135deg, #64748b, #475569)',
           border: ringW > 0 ? `${ringW}px solid ${ringColor}` : 'none',
+          boxShadow: shadowCss,
         }}
       >
         {isOwner && l.ownerCrownEnabled && (
@@ -357,21 +448,78 @@ function ListenerTile({ size, cfg, isOwner }:
             style={{ top: -4, right: -4, color: acc.ownerHighlight, width: 11, height: 11 }}
           />
         )}
+        {/* ★ v289: Hand raise badge — accents.handRaiseEnabled + handRaiseColor */}
+        {handRaised && acc.handRaiseEnabled && (
+          <div
+            className="absolute rounded-full flex items-center justify-center"
+            style={{
+              top: -4, left: -4,
+              width: 14, height: 14,
+              background: acc.handRaiseColor,
+              border: '2px solid rgba(15,25,38,1)',
+            }}
+          >
+            <Hand style={{ width: 8, height: 8, color: '#fff' }} />
+          </div>
+        )}
       </div>
       {l.showName && (
         <div
           className="truncate text-center mt-1"
           style={{
-            fontSize: 9,
+            fontSize: nameFontSize,
             color: 'rgba(148,163,184,0.85)',
             maxWidth: size + 4,
           }}
         >
-          Dinleyici
+          {displayName}
         </div>
       )}
     </div>
   );
+}
+
+/* ★ v289: Overflow badge — listeners_advanced.overflowBadge* */
+function OverflowBadge({ cfg, count }: { cfg: RoomLayoutConfig; count: number }) {
+  const la = cfg.listeners_advanced;
+  const text = (la.overflowBadgeText || '+{N} Seyirci').replace('{N}', String(count));
+  return (
+    <div className="flex flex-col items-center" style={{ width: 50 }}>
+      <div
+        className="rounded-full flex items-center justify-center"
+        style={{
+          width: 44, height: 44,
+          background: la.overflowBadgeColor || 'rgba(20,184,166,0.16)',
+          border: `1px solid ${hexToRgba((la.overflowBadgeTextColor || '#5EEAD4'), 0.35)}`,
+        }}
+      >
+        <span style={{ color: la.overflowBadgeTextColor || '#5EEAD4', fontSize: 11, fontWeight: 700 }}>
+          +{count}
+        </span>
+      </div>
+      <div className="truncate text-center mt-1" style={{ fontSize: 9, color: la.overflowBadgeTextColor || '#5EEAD4', maxWidth: 50 }}>
+        {text.replace(/^\+\d+\s*/, '').trim() || 'Seyirci'}
+      </div>
+    </div>
+  );
+}
+
+/* ★ v289: Stage divider — stage.dividerStyle / dividerColor */
+function StageDividerLine({ cfg }: { cfg: RoomLayoutConfig }) {
+  const st = cfg.stage;
+  if (st.dividerStyle === 'none') return null;
+  if (st.dividerStyle === 'gradient') {
+    return (
+      <div
+        style={{
+          height: 1,
+          background: `linear-gradient(90deg, transparent, ${st.dividerColor}, ${st.dividerColor}, transparent)`,
+          marginTop: 4, marginBottom: 4,
+        }}
+      />
+    );
+  }
+  return <div style={{ height: 1, background: st.dividerColor, marginTop: 4, marginBottom: 4 }} />;
 }
 
 /* ══════════════ CONTROL BAR — APK RoomControlBar 8 ikon ══════════════ */
