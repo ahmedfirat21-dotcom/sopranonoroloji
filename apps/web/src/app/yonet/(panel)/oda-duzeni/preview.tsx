@@ -178,11 +178,17 @@ function PreviewHeader({ cfg, totalCount }: { cfg: RoomLayoutConfig; totalCount:
     <div
       className="px-3 pt-2 pb-2.5 flex items-center gap-2 relative"
       style={{
-        background: h.headerBgOpacity > 0
-          ? `linear-gradient(180deg, rgba(48,65,94,${h.headerBgOpacity * 0.95}), rgba(26,40,64,${h.headerBgOpacity * 0.85}), rgba(12,22,40,${h.headerBgOpacity * 0.6}))`
-          : 'linear-gradient(180deg, rgba(48,65,94,0.92), rgba(26,40,64,0.82), rgba(12,22,40,0.6))',
+        background: `linear-gradient(135deg, #3a4658, #2a3344, #1a2030)`,
+        opacity: h.headerBgOpacity > 0 ? h.headerBgOpacity : 1,
       }}
     >
+      {/* Teal karakter halo overlay — tab family ile uyumlu */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'linear-gradient(180deg, rgba(20,184,166,0.18) 0%, rgba(20,184,166,0.05) 40%, transparent 100%)',
+        }}
+      />
       {/* Sol: host avatar */}
       <div
         className="w-9 h-9 rounded-full shrink-0 relative"

@@ -45,9 +45,13 @@ export default function RoomLayoutEditor({ initial }: { initial: any }) {
     });
   };
 
+  // ★ v283 (16 May 2026): "Sıfırla" artık fabrika varsayılanına döner — DB'deki son
+  //   state'e değil. defaults.ts içindeki DEFAULT_ROOM_LAYOUT (mergeWithDefaults(undefined))
+  //   tüm slider/toggle/renkleri sıfırdan kurulan değerlere çeker. Kaydet butonuna
+  //   bastığında DB'ye yazılır → mobile'a anında uygulanır.
   const handleReset = () => {
-    if (!confirm('Sayfa yüklenirken çekilen değerlere dönülecek. Emin misin?')) return;
-    dispatch({ reset: true, value: mergeWithDefaults(initial?.config) });
+    if (!confirm('Tüm ayarlar fabrika varsayılanına dönecek. Kaydet'e basana kadar DB değişmez. Emin misin?')) return;
+    dispatch({ reset: true, value: mergeWithDefaults(undefined) });
   };
 
   const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
@@ -107,7 +111,7 @@ export default function RoomLayoutEditor({ initial }: { initial: any }) {
               onClick={handleReset}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs text-slate-400 hover:text-rose-300 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/30 transition-all"
             >
-              <RotateCcw className="w-3.5 h-3.5" /> Sıfırla
+              <RotateCcw className="w-3.5 h-3.5" /> Varsayılana Sıfırla
             </button>
             <div className="flex items-center gap-3">
               {status && (
