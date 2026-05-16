@@ -6,7 +6,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import {
   LayoutDashboard, Flag, Users, Store, Home, MessageSquare,
   Coins, Bell, Crown, Settings as SettingsIcon, TrendingUp, Banknote, ScrollText,
-  ShieldAlert, UserPlus, Palette, Layout as LayoutIcon,
+  ShieldAlert, UserPlus, Palette, Layout as LayoutIcon, FileCheck,
 } from 'lucide-react';
 import SopranoLogoMini, { SopranoLogoStyleTag } from './SopranoLogoMini';
 
@@ -40,6 +40,8 @@ const NAV: NavGroup[] = [
   { href: '/yonet/davetler', label: 'Davetler', icon: UserPlus },
   { href: '/yonet/guvenlik', label: 'Güvenlik', icon: ShieldAlert },
   { href: '/yonet/audit', label: 'İşlem Kayıtları', icon: ScrollText },
+  // ★ v284 (16 May 2026): KVKK madde 7 — recording_deletion_log denetim
+  { href: '/yonet/kvkk-kayitlar', label: 'KVKK Kayıt Silme', icon: FileCheck },
   // ★ F-1 (16 May 2026): Sistem ayarları — bakım modu, banner, feature flags
   { href: '/yonet/sistem-ayarlari', label: 'Sistem Ayarları', icon: ShieldAlert },
   { href: '/yonet/ayarlar', label: 'Yönetici Şifresi', icon: SettingsIcon },
