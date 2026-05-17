@@ -1,9 +1,13 @@
 "use client";
 import React from 'react';
 import { Section, Slider, Toggle, ColorField, SelectField, TextField,
-  SHAPE_OPTS, WEIGHT_OPTS, CORNER_OPTS,
+  SHAPE_OPTS, WEIGHT_OPTS,
 } from './controls';
 import type { RoomLayoutConfig, AvatarShape, CornerPosition } from './types';
+
+// ★ v301 (18 May 2026): CORNER_OPTS bu dosyada 156. satırda EffectsPanel için
+//   zaten import ediliyor; tek bir kez tanımlanmalı. CameraPanel daha aşağıda
+//   (CORNER_OPTS scope'una giriyor). Çift import = "defined multiple times" hatası.
 
 // ★ v301 (18 May 2026): Kamera tile aspect ratio preset'leri.
 //   heightRatio = height / width — 1.0 kare, >1 dikey, <1 yatay.
