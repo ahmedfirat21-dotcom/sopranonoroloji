@@ -74,6 +74,11 @@ export interface RoomLayoutConfig {
     showLiveIndicator: boolean; liveDotColor: string; liveDotPulse: boolean;
     showListenerCount: boolean;
     headerBgOpacity: number; headerBorderBottom: boolean; headerBorderColor: string;
+    // ★ v300 (17 May 2026): Host avatar görsel ayarları — APK ile birebir senkron.
+    showHostAvatar: boolean;
+    hostAvatarSize: number;
+    hostAvatarBorderWidth: number;
+    hostAvatarBorderColor: string;
   };
   controls: {
     barBackground: string; barBlurEnabled: boolean; barBlurIntensity: number; barBorderTop: string; barPaddingV: number;
@@ -88,5 +93,31 @@ export interface RoomLayoutConfig {
     maxVisibleSmallScreen: number; maxVisibleDefault: number;
     overflowBadgeText: string; overflowBadgeColor: string; overflowBadgeTextColor: string;
     showHandRaiseBadge: boolean; handRaiseBadgePosition: CornerPosition; showMicRequestPulse: boolean;
+  };
+  /* ★ v301 (18 May 2026): Kamera config — mobile services/roomLayoutConfig.ts ile birebir senkron.
+   * SpeakerSection.tsx + CameraFullscreenModal.tsx içindeki HARDCODED değerler buradan okunur. */
+  camera: {
+    heightRatio: number;          // height/width — 1.0 kare, 1.18 dikey-hafif (eski +18 davranışı)
+    cornerRadiusPercent: number;  // 0-30, eski hardcode 8
+    cornerRadiusMin: number;      // dp, eski hardcode 12
+    objectFit: 'cover' | 'contain';
+    mirrorSelf: boolean;
+    indicatorEnabled: boolean;
+    indicatorColor: string;
+    indicatorPosition: CornerPosition;
+    indicatorSize: number;
+    useCustomBorder: boolean;
+    borderWidth: number;
+    borderColor: string;
+    overlayTopOpacity: number;
+    overlayBottomOpacity: number;
+    spotlightEnabled: boolean;
+    spotlightSingleAspect: number;
+    spotlightDoubleAspect: number;
+    spotlightTripleAspect: number;
+    spotlightQuadAspect: number;
+    spotlightGap: number;
+    fullscreenObjectFit: 'cover' | 'contain';
+    maxConcurrentCameras: number; // 0 = sınırsız
   };
 }

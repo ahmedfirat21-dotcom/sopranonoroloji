@@ -1,9 +1,24 @@
 "use client";
 import React from 'react';
 import { Section, Slider, Toggle, ColorField, SelectField, TextField,
-  SHAPE_OPTS, WEIGHT_OPTS,
+  SHAPE_OPTS, WEIGHT_OPTS, CORNER_OPTS,
 } from './controls';
-import type { RoomLayoutConfig, AvatarShape } from './types';
+import type { RoomLayoutConfig, AvatarShape, CornerPosition } from './types';
+
+// ★ v301 (18 May 2026): Kamera tile aspect ratio preset'leri.
+//   heightRatio = height / width — 1.0 kare, >1 dikey, <1 yatay.
+const CAMERA_ASPECT_OPTS = [
+  { value: '1.0', label: 'Kare (1:1)' },
+  { value: '1.18', label: 'Hafif Dikey (eski +18 davranışı)' },
+  { value: '1.25', label: 'Dikey 4:5 (TikTok)' },
+  { value: '1.33', label: 'Dikey 3:4' },
+  { value: '0.75', label: 'Yatay 4:3 (klasik webcam)' },
+  { value: '0.5625', label: 'Yatay 16:9 (sinema)' },
+];
+const FIT_OPTS = [
+  { value: 'cover', label: 'Doldur (cover) — kenarları kırp' },
+  { value: 'contain', label: 'Sığdır (contain) — kara şerit kalabilir' },
+];
 
 type C = RoomLayoutConfig;
 
@@ -115,6 +130,15 @@ export function HeaderControlsPanel({ global, header, controls, updateGlobal, up
         <ColorField label="Alt Çizgi Rengi" value={header.headerBorderColor} onChange={v => updateHeader({ headerBorderColor: v })} />
       </Section>
 
+      {/* ★ v300 (17 May 2026): Üst başlıktaki oda sahibi (host) mini avatarının görünüm ayarları.
+          APK RoomInfoHeader.tsx ile birebir senkron — DB JSONB config.header bloğuna yazılır. */}
+      <Section title="Oda Sahibi Avatarı" hint="Başlıktaki host mini avatarı (sol üst)" mobile="ok">
+        <Toggle label="Avatarı Göster" checked={header.showHostAvatar ?? true} onChange={v => updateHeader({ showHostAvatar: v })} />
+        <Slider label="Avatar Boyutu" min={24} max={56} step={1} value={header.hostAvatarSize ?? 36} onChange={v => updateHeader({ hostAvatarSize: v })} display={`${header.hostAvatarSize ?? 36}dp`} />
+        <Slider label="Çerçeve Kalınlığı" min={0} max={4} step={0.5} value={header.hostAvatarBorderWidth ?? 1.5} onChange={v => updateHeader({ hostAvatarBorderWidth: v })} display={`${header.hostAvatarBorderWidth ?? 1.5}dp`} />
+        <ColorField label="Çerçeve Rengi" value={header.hostAvatarBorderColor ?? 'rgba(20,184,166,0.55)'} onChange={v => updateHeader({ hostAvatarBorderColor: v })} />
+      </Section>
+
       <Section title="Alt Kontrol Barı" hint="Ekranın altındaki mikrofon/sohbet/ayrıl barı" mobile="ok">
         <Slider label="Buton Boyutu" min={32} max={56} step={1} value={controls.buttonSize} onChange={v => updateControls({ buttonSize: v })} display={`${controls.buttonSize}dp`} />
         <Slider label="İkon Boyutu" min={14} max={28} step={1} value={controls.iconSize} onChange={v => updateControls({ iconSize: v })} display={`${controls.iconSize}dp`} />
@@ -209,6 +233,100 @@ export function EffectsPanel({
             Memory: "v107.41 Reanimated entering/exiting kaldırıldı — kullanıcı zıplama
             istemiyor". Bu iki alan defaults'ta hayalet kalıyor (geriye uyum) ama UI'da
             kullanıcı görmesin — sahte ayar yok. */}
+      </Section>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════ CAMERA ═══════════════════════════════
+ * ★ v301 (18 May 2026): Kameralı kullanıcı tile'ı ayarları.
+ *   - Tile geometri (aspect, köşe yuvarlaması)
+ *   - Video davranışı (object-fit, mirror)
+ *   - Indicator (köşedeki kamera ikonu)
+ *   - Border (audio'dan bağımsız kamera kenarı)
+ *   - Video üzerindeki gradient overlay (isim okunabilirliği)
+ *   - Spotlight modu (hibrit Discord/TikTok layout)
+ *   - Fullscreen modal davranışı
+ * Hepsi mobile SpeakerSection.tsx + CameraFullscreenModal.tsx render path'ine bağlı.
+ * ═══════════════════════════════════════════════════════════════════════ */
+export function CameraPanel({ cfg, update }:
+  { cfg: RoomLayoutConfig['camera']; update: (p: Partial<RoomLayoutConfig['camera']>) => void }) {
+  // Heuristic: heightRatio değerini en yakın preset'e snap'le; custom ise '' göster
+  const presetMatch = CAMERA_ASPECT_OPTS.find(o => Math.abs(parseFloat(o.value) - cfg.heightRatio) < 0.005);
+  return (
+    <div className="space-y-3">
+      <Section title="Tile Geometri" hint="Kameralı konuşmacı kutusunun en/boy oranı ve köşe yuvarlaması" mobile="ok">
+        <SelectField
+          label="En/Boy Oranı (Aspect)"
+          value={presetMatch?.value ?? cfg.heightRatio.toFixed(4)}
+          options={presetMatch ? CAMERA_ASPECT_OPTS : [...CAMERA_ASPECT_OPTS, { value: cfg.heightRatio.toFixed(4), label: `Özel (${cfg.heightRatio.toFixed(2)})` }]}
+          onChange={v => update({ heightRatio: parseFloat(v) })}
+        />
+        <Slider label="Özel Oran (manuel)" min={0.5} max={2} step={0.01} value={cfg.heightRatio}
+          onChange={v => update({ heightRatio: v })} display={`H/W = ${cfg.heightRatio.toFixed(2)}`} />
+        <Slider label="Köşe Yuvarlaması (%)" min={0} max={30} step={1} value={cfg.cornerRadiusPercent}
+          onChange={v => update({ cornerRadiusPercent: v })} display={`%${cfg.cornerRadiusPercent} (cardWidth)`} />
+        <Slider label="Köşe Min (dp)" min={0} max={48} step={1} value={cfg.cornerRadiusMin}
+          onChange={v => update({ cornerRadiusMin: v })} display={`${cfg.cornerRadiusMin}dp`} />
+      </Section>
+
+      <Section title="Video Davranışı" hint="Video kareye nasıl yerleşir ve self-view ayna mı" mobile="ok">
+        <SelectField label="Object-Fit" value={cfg.objectFit} options={FIT_OPTS}
+          onChange={v => update({ objectFit: v as 'cover' | 'contain' })} />
+        <Toggle label="Kendi Görüntün Ayna (mirror self)" checked={cfg.mirrorSelf}
+          onChange={v => update({ mirrorSelf: v })} />
+      </Section>
+
+      <Section title="Köşe Indicator (kamera ikonu)" hint="Avatarın köşesindeki 'kamera açık' rozeti" mobile="ok">
+        <Toggle label="Indicator Aktif" checked={cfg.indicatorEnabled}
+          onChange={v => update({ indicatorEnabled: v })} />
+        <ColorField label="Indicator Rengi" value={cfg.indicatorColor}
+          onChange={v => update({ indicatorColor: v })} />
+        <SelectField label="Konum" value={cfg.indicatorPosition} options={CORNER_OPTS}
+          onChange={v => update({ indicatorPosition: v as CornerPosition })} />
+        <Slider label="Boyut" min={10} max={28} step={1} value={cfg.indicatorSize}
+          onChange={v => update({ indicatorSize: v })} display={`${cfg.indicatorSize}dp`} />
+      </Section>
+
+      <Section title="Border (Kamera Kenarı)" hint="Audio halkasından bağımsız özel kamera kenarı" mobile="ok">
+        <Toggle label="Özel Border Kullan (kapalı = audio ringWidth/Color)" checked={cfg.useCustomBorder}
+          onChange={v => update({ useCustomBorder: v })} />
+        <Slider label="Border Kalınlığı" min={0} max={8} step={1} value={cfg.borderWidth}
+          onChange={v => update({ borderWidth: v })} display={`${cfg.borderWidth}dp`} />
+        <ColorField label="Border Rengi" value={cfg.borderColor}
+          onChange={v => update({ borderColor: v })} />
+      </Section>
+
+      <Section title="Video Overlay (Üst/Alt Gölge)" hint="Video üzerinde isim ve rozet okunabilirliği için siyah gradient" mobile="ok">
+        <Slider label="Üst Gölge Opaklık" min={0} max={1} step={0.05} value={cfg.overlayTopOpacity}
+          onChange={v => update({ overlayTopOpacity: v })} display={`${(cfg.overlayTopOpacity * 100).toFixed(0)}%`} />
+        <Slider label="Alt Gölge Opaklık" min={0} max={1} step={0.05} value={cfg.overlayBottomOpacity}
+          onChange={v => update({ overlayBottomOpacity: v })} display={`${(cfg.overlayBottomOpacity * 100).toFixed(0)}%`} />
+      </Section>
+
+      <Section title="Spotlight Modu (Hibrit Layout)" hint="Kameralı kullanıcılar üstte büyük tile, audio-only altta kompakt (Discord/TikTok pattern). Kapalı = uniform circle grid (Clubhouse)" mobile="ok">
+        <Toggle label="Spotlight Aktif" checked={cfg.spotlightEnabled}
+          onChange={v => update({ spotlightEnabled: v })} />
+        <Slider label="1 Kamera Aspect (H/W)" min={0.4} max={1.5} step={0.02} value={cfg.spotlightSingleAspect}
+          onChange={v => update({ spotlightSingleAspect: v })} display={cfg.spotlightSingleAspect.toFixed(2)} />
+        <Slider label="2 Kamera Aspect" min={0.5} max={1.5} step={0.05} value={cfg.spotlightDoubleAspect}
+          onChange={v => update({ spotlightDoubleAspect: v })} display={cfg.spotlightDoubleAspect.toFixed(2)} />
+        <Slider label="3 Kamera Aspect" min={0.5} max={1.5} step={0.05} value={cfg.spotlightTripleAspect}
+          onChange={v => update({ spotlightTripleAspect: v })} display={cfg.spotlightTripleAspect.toFixed(2)} />
+        <Slider label="4 Kamera Aspect" min={0.5} max={1.5} step={0.05} value={cfg.spotlightQuadAspect}
+          onChange={v => update({ spotlightQuadAspect: v })} display={cfg.spotlightQuadAspect.toFixed(2)} />
+        <Slider label="Spotlight Boşluk (dp)" min={0} max={24} step={1} value={cfg.spotlightGap}
+          onChange={v => update({ spotlightGap: v })} display={`${cfg.spotlightGap}dp`} />
+      </Section>
+
+      <Section title="Fullscreen Modal" hint="Kamera rozetine tıklayınca açılan tam ekran" mobile="ok">
+        <SelectField label="Object-Fit (fullscreen)" value={cfg.fullscreenObjectFit} options={FIT_OPTS}
+          onChange={v => update({ fullscreenObjectFit: v as 'cover' | 'contain' })} />
+      </Section>
+
+      <Section title="Limit" hint="Aynı anda kaç konuşmacı kamera açabilir" mobile="ok">
+        <Slider label="Maks Eşzamanlı Kamera (0 = sınırsız)" min={0} max={15} step={1} value={cfg.maxConcurrentCameras}
+          onChange={v => update({ maxConcurrentCameras: v })} display={cfg.maxConcurrentCameras === 0 ? '∞' : `${cfg.maxConcurrentCameras} kişi`} />
       </Section>
     </div>
   );

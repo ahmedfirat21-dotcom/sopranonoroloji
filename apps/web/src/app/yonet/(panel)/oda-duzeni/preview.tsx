@@ -3,8 +3,8 @@
 // ★ Inline style'lar bu dosyada zorunlu — admin slider/renk/toggle değişikliği
 //   dinamik render gerektirir, StyleSheet'e taşınamaz.
 import React from 'react';
-import { Crown, Mic, MicOff, Video, Hand, Bell, ChevronDown, Users, BarChart3, MessageCircle, Volume2, Mail, Gift, Plus } from 'lucide-react';
-import type { RoomLayoutConfig, AvatarShape } from './types';
+import { Crown, Mic, MicOff, Video, VideoOff, Hand, Bell, ChevronDown, Users, BarChart3, MessageCircle, Volume2, Mail, Gift, Plus } from 'lucide-react';
+import type { RoomLayoutConfig, AvatarShape, CornerPosition } from './types';
 
 /**
  * Oda Önizleme — APK paritesi (v286, 16 May 2026)
@@ -71,10 +71,15 @@ function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-export function RoomPreview({ cfg, speakerCount = DEFAULT_SPEAKER_COUNT, listenerCount = DEFAULT_LISTENER_COUNT }:
-  { cfg: RoomLayoutConfig; speakerCount?: number; listenerCount?: number }) {
+export function RoomPreview({ cfg, speakerCount = DEFAULT_SPEAKER_COUNT, listenerCount = DEFAULT_LISTENER_COUNT, cameraCount = 0 }:
+  { cfg: RoomLayoutConfig; speakerCount?: number; listenerCount?: number; cameraCount?: number }) {
   const sM = getSpeakerMetrics(speakerCount, PREVIEW_W, cfg.speakers);
   const lM = getListenerMetrics(listenerCount, PREVIEW_W, cfg.listeners);
+  // ★ v301 (18 May 2026): Camera mock — ilk `cameraCount` konuşmacının kamerası açık.
+  //   Spotlight aktifse kameralılar üstte rectangular tile olarak render edilir, audio
+  //   only altta küçük circle. SpeakerSection.tsx hibrit pattern'ı ile birebir.
+  const camCount = Math.min(cameraCount, speakerCount);
+  const showSpotlight = cfg.camera.spotlightEnabled && camCount > 0;
 
   // APK default arka plan: room_in_bg gradient
   const bgStyle: React.CSSProperties = {
@@ -100,7 +105,10 @@ export function RoomPreview({ cfg, speakerCount = DEFAULT_SPEAKER_COUNT, listene
           paddingTop: 16,
         }}
       >
-        {/* Speaker grid */}
+        {/* ★ v301: Spotlight aktif + kamera var → kameralılar üstte rectangular */}
+        {showSpotlight && <CameraSpotlightGrid cfg={cfg} camCount={camCount} W={PREVIEW_W - cfg.global.horizontalPadding * 2} />}
+
+        {/* Speaker grid (audio-only veya spotlight kapalı tüm konuşmacılar) */}
         <div
           className="grid"
           style={{
@@ -108,22 +116,28 @@ export function RoomPreview({ cfg, speakerCount = DEFAULT_SPEAKER_COUNT, listene
             gap: `${cfg.speakers.rowGap}px ${cfg.speakers.colGap}px`,
             justifyItems: 'center',
             marginBottom: speakerCount === 0 ? 0 : 12,
+            marginTop: showSpotlight ? 8 : 0,
           }}
         >
           {speakerCount === 0 ? (
             <EmptyStage />
           ) : (
-            Array.from({ length: speakerCount }).map((_, i) => (
-              <SpeakerTile
-                key={i}
-                size={sM.cardW}
-                cfg={cfg}
-                isOwner={i === 0}
-                isMod={i === 3} /* ★ v289: 4. konuşmacı mod → mor halka */
-                speaking={i === 1}
-                muted={i === 2}
-              />
-            ))
+            Array.from({ length: speakerCount }).map((_, i) => {
+              // Spotlight aktifse kameralılar zaten yukarıda — sadece audio-only'ler bu grid'de.
+              if (showSpotlight && i < camCount) return null;
+              return (
+                <SpeakerTile
+                  key={i}
+                  size={sM.cardW}
+                  cfg={cfg}
+                  isOwner={i === 0}
+                  isMod={i === 3} /* ★ v289: 4. konuşmacı mod → mor halka */
+                  speaking={i === 1}
+                  muted={i === 2}
+                  withCamera={!showSpotlight && i < camCount}
+                />
+              );
+            })
           )}
         </div>
 
@@ -196,14 +210,18 @@ function PreviewHeader({ cfg, totalCount }: { cfg: RoomLayoutConfig; totalCount:
         opacity: h.headerBgOpacity > 0 ? h.headerBgOpacity : 1,
       }}
     >
-      {/* Sol: host avatar */}
-      <div
-        className="w-9 h-9 rounded-full shrink-0 relative"
-        style={{
-          background: 'linear-gradient(135deg, #fbbf24, #b45309)',
-          border: '1.5px solid #fbbf24',
-        }}
-      />
+      {/* Sol: host avatar — v300 dinamik (showHostAvatar / size / borderWidth / borderColor) */}
+      {h.showHostAvatar !== false && (
+        <div
+          className="rounded-full shrink-0 relative"
+          style={{
+            width: h.hostAvatarSize ?? 36,
+            height: h.hostAvatarSize ?? 36,
+            background: 'linear-gradient(135deg, #fbbf24, #b45309)',
+            border: `${h.hostAvatarBorderWidth ?? 1.5}px solid ${h.hostAvatarBorderColor ?? 'rgba(20,184,166,0.55)'}`,
+          }}
+        />
+      )}
       {/* Orta: room name + duration */}
       <div className="flex-1 min-w-0">
         <div
@@ -276,24 +294,32 @@ function EmptyStage() {
  * + speakers.nameFontSize + nameMaxChars + shadows (host/speaker) + isMod halka
  * (accents.moderatorHighlight) + online dot (indicators.onlineDot*) preview'e
  * bağlandı. Önceden bu 12+ alan slider'ı değiştirse de yansımıyordu. */
-function SpeakerTile({ size, cfg, isOwner, speaking, muted, isMod }:
-  { size: number; cfg: RoomLayoutConfig; isOwner: boolean; speaking: boolean; muted: boolean; isMod?: boolean }) {
+function SpeakerTile({ size, cfg, isOwner, speaking, muted, isMod, withCamera }:
+  { size: number; cfg: RoomLayoutConfig; isOwner: boolean; speaking: boolean; muted: boolean; isMod?: boolean; withCamera?: boolean }) {
   const sp = cfg.speakers;
   const host = cfg.host;
   const acc = cfg.accents;
   const sh = cfg.shadows;
   const ind = cfg.indicators;
+  const cam = cfg.camera;
   const shape = isOwner ? host.avatarShape : sp.avatarShape;
   const radiusCfg = isOwner ? host.borderRadius : sp.borderRadius;
   // ★ v289: Host için avatarSize override (admin'in Boyut slider'ı)
   const renderSize = isOwner ? Math.min(host.avatarSize, size + 40) : size;
   // ★ v291 (16 May 2026): Host için admin halka (host.ringWidth/ringColor) artık etkin.
   //   Önce sabit 2dp altın halka idi (kullanıcı kararı v283), şimdi admin'e geri geldi.
-  const ringW = isMod ? Math.max(2, sp.ringWidth) : (isOwner ? host.ringWidth : sp.ringWidth);
-  const ringColor = isMod
+  // ★ v301 (18 May 2026): withCamera + cam.useCustomBorder ise audio border'ı override et.
+  const audioRingW = isMod ? Math.max(2, sp.ringWidth) : (isOwner ? host.ringWidth : sp.ringWidth);
+  const audioRingColor = isMod
     ? acc.moderatorHighlight
     : isOwner ? (host.ringColor || acc.ownerHighlight) : (speaking ? sp.speakingRingColor : sp.ringColor);
-  const radius = shapeRadius(shape, renderSize, radiusCfg);
+  const ringW = withCamera && cam.useCustomBorder ? cam.borderWidth : audioRingW;
+  const ringColor = withCamera && cam.useCustomBorder ? cam.borderColor : audioRingColor;
+  // ★ v301: Kameralı tile → cam.cornerRadius (% + min), audio → shapeRadius normal
+  const camRadius = Math.max(cam.cornerRadiusMin, Math.floor(renderSize * cam.cornerRadiusPercent / 100));
+  const radius = withCamera ? camRadius : shapeRadius(shape, renderSize, radiusCfg);
+  // ★ v301: Kameralı tile dikdörtgen — height = width * heightRatio
+  const tileH = withCamera ? Math.round(renderSize * cam.heightRatio) : renderSize;
   // ★ v289: Shadows (Skia) — host vs speaker ayrı config
   const shadowOpacity = isOwner ? host.haloOpacity * 0.6 : 0;
   const shadowColor = isOwner ? host.haloColor : '#000';
@@ -338,17 +364,52 @@ function SpeakerTile({ size, cfg, isOwner, speaking, muted, isMod }:
       {/* ★ v289: namePosition='above' isim avatardan ÖNCE */}
       {pos === 'above' && nameEl}
       <div
-        className="relative flex items-center justify-center"
+        className="relative flex items-center justify-center overflow-hidden"
         style={{
           width: renderSize,
-          height: renderSize,
+          height: tileH,
           borderRadius: radius,
-          background: 'linear-gradient(135deg, #475569, #1e293b)',
+          background: withCamera
+            ? 'linear-gradient(135deg, #0f766e, #134e4a)'
+            : 'linear-gradient(135deg, #475569, #1e293b)',
           border: ringW > 0 ? `${ringW}px solid ${ringColor}` : 'none',
           boxShadow: combinedShadow || 'none',
           opacity: muted ? sp.muteOpacity : 1,
         }}
       >
+        {/* ★ v301: Kamera mock — "VIDEO" simgesi + gradient overlay */}
+        {withCamera && (
+          <>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Video style={{ width: Math.min(28, renderSize * 0.3), height: Math.min(28, renderSize * 0.3), color: 'rgba(255,255,255,0.55)' }} />
+            </div>
+            {cam.overlayTopOpacity > 0 && (
+              <div
+                className="absolute left-0 right-0 top-0 pointer-events-none"
+                style={{ height: '35%', background: `linear-gradient(180deg, rgba(0,0,0,${cam.overlayTopOpacity}), transparent)` }}
+              />
+            )}
+            {cam.overlayBottomOpacity > 0 && (
+              <div
+                className="absolute left-0 right-0 bottom-0 pointer-events-none"
+                style={{ height: '40%', background: `linear-gradient(180deg, transparent, rgba(0,0,0,${cam.overlayBottomOpacity}))` }}
+              />
+            )}
+            {cam.indicatorEnabled && (
+              <div
+                className="absolute rounded-full flex items-center justify-center"
+                style={{
+                  ...positionStyle(cam.indicatorPosition),
+                  width: cam.indicatorSize, height: cam.indicatorSize,
+                  background: cam.indicatorColor,
+                  border: '2px solid rgba(15,25,38,1)',
+                }}
+              >
+                <Video style={{ width: cam.indicatorSize * 0.55, height: cam.indicatorSize * 0.55, color: '#fff' }} />
+              </div>
+            )}
+          </>
+        )}
         {/* Speaking pulse */}
         {speaking && (
           <div
@@ -376,7 +437,7 @@ function SpeakerTile({ size, cfg, isOwner, speaking, muted, isMod }:
           </div>
         )}
         {/* ★ v289: Online dot — indicators.onlineDot* (sadece host hariç, yeşil nokta) */}
-        {!isOwner && ind.onlineDotEnabled && (
+        {!isOwner && !withCamera && ind.onlineDotEnabled && (
           <div
             className="absolute rounded-full"
             style={{
@@ -501,6 +562,75 @@ function OverflowBadge({ cfg, count }: { cfg: RoomLayoutConfig; count: number })
       <div className="truncate text-center mt-1" style={{ fontSize: 9, color: la.overflowBadgeTextColor || '#5EEAD4', maxWidth: 50 }}>
         {text.replace(/^\+\d+\s*/, '').trim() || 'Seyirci'}
       </div>
+    </div>
+  );
+}
+
+/* ════════ v301 (18 May 2026): CameraSpotlightGrid ════════
+ * Spotlight aktif + kamera açan konuşmacılar — Discord/TikTok pattern.
+ * Mobile SpeakerSection.tsx L1228-1248 ile birebir aspect kuralı:
+ *   1 kamera → spotlightSingleAspect (default 0.62, sinematik)
+ *   2 kamera → spotlightDoubleAspect (default 1.0, kare yan yana)
+ *   3 kamera → spotlightTripleAspect (default 1.0, 3 col kare)
+ *   4 kamera → spotlightQuadAspect (default 1.05, 2x2 hafif dikey)
+ *   5+      → 3 col kompakt, kare
+ */
+function CameraSpotlightGrid({ cfg, camCount, W }: { cfg: RoomLayoutConfig; camCount: number; W: number }) {
+  const cam = cfg.camera;
+  let cols = 1, tileW = W, tileH = W * cam.spotlightSingleAspect;
+  let gap = cam.spotlightGap;
+  if (camCount === 1) {
+    tileW = W; tileH = Math.round(W * cam.spotlightSingleAspect);
+  } else if (camCount === 2) {
+    cols = 2; tileW = Math.floor((W - gap) / 2); tileH = Math.round(tileW * cam.spotlightDoubleAspect);
+  } else if (camCount === 3) {
+    cols = 3; tileW = Math.floor((W - gap * 2) / 3); tileH = Math.round(tileW * cam.spotlightTripleAspect);
+  } else if (camCount === 4) {
+    cols = 2; tileW = Math.floor((W - gap) / 2); tileH = Math.round(tileW * cam.spotlightQuadAspect);
+  } else {
+    cols = 3; tileW = Math.floor((W - gap * 2) / 3); tileH = tileW; gap = Math.max(4, gap - 4);
+  }
+  const radius = Math.max(cam.cornerRadiusMin, Math.floor(tileW * cam.cornerRadiusPercent / 100));
+  return (
+    <div className="grid mb-2" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)`, gap }}>
+      {Array.from({ length: camCount }).map((_, i) => {
+        const useCustom = cam.useCustomBorder;
+        return (
+          <div
+            key={i}
+            className="relative overflow-hidden flex items-center justify-center"
+            style={{
+              width: tileW, height: tileH, borderRadius: radius,
+              background: 'linear-gradient(135deg, #0f766e, #134e4a)',
+              border: useCustom && cam.borderWidth > 0 ? `${cam.borderWidth}px solid ${cam.borderColor}` : 'none',
+            }}
+          >
+            <Video style={{ width: Math.min(34, tileW * 0.18), height: Math.min(34, tileW * 0.18), color: 'rgba(255,255,255,0.45)' }} />
+            {cam.overlayTopOpacity > 0 && (
+              <div className="absolute left-0 right-0 top-0 pointer-events-none"
+                style={{ height: '32%', background: `linear-gradient(180deg, rgba(0,0,0,${cam.overlayTopOpacity}), transparent)` }} />
+            )}
+            {cam.overlayBottomOpacity > 0 && (
+              <div className="absolute left-0 right-0 bottom-0 pointer-events-none"
+                style={{ height: '38%', background: `linear-gradient(180deg, transparent, rgba(0,0,0,${cam.overlayBottomOpacity}))` }} />
+            )}
+            {cam.indicatorEnabled && (
+              <div className="absolute rounded-full flex items-center justify-center"
+                style={{
+                  ...positionStyle(cam.indicatorPosition),
+                  width: cam.indicatorSize, height: cam.indicatorSize,
+                  background: cam.indicatorColor,
+                  border: '2px solid rgba(15,25,38,1)',
+                }}>
+                <Video style={{ width: cam.indicatorSize * 0.55, height: cam.indicatorSize * 0.55, color: '#fff' }} />
+              </div>
+            )}
+            <div className="absolute left-2 bottom-1.5 text-white truncate" style={{ fontSize: 10, maxWidth: tileW - 16, textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}>
+              {i === 0 ? 'Burak DENİZ' : `Kameralı ${i + 1}`}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

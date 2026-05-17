@@ -7,14 +7,14 @@
  * State: tek üst seviye reducer, functional update — stale closure yok.
  */
 import React, { useReducer, useTransition, useDeferredValue } from 'react';
-import { Save, RotateCcw, Crown, Mic, Users, LayoutPanelTop, Sparkles, Loader2 } from 'lucide-react';
+import { Save, RotateCcw, Crown, Mic, Users, LayoutPanelTop, Sparkles, Video, Loader2 } from 'lucide-react';
 import { saveRoomLayout } from './actions';
-import { HostPanel, SpeakersPanel, ListenersPanel, HeaderControlsPanel, EffectsPanel } from './panels';
+import { HostPanel, SpeakersPanel, ListenersPanel, HeaderControlsPanel, EffectsPanel, CameraPanel } from './panels';
 import { RoomPreview } from './preview';
 import { mergeWithDefaults } from './defaults';
 import type { RoomLayoutConfig } from './types';
 
-type Tab = 'host' | 'speakers' | 'listeners' | 'chrome' | 'effects';
+type Tab = 'host' | 'speakers' | 'listeners' | 'chrome' | 'effects' | 'camera';
 
 // ── Reducer: tek action tipi, group + partial patch ──
 type Group = keyof RoomLayoutConfig;
@@ -37,6 +37,8 @@ export default function RoomLayoutEditor({ initial }: { initial: any }) {
   // ★ Mock sayıları — önizlemenin hangi preset aralığını test edeceğini belirler
   const [mockSpeakers, setMockSpeakers] = React.useState(4);
   const [mockListeners, setMockListeners] = React.useState(9);
+  // ★ v301: Kameralı konuşmacı sayısı — spotlight preset'ini test etmek için
+  const [mockCameras, setMockCameras] = React.useState(0);
 
   const upd = (group: Group) => (patch: any) => dispatch({ group, patch });
 
@@ -64,6 +66,7 @@ export default function RoomLayoutEditor({ initial }: { initial: any }) {
     { key: 'listeners', label: 'Dinleyiciler', icon: <Users className="w-3.5 h-3.5" /> },
     { key: 'chrome',    label: 'Başlık & Bar', icon: <LayoutPanelTop className="w-3.5 h-3.5" /> },
     { key: 'effects',   label: 'Efektler',     icon: <Sparkles className="w-3.5 h-3.5" /> },
+    { key: 'camera',    label: 'Kamera',       icon: <Video className="w-3.5 h-3.5" /> },
   ];
 
   return (
@@ -117,6 +120,9 @@ export default function RoomLayoutEditor({ initial }: { initial: any }) {
               updateListenersAdv={upd('listeners_advanced')} updateStage={upd('stage')}
             />
           )}
+          {tab === 'camera' && (
+            <CameraPanel cfg={cfg.camera} update={upd('camera')} />
+          )}
         </div>
 
         {/* Aksiyon barı — sayfa altında sabit */}
@@ -156,7 +162,7 @@ export default function RoomLayoutEditor({ initial }: { initial: any }) {
             <span className="font-medium">Canlı Önizleme</span>
             <span className="text-[10px] text-slate-500">Mobile-eş hesap</span>
           </div>
-          <RoomPreview cfg={deferredCfg} speakerCount={mockSpeakers} listenerCount={mockListeners} />
+          <RoomPreview cfg={deferredCfg} speakerCount={mockSpeakers} listenerCount={mockListeners} cameraCount={mockCameras} />
           {/* Mock kişi sayısı kontrolü — preset aralıkları için */}
           <div className="mt-3 pt-2 border-t border-slate-700/40 space-y-2">
             <div className="text-[10px] text-slate-400">Önizleme Mock</div>
@@ -178,8 +184,19 @@ export default function RoomLayoutEditor({ initial }: { initial: any }) {
                 onChange={(e) => setMockListeners(parseInt(e.target.value, 10))}
                 className="w-full accent-teal-500" />
             </label>
+            <label className="block">
+              <div className="flex items-center justify-between text-[10px] text-slate-500">
+                <span>Kamera Açan (ilk N konuşmacı)</span>
+                <span className="font-mono text-cyan-300">{mockCameras}</span>
+              </div>
+              <input type="range" min={0} max={Math.min(mockSpeakers, 6)} step={1} value={Math.min(mockCameras, mockSpeakers)}
+                onChange={(e) => setMockCameras(parseInt(e.target.value, 10))}
+                className="w-full accent-cyan-500" />
+            </label>
             <div className="text-[10px] text-emerald-500/70 leading-relaxed">
               Boyut presetları kişi sayısı aralığına bağlı. Konuşmacı 1-3=Büyük · 4-9=Orta · 10+=Küçük · Dinleyici 1-4=Büyük · 5-8=Orta · 9+=Küçük.
+              <br />
+              <span className="text-cyan-400/80">Kamera &gt; 0 + Spotlight aktif</span> = kameralılar üstte rectangular tile (Discord pattern).
             </div>
           </div>
         </div>

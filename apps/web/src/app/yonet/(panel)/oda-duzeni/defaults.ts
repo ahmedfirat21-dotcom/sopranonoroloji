@@ -52,6 +52,8 @@ export const DEFAULT_LAYOUT: RoomLayoutConfig = {
     subtitleFontSize: 11, subtitleColor: '#94A3B8',
     showLiveIndicator: true, liveDotColor: '#EF4444', liveDotPulse: true,
     showListenerCount: true, headerBgOpacity: 0.0, headerBorderBottom: true, headerBorderColor: 'rgba(20,184,166,0.55)',
+    // ★ v300: Host avatar görsel ayarları — APK ile birebir.
+    showHostAvatar: true, hostAvatarSize: 36, hostAvatarBorderWidth: 1.5, hostAvatarBorderColor: 'rgba(20,184,166,0.55)',
   },
   controls: {
     barBackground: 'rgba(15,25,38,0.85)', barBlurEnabled: true, barBlurIntensity: 28,
@@ -64,6 +66,19 @@ export const DEFAULT_LAYOUT: RoomLayoutConfig = {
     maxVisibleSmallScreen: 10, maxVisibleDefault: 14,
     overflowBadgeText: '+{N} Seyirci', overflowBadgeColor: 'rgba(20,184,166,0.16)', overflowBadgeTextColor: '#5EEAD4',
     showHandRaiseBadge: true, handRaiseBadgePosition: 'topLeft', showMicRequestPulse: true,
+  },
+  // ★ v301 (18 May 2026): Kamera default'ları — eski hardcoded davranışla birebir.
+  camera: {
+    heightRatio: 1.18, cornerRadiusPercent: 8, cornerRadiusMin: 12,
+    objectFit: 'cover', mirrorSelf: true,
+    indicatorEnabled: true, indicatorColor: '#3B82F6', indicatorPosition: 'topRight', indicatorSize: 16,
+    useCustomBorder: false, borderWidth: 2, borderColor: '#3B82F6',
+    overlayTopOpacity: 0.55, overlayBottomOpacity: 0.60,
+    spotlightEnabled: true,
+    spotlightSingleAspect: 0.62, spotlightDoubleAspect: 1.0, spotlightTripleAspect: 1.0, spotlightQuadAspect: 1.05,
+    spotlightGap: 12,
+    fullscreenObjectFit: 'cover',
+    maxConcurrentCameras: 0,
   },
 };
 
