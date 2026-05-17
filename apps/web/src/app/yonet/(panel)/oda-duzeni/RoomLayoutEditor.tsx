@@ -40,6 +40,18 @@ export default function RoomLayoutEditor({ initial }: { initial: any }) {
   // ★ v301: Kameralı konuşmacı sayısı — spotlight preset'ini test etmek için
   const [mockCameras, setMockCameras] = React.useState(0);
 
+  // ★ v301 (18 May 2026): Kamera sekmesine girince otomatik 2 kameralı konuşmacı
+  //   göster — yoksa kullanıcı slider'ları değiştirir ama önizlemede kamera tile
+  //   olmadığı için "hiçbir şey olmuyor" sanır. Diğer sekmelere dönülünce
+  //   kullanıcının manuel ayarladığı değere dokunulmaz (sadece ilk girişte ve
+  //   mockCameras=0 ise tetiklenir).
+  React.useEffect(() => {
+    if (tab === 'camera') {
+      setMockCameras((prev) => (prev === 0 ? 2 : prev));
+      setMockSpeakers((prev) => (prev < 2 ? 2 : prev));
+    }
+  }, [tab]);
+
   const upd = (group: Group) => (patch: any) => dispatch({ group, patch });
 
   const handleSave = () => {
@@ -121,7 +133,22 @@ export default function RoomLayoutEditor({ initial }: { initial: any }) {
             />
           )}
           {tab === 'camera' && (
-            <CameraPanel cfg={cfg.camera} update={upd('camera')} />
+            <>
+              {/* ★ v301 (18 May 2026): Görünür yönlendirme — kullanıcı kamera
+                  sekmesine ilk girdiğinde mock kamera sayısı otomatik 2 olur,
+                  ama yine de "nerede göreceğim?" sorusu çıkar. Bu cyan banner
+                  sağdaki canlı önizlemeye işaret eder. */}
+              <div className="flex items-start gap-2 px-3 py-2 mb-3 rounded-lg bg-cyan-500/8 border border-cyan-500/30 text-[11px] text-cyan-100">
+                <Video className="w-4 h-4 mt-0.5 shrink-0 text-cyan-400" />
+                <div className="leading-relaxed">
+                  <span className="font-semibold text-cyan-200">Önizleme sağda 👉</span>{' '}
+                  Bu sekmeye geçince ilk 2 konuşmacı için <span className="font-mono text-cyan-200">kameralı tile</span> otomatik açıldı.
+                  Sağdaki "Kameralı Sayısı" slider'ı ile 1-4 arası test edebilirsin —
+                  Spotlight aspect değerleri kişi sayısına göre değişir.
+                </div>
+              </div>
+              <CameraPanel cfg={cfg.camera} update={upd('camera')} />
+            </>
           )}
         </div>
 
