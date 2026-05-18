@@ -337,18 +337,31 @@ function SpeakerTile({ size, cfg, isOwner, speaking, muted, isMod, withCamera, i
         ? `0 0 ${sh.speakerShadowBlur}px ${hexToRgba(sh.speakerShadowColor, sh.speakerShadowOpacity)}`
         : '');
   const combinedShadow = [haloShadow, skiaShadow].filter(Boolean).join(', ');
-  // ★ v289: Name kesim + font size + position (below/above/inside/hidden)
-  const nameFontSize = sp.nameFontSize || 11;
+  // ★ v309 (18 May 2026): Host config'inin tüm field'ları preview'a bağlandı:
+  //   - host.namePosition (önceden sp.namePosition zorla kullanılıyordu, host
+  //     için override yoktu)
+  //   - host.nameFontSize (önceden sp.nameFontSize)
+  //   - host.nameFontWeight (yeni)
+  //   - host.nameColor (yeni — eski sadece acc.ownerHighlight'tan geliyordu)
+  //   - host.ringStyle (border-style, yeni)
+  //   - host.containerPadding (wrapper padding, yeni)
+  const nameFontSize = isOwner ? (host.nameFontSize || 14) : (sp.nameFontSize || 11);
+  const nameFontWeight = isOwner ? (host.nameFontWeight || '700') : '700';
   const fullName = isOwner ? 'Burak DENİZ' : (isMod ? 'Moderatör Ali' : 'Konuş.');
-  const displayName = sp.nameMaxChars > 0 ? fullName.slice(0, sp.nameMaxChars) : fullName;
-  const pos = sp.namePosition || 'below';
-  const nameColor = isOwner ? acc.ownerHighlight : (isMod ? acc.moderatorHighlight : '#e2e8f0');
+  const nameMaxChars = isOwner ? 0 : sp.nameMaxChars;
+  const displayName = nameMaxChars > 0 ? fullName.slice(0, nameMaxChars) : fullName;
+  const pos = isOwner ? (host.namePosition || 'below') : (sp.namePosition || 'below');
+  const nameColor = isOwner
+    ? (host.nameColor || acc.ownerHighlight)
+    : (isMod ? acc.moderatorHighlight : '#e2e8f0');
+  // host.ringStyle (solid/dashed/dotted/none) sadece host için. Speakers ringStyle yok.
+  const borderStyle = isOwner && host.ringStyle && host.ringStyle !== 'none' ? host.ringStyle : 'solid';
   const nameEl = pos === 'hidden' ? null : (
     <div
       className="text-center truncate"
       style={{
         fontSize: nameFontSize,
-        fontWeight: 700,
+        fontWeight: nameFontWeight as any,
         color: nameColor,
         maxWidth: renderSize,
         marginTop: pos === 'below' ? 6 : 0,
@@ -376,9 +389,11 @@ function SpeakerTile({ size, cfg, isOwner, speaking, muted, isMod, withCamera, i
           background: withCamera
             ? 'linear-gradient(135deg, #0f766e, #134e4a)'
             : 'linear-gradient(135deg, #475569, #1e293b)',
-          border: ringW > 0 ? `${ringW}px solid ${ringColor}` : 'none',
+          // ★ v309 (18 May 2026): host.ringStyle artık etkin (solid/dashed/dotted)
+          border: ringW > 0 ? `${ringW}px ${borderStyle} ${ringColor}` : 'none',
           boxShadow: combinedShadow || 'none',
           opacity: muted ? sp.muteOpacity : 1,
+          padding: isOwner ? Math.max(0, Math.min(20, host.containerPadding || 0)) : 0,
         }}
       >
         {/* ★ v301: Kamera mock — "VIDEO" simgesi + gradient overlay */}
