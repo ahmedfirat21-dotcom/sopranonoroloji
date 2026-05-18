@@ -125,6 +125,24 @@ export function SpeakersPanel({ cfg, updateCfg }:
         <Slider label="Font Boyutu" min={8} max={22} step={1} value={cfg.nameFontSize} onChange={v => updateCfg({ nameFontSize: v })} display={`${cfg.nameFontSize}sp`} />
         <Slider label="Maks Karakter (0 = sınırsız)" min={0} max={24} step={1} value={cfg.nameMaxChars} onChange={v => updateCfg({ nameMaxChars: v })} display={cfg.nameMaxChars === 0 ? '∞' : `${cfg.nameMaxChars} hf`} />
       </Section>
+
+      {/* ★ v1.7.13.14: Konuşmacı grid yerleşimi + boyut presetleri */}
+      <Section title="Konuşmacı Grid Yerleşimi" hint="Sahnede max kaç sütun + kişi sayısına göre avatar boyutu" mobile="ok">
+        <Slider label="Maks Sütun" min={2} max={6} step={1} value={cfg.maxCols} onChange={v => updateCfg({ maxCols: v })} display={`${cfg.maxCols} sütun`} />
+        <Slider label="Sütun Aralığı" min={4} max={32} step={1} value={cfg.colGap} onChange={v => updateCfg({ colGap: v })} display={`${cfg.colGap}dp`} />
+        <Slider label="Satır Aralığı" min={4} max={32} step={1} value={cfg.rowGap} onChange={v => updateCfg({ rowGap: v })} display={`${cfg.rowGap}dp`} />
+      </Section>
+
+      <Section title="Konuşmacı Avatar Boyutu" hint="Kişi sayısına göre avatar büyüklüğü: 1-3 büyük, 4-9 orta, 10+ küçük" mobile="ok">
+        <Slider label="Büyük Preset (1-3 kişi)" min={60} max={160} step={2} value={cfg.sizePresets.large} onChange={v => updateCfg({ sizePresets: { ...cfg.sizePresets, large: v } })} display={`${cfg.sizePresets.large}dp`} />
+        <Slider label="Orta Preset (4-9 kişi)" min={50} max={130} step={2} value={cfg.sizePresets.medium} onChange={v => updateCfg({ sizePresets: { ...cfg.sizePresets, medium: v } })} display={`${cfg.sizePresets.medium}dp`} />
+        <Slider label="Küçük Preset (10+ kişi)" min={40} max={110} step={2} value={cfg.sizePresets.small} onChange={v => updateCfg({ sizePresets: { ...cfg.sizePresets, small: v } })} display={`${cfg.sizePresets.small}dp`} />
+      </Section>
+
+      <Section title="Konuşmacı Davranış" hint="Mic ikonu görünürlüğü + susturulanın opak değeri" mobile="ok">
+        <Toggle label="Mic İkonu Göster (avatar köşesinde)" checked={cfg.showMicIcon} onChange={v => updateCfg({ showMicIcon: v })} />
+        <Slider label="Susturulu Opaklığı" min={0.2} max={1} step={0.05} value={cfg.muteOpacity} onChange={v => updateCfg({ muteOpacity: v })} display={`${(cfg.muteOpacity * 100).toFixed(0)}%`} />
+      </Section>
     </div>
   );
 }
@@ -154,7 +172,21 @@ export function ListenersPanel({ cfg, accents, updateCfg, updateAccents }:
 
       <Section title="Oda Sahibi (Owner) Vurgusu" hint="Listede oda sahibinin nasıl ayırt edileceği" mobile="ok">
         <Toggle label="Taç Göster" checked={cfg.ownerCrownEnabled} onChange={v => updateCfg({ ownerCrownEnabled: v })} />
+        <Slider label="Owner Avatar Ölçeği" min={1.0} max={1.4} step={0.05} value={cfg.ownerScale} onChange={v => updateCfg({ ownerScale: v })} display={`${cfg.ownerScale.toFixed(2)}x`} />
         <ColorField label="Vurgu Rengi" value={accents.ownerHighlight} onChange={v => updateAccents({ ownerHighlight: v })} />
+      </Section>
+
+      {/* ★ v1.7.13.14: Dinleyici grid yerleşimi + boyut presetleri */}
+      <Section title="Dinleyici Grid Yerleşimi" hint="Dinleyici listesi max sütun + sütun/satır aralığı" mobile="ok">
+        <Slider label="Maks Sütun" min={3} max={8} step={1} value={cfg.maxCols} onChange={v => updateCfg({ maxCols: v })} display={`${cfg.maxCols} sütun`} />
+        <Slider label="Sütun Aralığı" min={4} max={20} step={1} value={cfg.colGap} onChange={v => updateCfg({ colGap: v })} display={`${cfg.colGap}dp`} />
+        <Slider label="Satır Aralığı" min={4} max={20} step={1} value={cfg.rowGap} onChange={v => updateCfg({ rowGap: v })} display={`${cfg.rowGap}dp`} />
+      </Section>
+
+      <Section title="Dinleyici Avatar Boyutu" hint="Dinleyici sayısına göre avatar küçülmesi" mobile="ok">
+        <Slider label="Büyük Preset (1-4 dinleyici)" min={40} max={80} step={2} value={cfg.sizePresets.large} onChange={v => updateCfg({ sizePresets: { ...cfg.sizePresets, large: v } })} display={`${cfg.sizePresets.large}dp`} />
+        <Slider label="Orta Preset (5-15 dinleyici)" min={32} max={70} step={2} value={cfg.sizePresets.medium} onChange={v => updateCfg({ sizePresets: { ...cfg.sizePresets, medium: v } })} display={`${cfg.sizePresets.medium}dp`} />
+        <Slider label="Küçük Preset (16+ dinleyici)" min={28} max={56} step={2} value={cfg.sizePresets.small} onChange={v => updateCfg({ sizePresets: { ...cfg.sizePresets, small: v } })} display={`${cfg.sizePresets.small}dp`} />
       </Section>
     </div>
   );
