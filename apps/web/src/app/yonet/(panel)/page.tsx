@@ -8,10 +8,12 @@ import LiveStatsCards from './LiveStatsCards';
 async function getInitialStats() {
   const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
   const dayAgo = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+  const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 3600 * 1000).toISOString();
 
   const [
     usersRes, onlineNowRes, active5minRes, devicesRes,
     roomsLiveRes, messagesRes, reportsOpenRes, blockedRes, spTotalRes, newUsers24hRes,
+    inactive14dRes,
   ] = await Promise.all([
     supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }),
     supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).eq('is_online', true),
@@ -23,6 +25,7 @@ async function getInitialStats() {
     supabaseAdmin.from('blocked_users').select('*', { count: 'exact', head: true }),
     supabaseAdmin.from('sp_transactions').select('amount').gte('created_at', dayAgo),
     supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', dayAgo),
+    supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).lt('last_active_at', fourteenDaysAgo),
   ]);
 
   let spVolume24h = 0;
@@ -38,12 +41,18 @@ async function getInitialStats() {
     }
   }
 
+  const totalUsers = usersRes.count || 0;
+  const installedDevices = uniqueDeviceUsers.size;
+  const probablyDeleted = Math.max(0, totalUsers - installedDevices);
+
   return {
-    users: usersRes.count || 0,
+    users: totalUsers,
     onlineNow: onlineNowRes.count || 0,
     active5min: active5minRes.count || 0,
-    installedDevices: uniqueDeviceUsers.size,
+    installedDevices,
     totalPushTokens: devicesRes.data?.length || 0,
+    probablyDeleted,
+    inactive14d: inactive14dRes.count || 0,
     roomsLive: roomsLiveRes.count || 0,
     messages24h: messagesRes.count || 0,
     reportsOpen: reportsOpenRes.count || 0,
