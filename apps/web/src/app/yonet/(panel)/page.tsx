@@ -1,21 +1,28 @@
 /**
- * SopranoChat Admin Dashboard — Server Component
- * Üst düzey metrikler + son aktiviteler.
+ * SopranoChat Admin Dashboard — 3 ana metrik (İndiren / Online / Pasif Yüklü)
+ * gerçek zamanlı, 10 sn'de bir yenilenir.
  */
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { Users, Home, MessageSquare, Coins, Flag, AlertTriangle } from 'lucide-react';
+import LiveStatsCards from './LiveStatsCards';
 
-async function getStats() {
-  // Paralel sayım sorguları
+async function getInitialStats() {
+  const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+  const dayAgo = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+
   const [
-    usersRes, roomsLiveRes, messagesRes, reportsOpenRes, blockedRes, spTotalRes,
+    usersRes, onlineNowRes, active5minRes, devicesRes,
+    roomsLiveRes, messagesRes, reportsOpenRes, blockedRes, spTotalRes, newUsers24hRes,
   ] = await Promise.all([
     supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }),
+    supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).eq('is_online', true),
+    supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).gte('last_active_at', fiveMinAgo),
+    supabaseAdmin.from('push_tokens').select('user_id'),
     supabaseAdmin.from('rooms').select('*', { count: 'exact', head: true }).eq('is_live', true),
-    supabaseAdmin.from('messages').select('*', { count: 'exact', head: true }).gte('created_at', new Date(Date.now() - 24 * 3600 * 1000).toISOString()),
+    supabaseAdmin.from('messages').select('*', { count: 'exact', head: true }).gte('created_at', dayAgo),
     supabaseAdmin.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
     supabaseAdmin.from('blocked_users').select('*', { count: 'exact', head: true }),
-    supabaseAdmin.from('sp_transactions').select('amount').gte('created_at', new Date(Date.now() - 24 * 3600 * 1000).toISOString()),
+    supabaseAdmin.from('sp_transactions').select('amount').gte('created_at', dayAgo),
+    supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', dayAgo),
   ]);
 
   let spVolume24h = 0;
@@ -23,35 +30,43 @@ async function getStats() {
     for (const r of spTotalRes.data) spVolume24h += Math.abs((r as any).amount || 0);
   }
 
+  const uniqueDeviceUsers = new Set<string>();
+  if (devicesRes.data) {
+    for (const r of devicesRes.data) {
+      const uid = (r as any).user_id;
+      if (uid) uniqueDeviceUsers.add(uid);
+    }
+  }
+
   return {
     users: usersRes.count || 0,
+    onlineNow: onlineNowRes.count || 0,
+    active5min: active5minRes.count || 0,
+    installedDevices: uniqueDeviceUsers.size,
+    totalPushTokens: devicesRes.data?.length || 0,
     roomsLive: roomsLiveRes.count || 0,
     messages24h: messagesRes.count || 0,
     reportsOpen: reportsOpenRes.count || 0,
     blocked: blockedRes.count || 0,
     spVolume24h,
+    newUsers24h: newUsers24hRes.count || 0,
+    timestamp: Date.now(),
   };
 }
 
+export const dynamic = 'force-dynamic';
+
 export default async function YonetDashboard() {
-  const stats = await getStats();
+  const stats = await getInitialStats();
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Panel</h1>
-        <p className="text-sm text-slate-400 mt-1">Genel durum ve son 24 saat ölçümleri</p>
+        <p className="text-sm text-slate-400 mt-1">Genel durum ve canlı metrikler</p>
       </div>
 
-      {/* Top metrics grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card icon={<Users className="w-5 h-5" />} label="Toplam Kullanıcı" value={fmt(stats.users)} accent="#22D3EE" />
-        <Card icon={<Home className="w-5 h-5" />} label="Canlı Oda" value={fmt(stats.roomsLive)} accent="#22C55E" />
-        <Card icon={<MessageSquare className="w-5 h-5" />} label="Son 24sa Mesaj" value={fmt(stats.messages24h)} accent="#A78BFA" />
-        <Card icon={<Coins className="w-5 h-5" />} label="Son 24sa SP Hacmi" value={fmt(stats.spVolume24h)} accent="#FBBF24" />
-        <Card icon={<Flag className="w-5 h-5" />} label="Bekleyen Şikayet" value={fmt(stats.reportsOpen)} accent="#EF4444" highlight={stats.reportsOpen > 0} />
-        <Card icon={<AlertTriangle className="w-5 h-5" />} label="Toplam Engelleme" value={fmt(stats.blocked)} accent="#94A3B8" />
-      </div>
+      <LiveStatsCards initial={stats} />
 
       {/* Quick actions */}
       <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
@@ -77,37 +92,4 @@ export default async function YonetDashboard() {
       </div>
     </div>
   );
-}
-
-function Card({ icon, label, value, accent, highlight }: {
-  icon: React.ReactNode; label: string; value: string; accent: string; highlight?: boolean;
-}) {
-  return (
-    <div
-      className={`relative bg-white/5 border rounded-2xl p-5 transition-colors ${
-        highlight ? 'border-red-500/40 bg-red-500/5' : 'border-white/10'
-      }`}
-    >
-      <div
-        className="absolute top-0 left-6 right-6 h-px"
-        style={{ background: `linear-gradient(90deg, transparent, ${accent}, transparent)` }}
-      />
-      <div className="flex items-center justify-between mb-3">
-        <div
-          className="w-9 h-9 rounded-lg flex items-center justify-center"
-          style={{ backgroundColor: `${accent}1A`, color: accent }}
-        >
-          {icon}
-        </div>
-      </div>
-      <div className="text-3xl font-bold text-slate-100">{value}</div>
-      <div className="text-xs text-slate-400 mt-1 tracking-wide">{label}</div>
-    </div>
-  );
-}
-
-function fmt(n: number): string {
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
-  if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
-  return n.toLocaleString('tr-TR');
 }
