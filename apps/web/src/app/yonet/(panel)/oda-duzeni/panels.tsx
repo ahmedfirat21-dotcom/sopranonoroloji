@@ -3,7 +3,32 @@ import React from 'react';
 import { Section, Slider, Toggle, ColorField, SelectField, TextField,
   SHAPE_OPTS, WEIGHT_OPTS,
 } from './controls';
-import type { RoomLayoutConfig, AvatarShape, CornerPosition } from './types';
+import type { RoomLayoutConfig, AvatarShape, CornerPosition, RingStyle, BadgePosition, ButtonShape, EnterTransition } from './types';
+
+// ★ v1.7.13.14 (19 May 2026): Eksik opsiyon listeleri — tam admin kullanımı için.
+const RING_STYLE_OPTS = [
+  { value: 'solid', label: 'Düz' },
+  { value: 'dashed', label: 'Kesik' },
+  { value: 'dotted', label: 'Noktalı' },
+  { value: 'none', label: 'Yok' },
+];
+const BADGE_POS_OPTS = [
+  { value: 'topRight', label: 'Üst Sağ' },
+  { value: 'topLeft', label: 'Üst Sol' },
+  { value: 'bottomRight', label: 'Alt Sağ' },
+  { value: 'bottomLeft', label: 'Alt Sol' },
+  { value: 'hidden', label: 'Gizli' },
+];
+const BUTTON_SHAPE_OPTS = [
+  { value: 'circle', label: 'Yuvarlak' },
+  { value: 'rounded', label: 'Köşeli (Yumuşak)' },
+];
+const ENTER_TRANS_OPTS = [
+  { value: 'fade', label: 'Solma (fade)' },
+  { value: 'slide', label: 'Kayma (slide)' },
+  { value: 'bounce', label: 'Zıplama (bounce)' },
+  { value: 'none', label: 'Yok' },
+];
 
 // ★ v301 (18 May 2026): CORNER_OPTS bu dosyada 156. satırda EffectsPanel için
 //   zaten import ediliyor; tek bir kez tanımlanmalı. CameraPanel daha aşağıda
@@ -53,6 +78,26 @@ export function HostPanel({ cfg, update }: { cfg: C['host']; update: (p: Partial
         <ColorField label="Halo Rengi" value={cfg.haloColor} onChange={v => update({ haloColor: v })} />
         <Slider label="Opaklık" min={0} max={1} step={0.05} value={cfg.haloOpacity} onChange={v => update({ haloOpacity: v })} display={`${(cfg.haloOpacity * 100).toFixed(0)}%`} />
         <Slider label="Bulanıklık (Blur)" min={0} max={60} step={1} value={cfg.haloBlur} onChange={v => update({ haloBlur: v })} display={`${cfg.haloBlur}px`} />
+      </Section>
+
+      {/* ★ v1.7.13.14: Host detay — ringStyle, namePosition/Font/Color, badgePosition, containerPadding */}
+      <Section title="Halka Stili" hint="Düz / Kesik / Noktalı çizgi stili (APK'da bazı stiller fallback'le düz çizilir)" mobile="ok">
+        <SelectField label="Halka Çizgi Stili" value={cfg.ringStyle} options={RING_STYLE_OPTS} onChange={v => update({ ringStyle: v as RingStyle })} />
+      </Section>
+
+      <Section title="Host İsim Yazısı" hint="Sahnedeki host adı — boyut/konum/renk" mobile="ok">
+        <SelectField label="İsim Konumu" value={cfg.namePosition} options={NAME_POS_OPTS} onChange={v => update({ namePosition: v as NamePosition })} />
+        <Slider label="Font Boyutu" min={10} max={22} step={1} value={cfg.nameFontSize} onChange={v => update({ nameFontSize: v })} display={`${cfg.nameFontSize}sp`} />
+        <SelectField label="Font Kalınlık" value={cfg.nameFontWeight} options={WEIGHT_OPTS} onChange={v => update({ nameFontWeight: v })} />
+        <ColorField label="İsim Rengi" value={cfg.nameColor} onChange={v => update({ nameColor: v })} />
+      </Section>
+
+      <Section title="Host Rozet Konumu" hint="Host avatarının üzerindeki tier/admin rozet konumu" mobile="ok">
+        <SelectField label="Rozet Konumu" value={cfg.badgePosition} options={BADGE_POS_OPTS} onChange={v => update({ badgePosition: v as BadgePosition })} />
+      </Section>
+
+      <Section title="Host Kart Dolgu" hint="Host avatarının etrafındaki container iç boşluğu" mobile="ok">
+        <Slider label="Container Padding" min={0} max={24} step={1} value={cfg.containerPadding} onChange={v => update({ containerPadding: v })} display={`${cfg.containerPadding}dp`} />
       </Section>
     </div>
   );
@@ -162,10 +207,24 @@ export function HeaderControlsPanel({ global, header, controls, updateGlobal, up
         />
       </Section>
 
-      <Section title="Alt Kontrol Barı" hint="Ekranın altındaki mikrofon/sohbet/ayrıl barı" mobile="ok">
+      <Section title="Alt Kontrol Barı — Görünüm" hint="Bar arka planı, blur, üst ayrıcı, dikey iç boşluk" mobile="ok">
+        <ColorField label="Bar Arka Planı" value={controls.barBackground} onChange={v => updateControls({ barBackground: v })} />
+        <Toggle label="Blur Efekti Aktif" checked={controls.barBlurEnabled} onChange={v => updateControls({ barBlurEnabled: v })} />
+        <Slider label="Blur Şiddeti" min={0} max={100} step={1} value={controls.barBlurIntensity} onChange={v => updateControls({ barBlurIntensity: v })} display={`${controls.barBlurIntensity}`} />
+        <ColorField label="Üst Ayrıcı Çizgi" value={controls.barBorderTop} onChange={v => updateControls({ barBorderTop: v })} />
+        <Slider label="Dikey Padding" min={4} max={24} step={1} value={controls.barPaddingV} onChange={v => updateControls({ barPaddingV: v })} display={`${controls.barPaddingV}dp`} />
+      </Section>
+
+      <Section title="Alt Kontrol Barı — Butonlar" hint="Buton boyutu, şekli, aralığı, mic ve leave renkleri" mobile="ok">
         <Slider label="Buton Boyutu" min={32} max={56} step={1} value={controls.buttonSize} onChange={v => updateControls({ buttonSize: v })} display={`${controls.buttonSize}dp`} />
         <Slider label="İkon Boyutu" min={14} max={28} step={1} value={controls.iconSize} onChange={v => updateControls({ iconSize: v })} display={`${controls.iconSize}dp`} />
         <ColorField label="İkon Rengi" value={controls.iconColor} onChange={v => updateControls({ iconColor: v })} />
+        <Slider label="Butonlar Arası Boşluk" min={4} max={24} step={1} value={controls.buttonGap} onChange={v => updateControls({ buttonGap: v })} display={`${controls.buttonGap}dp`} />
+        <SelectField label="Buton Şekli" value={controls.buttonShape} options={BUTTON_SHAPE_OPTS} onChange={v => updateControls({ buttonShape: v as ButtonShape })} />
+        <Slider label="Buton Köşe Yarıçapı (Köşeli modda)" min={2} max={24} step={1} value={controls.buttonBorderRadius} onChange={v => updateControls({ buttonBorderRadius: v })} display={`${controls.buttonBorderRadius}dp`} />
+        <ColorField label="Mikrofon Aktif Rengi" value={controls.micActiveColor} onChange={v => updateControls({ micActiveColor: v })} />
+        <ColorField label="Mikrofon Susturulu Rengi" value={controls.micMutedColor} onChange={v => updateControls({ micMutedColor: v })} />
+        <ColorField label="Ayrıl Buton Rengi" value={controls.leaveButtonColor} onChange={v => updateControls({ leaveButtonColor: v })} />
       </Section>
 
       {/* ★ v1.7.13.13 (19 May 2026): Alt kontrol barı konum ayarı. */}
@@ -306,16 +365,47 @@ export function EffectsPanel({
         <Slider label="Dinleyici Gölge Opaklık" min={0} max={1} step={0.05} value={shadows.listenerShadowOpacity} onChange={v => updateShadows({ listenerShadowOpacity: v })} display={`${(shadows.listenerShadowOpacity * 100).toFixed(0)}%`} />
       </Section>
 
-      <Section title="Online Noktası" hint="Çevrimiçi kullanıcıların avatar köşesindeki yeşil nokta" mobile="ok">
-        <Toggle label="Online Noktası Göster" checked={indicators.onlineDotEnabled} onChange={v => updateIndicators({ onlineDotEnabled: v })} />
-        <ColorField label="Online Nokta Rengi" value={indicators.onlineDotColor} onChange={v => updateIndicators({ onlineDotColor: v })} />
-        <SelectField label="Konum" value={indicators.onlineDotPosition} options={CORNER_OPTS} onChange={v => updateIndicators({ onlineDotPosition: v as CornerPosition })} />
+      <Section title="Online Noktası" hint="Çevrimiçi kullanıcıların avatar etrafındaki yeşil glow" mobile="ok">
+        <Toggle label="Online Glow Aktif" checked={indicators.onlineDotEnabled} onChange={v => updateIndicators({ onlineDotEnabled: v })} />
+        <ColorField label="Glow Rengi" value={indicators.onlineDotColor} onChange={v => updateIndicators({ onlineDotColor: v })} />
+        <Slider label="Glow Yoğunluğu" min={2} max={32} step={1} value={indicators.onlineDotSize} onChange={v => updateIndicators({ onlineDotSize: v })} display={`${indicators.onlineDotSize}dp`} />
+        <SelectField label="Konum (henüz glow için aktif değil)" value={indicators.onlineDotPosition} options={CORNER_OPTS} onChange={v => updateIndicators({ onlineDotPosition: v as CornerPosition })} />
       </Section>
 
-      <Section title="Moderatör & El Kaldırma" hint="Moderatör avatar halkası rengi + el kaldıran dinleyici rozeti" mobile="ok">
+      {/* ★ v1.7.13.14: Mute / Camera / Verified indicator detayları */}
+      <Section title="Susturulmuş İşareti" hint="Susturulan kullanıcının avatarındaki kırmızı rozet" mobile="ok">
+        <Toggle label="Susturma İşareti Göster" checked={indicators.muteIndicatorEnabled} onChange={v => updateIndicators({ muteIndicatorEnabled: v })} />
+        <ColorField label="Rozet Rengi" value={indicators.muteIndicatorColor} onChange={v => updateIndicators({ muteIndicatorColor: v })} />
+        <Slider label="Rozet Boyutu" min={12} max={32} step={1} value={indicators.muteIndicatorSize} onChange={v => updateIndicators({ muteIndicatorSize: v })} display={`${indicators.muteIndicatorSize}dp`} />
+        <SelectField label="Konum" value={indicators.muteIndicatorPosition} options={CORNER_OPTS} onChange={v => updateIndicators({ muteIndicatorPosition: v as CornerPosition })} />
+      </Section>
+
+      <Section title="Kamera Açık İşareti" hint="Kamera açık konuşmacının tile köşesindeki ikon" mobile="ok">
+        <Toggle label="Kamera İşareti Göster" checked={indicators.cameraIndicatorEnabled} onChange={v => updateIndicators({ cameraIndicatorEnabled: v })} />
+        <ColorField label="İşaret Rengi" value={indicators.cameraIndicatorColor} onChange={v => updateIndicators({ cameraIndicatorColor: v })} />
+      </Section>
+
+      <Section title="Doğrulanmış Tik" hint="Doğrulanmış kullanıcıların yanındaki onay tiki" mobile="ok">
+        <Toggle label="Tik Göster" checked={indicators.verifiedTickEnabled} onChange={v => updateIndicators({ verifiedTickEnabled: v })} />
+        <ColorField label="Tik Rengi" value={indicators.verifiedTickColor} onChange={v => updateIndicators({ verifiedTickColor: v })} />
+      </Section>
+
+      <Section title="Oda Sahibi Vurgu Detayı" hint="Owner avatarının ring kalınlığı + halo aktivasyonu" mobile="ok">
+        <Slider label="Owner Ring Kalınlık" min={0} max={6} step={1} value={accents.ownerRingWidth} onChange={v => updateAccents({ ownerRingWidth: v })} display={`${accents.ownerRingWidth}dp`} />
+        <Toggle label="Owner Halo Aktif" checked={accents.ownerHaloEnabled} onChange={v => updateAccents({ ownerHaloEnabled: v })} />
+      </Section>
+
+      <Section title="Moderatör & El Kaldırma" hint="Moderatör avatar halkası + el kaldıran dinleyici rozeti" mobile="ok">
         <ColorField label="Moderatör Halka Rengi" value={accents.moderatorHighlight} onChange={v => updateAccents({ moderatorHighlight: v })} />
+        <Slider label="Moderatör Ring Kalınlık" min={0} max={6} step={1} value={accents.moderatorRingWidth} onChange={v => updateAccents({ moderatorRingWidth: v })} display={`${accents.moderatorRingWidth}dp`} />
         <Toggle label="El Kaldırma Rozeti Aktif" checked={accents.handRaiseEnabled} onChange={v => updateAccents({ handRaiseEnabled: v })} />
         <ColorField label="El Kaldırma Rengi" value={accents.handRaiseColor} onChange={v => updateAccents({ handRaiseColor: v })} />
+      </Section>
+
+      <Section title="Yeni Katılım & Seçim Vurgusu" hint="Odaya yeni giren kullanıcı + seçilen avatar highlight'ı (timing post-launch)" mobile="ok">
+        <ColorField label="Yeni Katılım Rengi" value={accents.newJoinHighlight} onChange={v => updateAccents({ newJoinHighlight: v })} />
+        <Slider label="Yeni Katılım Süresi" min={1000} max={10000} step={500} value={accents.newJoinDurationMs} onChange={v => updateAccents({ newJoinDurationMs: v })} display={`${(accents.newJoinDurationMs / 1000).toFixed(1)}s`} />
+        <ColorField label="Seçilen Avatar Vurgusu" value={accents.selectedHighlight} onChange={v => updateAccents({ selectedHighlight: v })} />
       </Section>
 
       <Section title="Dinleyici Grid Limiti" hint="Grid'de aynı anda kaç dinleyici görünür — fazlası overflow rozetine düşer (tıkla → tüm liste)" mobile="ok">
