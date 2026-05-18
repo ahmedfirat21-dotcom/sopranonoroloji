@@ -135,6 +135,7 @@ export function RoomPreview({ cfg, speakerCount = DEFAULT_SPEAKER_COUNT, listene
                   speaking={i === 1}
                   muted={i === 2}
                   withCamera={!showSpotlight && i < camCount}
+                  isSoloSpeaker={speakerCount === 1}
                 />
               );
             })
@@ -294,8 +295,8 @@ function EmptyStage() {
  * + speakers.nameFontSize + nameMaxChars + shadows (host/speaker) + isMod halka
  * (accents.moderatorHighlight) + online dot (indicators.onlineDot*) preview'e
  * bağlandı. Önceden bu 12+ alan slider'ı değiştirse de yansımıyordu. */
-function SpeakerTile({ size, cfg, isOwner, speaking, muted, isMod, withCamera }:
-  { size: number; cfg: RoomLayoutConfig; isOwner: boolean; speaking: boolean; muted: boolean; isMod?: boolean; withCamera?: boolean }) {
+function SpeakerTile({ size, cfg, isOwner, speaking, muted, isMod, withCamera, isSoloSpeaker }:
+  { size: number; cfg: RoomLayoutConfig; isOwner: boolean; speaking: boolean; muted: boolean; isMod?: boolean; withCamera?: boolean; isSoloSpeaker?: boolean }) {
   const sp = cfg.speakers;
   const host = cfg.host;
   const acc = cfg.accents;
@@ -305,7 +306,10 @@ function SpeakerTile({ size, cfg, isOwner, speaking, muted, isMod, withCamera }:
   const shape = isOwner ? host.avatarShape : sp.avatarShape;
   const radiusCfg = isOwner ? host.borderRadius : sp.borderRadius;
   // ★ v289: Host için avatarSize override (admin'in Boyut slider'ı)
-  const renderSize = isOwner ? Math.min(host.avatarSize, size + 40) : size;
+  // ★ v309 (18 May 2026) FIX: Host avatarSize sadece host TEK BAŞINA sahnedeyse uygulanır.
+  //   Çoklu konuşmacıda host büyütülürse grid hesabı (size'a göre) ile container width
+  //   (renderSize) uyumsuz olur → tile'lar sağdan taşar. APK'da useHostSize benzer mantık.
+  const renderSize = (isOwner && isSoloSpeaker) ? Math.min(host.avatarSize, size + 40) : size;
   // ★ v291 (16 May 2026): Host için admin halka (host.ringWidth/ringColor) artık etkin.
   //   Önce sabit 2dp altın halka idi (kullanıcı kararı v283), şimdi admin'e geri geldi.
   // ★ v301 (18 May 2026): withCamera + cam.useCustomBorder ise audio border'ı override et.
