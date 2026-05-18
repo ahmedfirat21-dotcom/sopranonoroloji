@@ -143,10 +143,47 @@ export function HeaderControlsPanel({ global, header, controls, updateGlobal, up
         <ColorField label="Çerçeve Rengi" value={header.hostAvatarBorderColor ?? 'rgba(20,184,166,0.55)'} onChange={v => updateHeader({ hostAvatarBorderColor: v })} />
       </Section>
 
+      {/* ★ v1.7.13.13 (19 May 2026): Üst başlık konum ayarı — dikey/yatay offset
+          translateX/Y olarak uygulanır, layout bozulmaz. */}
+      <Section title="Üst Başlık Konumu" hint="Üst başlığı yukarı/aşağı veya yanal kaydır (transform offset)" mobile="ok">
+        <Slider
+          label="Dikey Kayma"
+          min={-40} max={40} step={1}
+          value={header.offsetY ?? 0}
+          onChange={v => updateHeader({ offsetY: v })}
+          display={`${header.offsetY ?? 0}dp`}
+        />
+        <Slider
+          label="Yatay Kayma"
+          min={-40} max={40} step={1}
+          value={header.offsetX ?? 0}
+          onChange={v => updateHeader({ offsetX: v })}
+          display={`${header.offsetX ?? 0}dp`}
+        />
+      </Section>
+
       <Section title="Alt Kontrol Barı" hint="Ekranın altındaki mikrofon/sohbet/ayrıl barı" mobile="ok">
         <Slider label="Buton Boyutu" min={32} max={56} step={1} value={controls.buttonSize} onChange={v => updateControls({ buttonSize: v })} display={`${controls.buttonSize}dp`} />
         <Slider label="İkon Boyutu" min={14} max={28} step={1} value={controls.iconSize} onChange={v => updateControls({ iconSize: v })} display={`${controls.iconSize}dp`} />
         <ColorField label="İkon Rengi" value={controls.iconColor} onChange={v => updateControls({ iconColor: v })} />
+      </Section>
+
+      {/* ★ v1.7.13.13 (19 May 2026): Alt kontrol barı konum ayarı. */}
+      <Section title="Alt Bar Konumu" hint="Alt kontrol barını yukarı/aşağı veya yanal kaydır (transform offset)" mobile="ok">
+        <Slider
+          label="Dikey Kayma"
+          min={-40} max={40} step={1}
+          value={controls.offsetY ?? 0}
+          onChange={v => updateControls({ offsetY: v })}
+          display={`${controls.offsetY ?? 0}dp`}
+        />
+        <Slider
+          label="Yatay Kayma"
+          min={-40} max={40} step={1}
+          value={controls.offsetX ?? 0}
+          onChange={v => updateControls({ offsetX: v })}
+          display={`${controls.offsetX ?? 0}dp`}
+        />
       </Section>
 
       <Section title="Sayfa Kenar Boşluğu" hint="Avatar gridinin yatay iç boşluğu" mobile="ok">

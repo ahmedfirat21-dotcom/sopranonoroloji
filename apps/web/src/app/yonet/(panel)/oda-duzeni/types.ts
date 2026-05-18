@@ -79,12 +79,16 @@ export interface RoomLayoutConfig {
     hostAvatarSize: number;
     hostAvatarBorderWidth: number;
     hostAvatarBorderColor: string;
+    // ★ v1.7.13.13 (19 May 2026): Üst başlık konum offset — APK ile birebir.
+    offsetY?: number; offsetX?: number;
   };
   controls: {
     barBackground: string; barBlurEnabled: boolean; barBlurIntensity: number; barBorderTop: string; barPaddingV: number;
     buttonSize: number; buttonGap: number; buttonShape: ButtonShape; buttonBorderRadius: number;
     micActiveColor: string; micMutedColor: string; leaveButtonColor: string;
     iconColor: string; iconSize: number;
+    // ★ v1.7.13.13 (19 May 2026): Alt kontrol barı konum offset — APK ile birebir.
+    offsetY?: number; offsetX?: number;
   };
   // ★ v289 (16 May 2026): speakers_advanced + name_advanced KALDIRILDI (19 alan,
   //   admin UI yok, mobile usage yok). Geriye uyum için mergeWithDefaults yeni

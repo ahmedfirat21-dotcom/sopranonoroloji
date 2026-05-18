@@ -54,6 +54,7 @@ export const DEFAULT_LAYOUT: RoomLayoutConfig = {
     showListenerCount: true, headerBgOpacity: 0.0, headerBorderBottom: true, headerBorderColor: 'rgba(20,184,166,0.55)',
     // ★ v300: Host avatar görsel ayarları — APK ile birebir.
     showHostAvatar: true, hostAvatarSize: 36, hostAvatarBorderWidth: 1.5, hostAvatarBorderColor: 'rgba(20,184,166,0.55)',
+    offsetY: 0, offsetX: 0,
   },
   controls: {
     barBackground: 'rgba(15,25,38,0.85)', barBlurEnabled: true, barBlurIntensity: 28,
@@ -61,6 +62,7 @@ export const DEFAULT_LAYOUT: RoomLayoutConfig = {
     buttonSize: 44, buttonGap: 12, buttonShape: 'circle', buttonBorderRadius: 12,
     micActiveColor: '#10B981', micMutedColor: '#475569', leaveButtonColor: '#EF4444',
     iconColor: '#E2E8F0', iconSize: 22,
+    offsetY: 0, offsetX: 0,
   },
   listeners_advanced: {
     maxVisibleSmallScreen: 10, maxVisibleDefault: 14,
