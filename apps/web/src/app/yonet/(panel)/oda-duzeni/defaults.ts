@@ -51,15 +51,15 @@ export const DEFAULT_LAYOUT: RoomLayoutConfig = {
   header: {
     titleFontSize: 16, titleFontWeight: '700', titleColor: '#F1F5F9',
     subtitleFontSize: 11, subtitleColor: '#94A3B8',
-    showLiveIndicator: true, liveDotColor: '#22C55E', liveDotPulse: true,
-    showListenerCount: true, headerBgOpacity: 0.0, headerBorderBottom: true, headerBorderColor: 'rgba(20,184,166,0.18)',
+    showLiveIndicator: true, liveDotColor: '#EF4444', liveDotPulse: true,
+    showListenerCount: true, headerBgOpacity: 0.55, headerBorderBottom: true, headerBorderColor: 'rgba(20,184,166,0.45)',
     // ★ v300: Host avatar görsel ayarları — APK ile birebir.
     showHostAvatar: true, hostAvatarSize: 36, hostAvatarBorderWidth: 1.5, hostAvatarBorderColor: 'rgba(20,184,166,0.55)',
     offsetY: 0, offsetX: 0,
   },
   controls: {
-    barBackground: 'rgba(15,25,38,0.85)', barBlurEnabled: true, barBlurIntensity: 28,
-    barBorderTop: 'rgba(255,255,255,0.05)', barPaddingV: 10,
+    barBackground: 'rgba(15,25,38,0.92)', barBlurEnabled: true, barBlurIntensity: 36,
+    barBorderTop: 'rgba(20,184,166,0.20)', barPaddingV: 12,
     buttonSize: 58, buttonGap: 12, buttonShape: 'circle', buttonBorderRadius: 12,
     micActiveColor: '#10B981', micMutedColor: '#475569', leaveButtonColor: '#EF4444',
     iconColor: '#E2E8F0', iconSize: 22,
@@ -74,11 +74,11 @@ export const DEFAULT_LAYOUT: RoomLayoutConfig = {
   camera: {
     heightRatio: 1.05, cornerRadiusPercent: 10, cornerRadiusMin: 14,
     objectFit: 'cover', mirrorSelf: true,
-    indicatorEnabled: true, indicatorColor: '#3B82F6', indicatorPosition: 'topRight', indicatorSize: 16,
+    indicatorEnabled: false, indicatorColor: '#3B82F6', indicatorPosition: 'topRight', indicatorSize: 16,
     useCustomBorder: false, borderWidth: 2, borderColor: '#3B82F6',
     overlayTopOpacity: 0.45, overlayBottomOpacity: 0.55,
     spotlightEnabled: true,
-    spotlightSingleAspect: 0.66, spotlightDoubleAspect: 0.95, spotlightTripleAspect: 1.0, spotlightQuadAspect: 1.0,
+    spotlightSingleAspect: 0.66, spotlightDoubleAspect: 1.30, spotlightTripleAspect: 1.0, spotlightQuadAspect: 1.0,
     spotlightGap: 8,
     fullscreenObjectFit: 'cover',
     maxConcurrentCameras: 0,
