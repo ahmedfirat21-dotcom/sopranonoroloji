@@ -52,7 +52,7 @@ export const DEFAULT_LAYOUT: RoomLayoutConfig = {
     titleFontSize: 16, titleFontWeight: '700', titleColor: '#F1F5F9',
     subtitleFontSize: 11, subtitleColor: '#94A3B8',
     showLiveIndicator: true, liveDotColor: '#EF4444', liveDotPulse: true,
-    showListenerCount: true, headerBgOpacity: 0.55, headerBorderBottom: true, headerBorderColor: 'rgba(20,184,166,0.45)',
+    showListenerCount: true, headerBgOpacity: 0.0, headerBorderBottom: true, headerBorderColor: 'rgba(20,184,166,0.55)',
     // ★ v300: Host avatar görsel ayarları — APK ile birebir. v31+: 36→32 (header'a sıgsın)
     showHostAvatar: true, hostAvatarSize: 32, hostAvatarBorderWidth: 1.5, hostAvatarBorderColor: 'rgba(20,184,166,0.55)',
     offsetY: 0, offsetX: 0,
