@@ -59,7 +59,7 @@ export const DEFAULT_LAYOUT: RoomLayoutConfig = {
   controls: {
     barBackground: 'rgba(15,25,38,0.85)', barBlurEnabled: true, barBlurIntensity: 28,
     barBorderTop: 'rgba(255,255,255,0.05)', barPaddingV: 10,
-    buttonSize: 44, buttonGap: 12, buttonShape: 'circle', buttonBorderRadius: 12,
+    buttonSize: 58, buttonGap: 12, buttonShape: 'circle', buttonBorderRadius: 12,
     micActiveColor: '#10B981', micMutedColor: '#475569', leaveButtonColor: '#EF4444',
     iconColor: '#E2E8F0', iconSize: 22,
     offsetY: 0, offsetX: 0,

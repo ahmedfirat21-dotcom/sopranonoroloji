@@ -248,7 +248,7 @@ export function HeaderControlsPanel({ global, header, controls, updateGlobal, up
       </Section>
 
       <Section title="Alt Kontrol Barı — Butonlar" hint="Buton boyutu, şekli, aralığı, mic ve leave renkleri" mobile="ok">
-        <Slider label="Buton Boyutu" min={32} max={56} step={1} value={controls.buttonSize} onChange={v => updateControls({ buttonSize: v })} display={`${controls.buttonSize}dp`} />
+        <Slider label="Buton Boyutu (Default 58 = ana sayfa tab bar ile aynı)" min={32} max={72} step={1} value={controls.buttonSize} onChange={v => updateControls({ buttonSize: v })} display={`${controls.buttonSize}dp`} />
         <Slider label="İkon Boyutu" min={14} max={28} step={1} value={controls.iconSize} onChange={v => updateControls({ iconSize: v })} display={`${controls.iconSize}dp`} />
         <ColorField label="İkon Rengi" value={controls.iconColor} onChange={v => updateControls({ iconColor: v })} />
         <Slider label="Butonlar Arası Boşluk" min={4} max={24} step={1} value={controls.buttonGap} onChange={v => updateControls({ buttonGap: v })} display={`${controls.buttonGap}dp`} />
