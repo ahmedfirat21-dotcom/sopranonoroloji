@@ -43,15 +43,34 @@ export default function RoomLayoutEditor({ initial }: { initial: any }) {
   // ★ v301: Kameralı konuşmacı sayısı — spotlight preset'ini test etmek için
   const [mockCameras, setMockCameras] = React.useState(0);
 
-  // ★ v301 (18 May 2026): Kamera sekmesine girince otomatik 2 kameralı konuşmacı
-  //   göster — yoksa kullanıcı slider'ları değiştirir ama önizlemede kamera tile
-  //   olmadığı için "hiçbir şey olmuyor" sanır. Diğer sekmelere dönülünce
-  //   kullanıcının manuel ayarladığı değere dokunulmaz (sadece ilk girişte ve
-  //   mockCameras=0 ise tetiklenir).
+  // ★ v1.7.13.21 (19 May 2026): Sekmeye göre uygun mock state.
+  //   Kullanıcı: "Kamera sekmesine tıkladıktan sonra diğer menülere geçince
+  //   önizleme değişmiyor." Çünkü mockCameras 2 olarak kalıyor, diğer sekmede
+  //   de kameralı tile gösteriliyordu — host avatar/konuşmacı grid görünmüyor.
+  //
+  //   Yeni davranış: her sekme değişiminde otomatik uygun mock:
+  //   - 'camera': 2 kameralı + 2 speaker (spotlight test)
+  //   - 'host': 1 speaker (host odaklı)
+  //   - 'speakers': 4 speaker (grid layout test)
+  //   - 'listeners': 1 speaker + 8 listener (audience odaklı)
+  //   - 'chrome'/'effects': mevcut değerleri koru (genel preview)
   React.useEffect(() => {
     if (tab === 'camera') {
-      setMockCameras((prev) => (prev === 0 ? 2 : prev));
-      setMockSpeakers((prev) => (prev < 2 ? 2 : prev));
+      setMockCameras(2);
+      setMockSpeakers(2);
+    } else if (tab === 'host') {
+      setMockCameras(0);
+      setMockSpeakers(1);
+    } else if (tab === 'speakers') {
+      setMockCameras(0);
+      setMockSpeakers(4);
+    } else if (tab === 'listeners') {
+      setMockCameras(0);
+      setMockSpeakers(1);
+      setMockListeners((prev) => (prev < 4 ? 8 : prev));
+    } else {
+      // chrome / effects / diğer — mockCameras 0'a reset (kamera state'i takılmasın)
+      setMockCameras(0);
     }
   }, [tab]);
 
