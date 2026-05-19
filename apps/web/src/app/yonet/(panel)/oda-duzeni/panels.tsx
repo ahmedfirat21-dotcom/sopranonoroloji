@@ -397,6 +397,21 @@ export function EffectsPanel({
         <ColorField label="Ayraç Rengi" value={stage.dividerColor} onChange={v => updateStage({ dividerColor: v })} />
       </Section>
 
+      {/* ★ v1.7.13.27 (19 May 2026): Konuşmacı-Dinleyici dikey boşluk slider'ı.
+          Eskiden DB field'ı vardı (stage.gapBetweenSpeakersAndListeners) ama admin
+          UI'ında slider yoktu — kullanıcı APK'da konuşmacı ile dinleyici aynı satırda
+          duruyor şikayetinin asıl nedeni buydu. Default 20dp; spotlight ile dolu
+          sahnede 32-48dp önerilir. APK + web admin önizleme aynı değeri okur. */}
+      <Section title="Konuşmacı-Dinleyici Boşluğu" hint="Sahnedeki konuşmacılar ile dinleyici listesi arasındaki dikey boşluk (gap)" mobile="ok">
+        <Slider
+          label="Boşluk Yüksekliği"
+          min={8} max={80} step={2}
+          value={stage.gapBetweenSpeakersAndListeners ?? 20}
+          onChange={v => updateStage({ gapBetweenSpeakersAndListeners: v })}
+          display={`${stage.gapBetweenSpeakersAndListeners ?? 20}dp`}
+        />
+      </Section>
+
       <Section title="Etkileşim & Erişilebilirlik" hint="Avatar tıklama feedback + hareket azaltma (a11y)" mobile="ok">
         <Slider label="Avatar Tıklama Scale (basılı tut feedback)" min={0.85} max={1} step={0.01} value={anims.avatarTapScale} onChange={v => updateAnims({ avatarTapScale: v })} display={`${anims.avatarTapScale.toFixed(2)}x`} />
         <Toggle label="Hareket Azaltma (tüm pulse/halo/tap animasyonlarını kapat)" checked={anims.reduceMotion} onChange={v => updateAnims({ reduceMotion: v })} />

@@ -36,13 +36,20 @@ function shapeRadius(shape: AvatarShape, size: number, cfgRadius: number) {
 function getSpeakerMetrics(count: number, W: number, cfg: RoomLayoutConfig['speakers']) {
   const availableW = W - 32;
   const p = cfg.sizePresets;
+  // ★ v1.7.13.27 (19 May 2026): Eski hardcoded col cap'leri (3,3,3,4,5) ve
+  //   1-kişi maxSize=110 admin slider'ını eziyordu. Şimdi admin maxCols ve
+  //   tüm sizePresets sınırlar arasında ETKİN; preview kullanıcı değerini yansıtır.
   let cols: number, maxSize: number;
-  if (count <= 1)      { cols = 1; maxSize = 110; }
-  else if (count <= 3) { cols = Math.min(3, cfg.maxCols); maxSize = p.large; }
-  else if (count <= 6) { cols = Math.min(3, cfg.maxCols); maxSize = p.medium; }
-  else if (count <= 9) { cols = Math.min(3, cfg.maxCols); maxSize = Math.round(p.medium * 0.92); }
-  else if (count <= 12){ cols = Math.min(4, cfg.maxCols); maxSize = p.small; }
-  else                 { cols = Math.min(5, cfg.maxCols); maxSize = Math.round(p.small * 0.9); }
+  if (count <= 1)      { cols = 1;                              maxSize = p.large; }
+  else if (count <= 3) { cols = Math.min(count, cfg.maxCols);   maxSize = p.large; }
+  else if (count <= 6) { cols = Math.min(3,     cfg.maxCols);   maxSize = p.medium; }
+  else if (count <= 9) { cols = Math.min(3,     cfg.maxCols);   maxSize = Math.round(p.medium * 0.92); }
+  else if (count <= 12){ cols = Math.min(4,     cfg.maxCols);   maxSize = p.small; }
+  else                 { cols = Math.min(5,     cfg.maxCols);   maxSize = Math.round(p.small * 0.9); }
+  // Eski Math.min(3, maxCols) yerine count-cap'i kullan — 1 kişide 1 col, 2'de 2 col vs.
+  // 4+ kişi için 3'ten fazla col mantıklı değil (avatar çok küçülür) ama admin
+  // maxCols=6 yaparsa 4 kişi için min(4, 6) = 4 col gösterelim.
+  if (count >= 2 && count <= 6) cols = Math.min(count, cfg.maxCols);
   const gap = cfg.colGap;
   const calc = Math.floor((availableW - gap * (cols - 1)) / cols);
   const cardW = Math.min(calc, maxSize);
@@ -51,11 +58,13 @@ function getSpeakerMetrics(count: number, W: number, cfg: RoomLayoutConfig['spea
 
 function getListenerMetrics(count: number, W: number, cfg: RoomLayoutConfig['listeners']) {
   const p = cfg.sizePresets;
+  // ★ v1.7.13.27: maxCols+1 / +2 magic adder kaldırıldı → admin maxCols slider
+  //   doğrudan etkin. Eskiden 6 maxCols ayarlasan preview 7-8 col gösteriyordu.
   let cols: number, maxSize: number;
-  if (count <= 4)       { cols = Math.min(5, cfg.maxCols + 1); maxSize = p.large; }
-  else if (count <= 8)  { cols = Math.min(6, cfg.maxCols); maxSize = p.medium; }
-  else if (count <= 15) { cols = Math.min(7, cfg.maxCols + 1); maxSize = Math.round(p.medium * 0.95); }
-  else                  { cols = Math.min(8, cfg.maxCols + 2); maxSize = p.small; }
+  if (count <= 4)       { cols = Math.min(count, cfg.maxCols); maxSize = p.large; }
+  else if (count <= 8)  { cols = Math.min(6, cfg.maxCols);     maxSize = p.medium; }
+  else if (count <= 15) { cols = Math.min(7, cfg.maxCols);     maxSize = Math.round(p.medium * 0.95); }
+  else                  { cols = Math.min(8, cfg.maxCols);     maxSize = p.small; }
   const gap = cfg.colGap;
   const cellW = Math.floor((W - 32 - gap * (cols - 1)) / cols);
   const calc = Math.max(32, cellW - (count <= 8 ? 10 : count <= 15 ? 8 : 5));
@@ -145,15 +154,20 @@ export function RoomPreview({ cfg, speakerCount = DEFAULT_SPEAKER_COUNT, listene
         {/* ★ v289 (16 May 2026): Stage divider — admin'in stage.dividerStyle/Color */}
         {listenerCount > 0 && <StageDividerLine cfg={cfg} />}
 
-        {/* Listener grid */}
+        {/* Listener grid
+            ★ v1.7.13.27 (19 May 2026): stage.gapBetweenSpeakersAndListeners admin
+            slider'ı önizlemeye bağlandı. Eskiden hardcoded mt-3 (12px) idi; admin
+            değerini değiştirsen önizleme reaksiyon vermiyordu. APK ile birebir aynı. */}
         {listenerCount > 0 && (() => {
           const max = cfg.listeners_advanced.maxVisibleDefault;
           const shown = Math.min(listenerCount, max);
           const overflow = Math.max(0, listenerCount - max);
+          const stageGap = Math.max(8, cfg.stage.gapBetweenSpeakersAndListeners ?? 20);
           return (
             <div
-              className="grid mt-3"
+              className="grid"
               style={{
+                marginTop: stageGap,
                 gridTemplateColumns: `repeat(${lM.cols}, 1fr)`,
                 gap: `${cfg.listeners.rowGap}px ${cfg.listeners.colGap}px`,
                 justifyItems: 'center',
