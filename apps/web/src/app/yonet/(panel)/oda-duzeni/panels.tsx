@@ -283,70 +283,11 @@ export function HeaderControlsPanel({ global, header, controls, updateGlobal, up
         <Slider label="Alt Güvenli Boşluk" min={0} max={32} step={1} value={global.safePaddingBottom ?? 12} onChange={v => updateGlobal({ safePaddingBottom: v })} display={`${global.safePaddingBottom ?? 12}dp`} />
       </Section>
 
-      {/* ★ v1.7.13.12 (19 May 2026): Oda Arka Planı paneli — kullanıcı sorusu:
-          "global arkaplan nerede var web admin'de?". Field'lar DB schema'da
-          vardı ama UI panel yoktu, sadece default kullanılıyordu. Şimdi admin
-          canlı değiştirebilir, APK realtime render eder. */}
-      <Section title="Oda Arka Planı" hint="Oda içi arka plan rengi/gradient/görsel — APK ile birebir uyumlu" mobile="ok">
-        <SelectField
-          label="Arka Plan Tipi"
-          value={global.background || 'gradient'}
-          options={[
-            { value: 'solid', label: 'Düz Renk' },
-            { value: 'gradient', label: 'Gradient (2 renk)' },
-            { value: 'image', label: 'Görsel' },
-            { value: 'none', label: 'Tema Varsayılanı' },
-          ]}
-          onChange={v => updateGlobal({ background: v as any })}
-        />
-        {(global.background === 'solid' || global.background === 'gradient') && (
-          <ColorField
-            label={global.background === 'solid' ? 'Arka Plan Rengi' : 'Gradient Başlangıç'}
-            value={global.background === 'solid' ? (global.bgColor || '#0A0F1A') : (global.bgGradient?.[0] || '#0F1926')}
-            onChange={v => {
-              if (global.background === 'solid') {
-                updateGlobal({ bgColor: v });
-              } else {
-                const next = [...(global.bgGradient || ['#0F1926', '#0A0F1A'])];
-                next[0] = v;
-                updateGlobal({ bgGradient: next });
-              }
-            }}
-          />
-        )}
-        {global.background === 'gradient' && (
-          <ColorField
-            label="Gradient Bitiş"
-            value={global.bgGradient?.[1] || '#0A0F1A'}
-            onChange={v => {
-              const next = [...(global.bgGradient || ['#0F1926', '#0A0F1A'])];
-              next[1] = v;
-              updateGlobal({ bgGradient: next });
-            }}
-          />
-        )}
-        {global.background === 'image' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <label style={{ fontSize: 12, color: '#94A3B8' }}>
-              Görsel URL (CDN/Storage linki — şu an manuel, upload UI sonra eklenecek)
-            </label>
-            <input
-              type="text"
-              value={global.bgImageUrl || ''}
-              onChange={e => updateGlobal({ bgImageUrl: e.target.value || null })}
-              placeholder="https://..."
-              style={{
-                padding: '8px 12px',
-                borderRadius: 8,
-                background: 'rgba(15,25,38,0.5)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                color: '#E2E8F0',
-                fontSize: 13,
-              }}
-            />
-          </div>
-        )}
-      </Section>
+      {/* ★ v1.7.13.15 (19 May 2026): Oda Arka Planı paneli KALDIRILDI.
+          Kullanıcı geri bildirimi: "web admin'e arka plan rengi işine gerek yok,
+          kullanıcılar zaten oda oluştururken arkaplan resmi veya rengi
+          değiştirebiliyor". APK artık ana sayfa/odalarım ile aynı uniform
+          gradient kullanır (oda özel image_url veya theme_id varsa öncelikli). */}
     </div>
   );
 }
