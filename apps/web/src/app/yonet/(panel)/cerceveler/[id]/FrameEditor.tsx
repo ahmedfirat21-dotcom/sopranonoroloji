@@ -283,12 +283,13 @@ const STAGE_SIZE = 360;
 // ★ v1.3.58: APK'daki GERÇEK avatar render boyutları (px). Önizleme aynı boyutta
 //   render eder — kullanıcı slider'ı sürüklediği boyut APK'da gözle gördüğü
 //   sonuca eşit.
+// ★ v1.7.13.39 (19 May 2026): ProfileHero avatar 160 -> 104 + Host 140 -> 116
+//   (konuşmacı ile uniform). Mobile ile birebir.
 const MOBILE_SIZES = [
   { v: 40, l: 'Mini (40)' },          // home header, room kart, DM listesi
   { v: 80, l: 'Dinleyici (80)' },     // ListenerGrid
-  { v: 120, l: 'Konuşmacı (120)' },   // SpeakerSection grid speakers
-  { v: 140, l: 'Sahne Host (140)' },  // SpeakerSection host (cardWidth maxSize)
-  { v: 160, l: 'Profil (160)' },      // ProfileHero (modern büyük avatar)
+  { v: 104, l: 'Profil (104)' },      // ProfileHero (kompakt avatar)
+  { v: 116, l: 'Sahne (116)' },       // SpeakerSection grid speakers + host (uniform)
 ];
 
 // ★ v1.3.61: Frame Lottie haritası — frameLottieRegistry.ts ile birebir senkron.
