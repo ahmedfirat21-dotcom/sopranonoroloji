@@ -27,10 +27,13 @@ function reducer(state: RoomLayoutConfig, action: Action): RoomLayoutConfig {
 
 export default function RoomLayoutEditor({ initial }: { initial: any }) {
   const [cfg, dispatch] = useReducer(reducer, initial?.config, mergeWithDefaults);
-  // ★ v288 (16 May 2026): Slider drag fix — Preview re-render her tikte slider'ı bloke
-  //   ediyordu (özellikle yeni eklenen 22 alanlı sekmede). useDeferredValue React'e
-  //   "slider güncel cfg ile çalışsın, preview deferred olsun" diyor → drag akıcı.
-  const deferredCfg = useDeferredValue(cfg);
+  // ★ v1.7.13.19 (19 May 2026): useDeferredValue KALDIRILDI.
+  //   Kullanıcı: "menüler arasında geçiş yaparken önizleme ekranı değişmiyor.
+  //   Kamera grid boyut ayarları da önizlemeye yansımıyor."
+  //   useDeferredValue (v288'de eklenmiş slider drag perf optimizasyonu) bazı
+  //   re-render'ları erteliyor, sekme değişimi/slider değişimi anlık yansımıyor.
+  //   Şimdi cfg direkt kullanılır — React 19 concurrent batching zaten yeterli.
+  const deferredCfg = cfg;
   const [tab, setTab] = React.useState<Tab>('host');
   const [saving, startSave] = useTransition();
   const [status, setStatus] = React.useState<string | null>(null);
