@@ -3,7 +3,7 @@ import type { RoomLayoutConfig } from './types';
 // ★ v1.7.13.30 (19 May 2026): Tüm varsayılanlar elden geçirildi (mobile ile birebir).
 export const DEFAULT_LAYOUT: RoomLayoutConfig = {
   host: {
-    avatarShape: 'circle', avatarSize: 144, borderRadius: 48, ringWidth: 3, ringColor: '#FBBF24',
+    avatarShape: 'circle', avatarSize: 116, borderRadius: 48, ringWidth: 3, ringColor: '#FBBF24',
     ringStyle: 'solid', namePosition: 'below', nameFontSize: 14, nameFontWeight: '700', nameColor: '#FFFFFF',
     badgePosition: 'topRight', haloEnabled: true, haloColor: '#FBBF24', haloOpacity: 0.40, haloBlur: 28,
     containerPadding: 8,
@@ -11,15 +11,15 @@ export const DEFAULT_LAYOUT: RoomLayoutConfig = {
   speakers: {
     avatarShape: 'circle', borderRadius: 50, maxCols: 3, colGap: 12, rowGap: 20, ringWidth: 2,
     ringColor: '#14B8A6', speakingRingColor: '#10B981', namePosition: 'below', nameFontSize: 12, nameMaxChars: 0,
-    showMicIcon: true, muteOpacity: 0.55, sizePresets: { small: 76, medium: 92, large: 116 },
+    showMicIcon: false, muteOpacity: 0.55, sizePresets: { small: 76, medium: 92, large: 116 },
   },
   listeners: {
     avatarShape: 'circle', borderRadius: 50, maxCols: 6, colGap: 10, rowGap: 14, showName: true,
-    nameFontSize: 10, nameMaxChars: 0, ringWidth: 0, ringColor: 'transparent', ownerCrownEnabled: true,
+    nameFontSize: 10, nameMaxChars: 0, ringWidth: 1.5, ringColor: 'rgba(20,184,166,0.40)', ownerCrownEnabled: true,
     ownerScale: 1.12, sizePresets: { small: 44, medium: 52, large: 64 },
   },
   stage: {
-    backgroundColor: 'rgba(15,25,38,0)', borderRadius: 0, padding: 12, dividerStyle: 'none',
+    backgroundColor: 'rgba(15,25,38,0)', borderRadius: 0, padding: 4, dividerStyle: 'none',
     dividerColor: 'rgba(255,255,255,0.08)', gapBetweenSpeakersAndListeners: 32,
   },
   global: {
@@ -53,16 +53,17 @@ export const DEFAULT_LAYOUT: RoomLayoutConfig = {
     subtitleFontSize: 11, subtitleColor: '#94A3B8',
     showLiveIndicator: true, liveDotColor: '#EF4444', liveDotPulse: true,
     showListenerCount: true, headerBgOpacity: 0.55, headerBorderBottom: true, headerBorderColor: 'rgba(20,184,166,0.45)',
-    // ★ v300: Host avatar görsel ayarları — APK ile birebir.
-    showHostAvatar: true, hostAvatarSize: 36, hostAvatarBorderWidth: 1.5, hostAvatarBorderColor: 'rgba(20,184,166,0.55)',
+    // ★ v300: Host avatar görsel ayarları — APK ile birebir. v31+: 36→32 (header'a sıgsın)
+    showHostAvatar: true, hostAvatarSize: 32, hostAvatarBorderWidth: 1.5, hostAvatarBorderColor: 'rgba(20,184,166,0.55)',
     offsetY: 0, offsetX: 0,
   },
   controls: {
     barBackground: 'rgba(15,25,38,0.92)', barBlurEnabled: true, barBlurIntensity: 36,
     barBorderTop: 'rgba(20,184,166,0.20)', barPaddingV: 12,
-    buttonSize: 58, buttonGap: 12, buttonShape: 'circle', buttonBorderRadius: 12,
+    // v31+: 8 buton sigsin diye 58/12/22 → 42/6/20 (393dp ekran)
+    buttonSize: 42, buttonGap: 6, buttonShape: 'circle', buttonBorderRadius: 12,
     micActiveColor: '#10B981', micMutedColor: '#475569', leaveButtonColor: '#EF4444',
-    iconColor: '#E2E8F0', iconSize: 22,
+    iconColor: '#E2E8F0', iconSize: 20,
     offsetY: 0, offsetX: 0,
   },
   listeners_advanced: {
