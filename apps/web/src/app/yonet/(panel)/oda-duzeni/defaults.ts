@@ -24,7 +24,7 @@ export const DEFAULT_LAYOUT: RoomLayoutConfig = {
   },
   global: {
     background: 'gradient', bgColor: '#0A0F1A', bgGradient: ['#0F1926', '#0A0F1A'], bgImageUrl: null,
-    safePaddingTop: 12, safePaddingBottom: 12, horizontalPadding: 16,
+    safePaddingTop: 0, safePaddingBottom: 0, horizontalPadding: 16,
   },
   animations: {
     speakingPulseEnabled: true, speakingPulseSpeed: 1400, speakingRingExpand: 1.25,
