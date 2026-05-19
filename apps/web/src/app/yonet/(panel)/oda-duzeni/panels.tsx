@@ -499,6 +499,26 @@ export function CameraPanel({ cfg, update }:
         <Slider label="Maks Eşzamanlı Kamera (0 = sınırsız)" min={0} max={15} step={1} value={cfg.maxConcurrentCameras}
           onChange={v => update({ maxConcurrentCameras: v })} display={cfg.maxConcurrentCameras === 0 ? '∞' : `${cfg.maxConcurrentCameras} kişi`} />
       </Section>
+
+      {/* ★ v1.7.13.24 (19 May 2026): Spotlight aktifken sahnedeki audio-only
+          konuşmacılar (mikrofon açık, kamera kapalı). Boyut + aralık admin'den.
+          Kullanıcı: "kamera açık olunca konuşmacı ve dinleyici nasıl görünür ayarı yok". */}
+      <Section title="Spotlight Altı Audio-Only Konuşmacılar" hint="Kamera açık konuşmacı varken, sahnedeki diğer mikrofon-açık kullanıcılar küçük circle olarak görünür" mobile="ok">
+        <Slider
+          label="Avatar Boyutu (max)"
+          min={40} max={100} step={2}
+          value={cfg.audioCompactSize ?? 76}
+          onChange={v => update({ audioCompactSize: v })}
+          display={`${cfg.audioCompactSize ?? 76}dp`}
+        />
+        <Slider
+          label="Avatarlar Arası Boşluk"
+          min={4} max={20} step={1}
+          value={cfg.audioCompactGap ?? 8}
+          onChange={v => update({ audioCompactGap: v })}
+          display={`${cfg.audioCompactGap ?? 8}dp`}
+        />
+      </Section>
     </div>
   );
 }

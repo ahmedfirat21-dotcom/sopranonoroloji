@@ -81,6 +81,8 @@ export const DEFAULT_LAYOUT: RoomLayoutConfig = {
     spotlightGap: 12,
     fullscreenObjectFit: 'cover',
     maxConcurrentCameras: 0,
+    audioCompactSize: 76,
+    audioCompactGap: 8,
   },
 };
 

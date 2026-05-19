@@ -123,5 +123,8 @@ export interface RoomLayoutConfig {
     spotlightGap: number;
     fullscreenObjectFit: 'cover' | 'contain';
     maxConcurrentCameras: number; // 0 = sınırsız
+    // ★ v1.7.13.24: Spotlight aktifken sahnedeki audio-only konuşmacılar
+    audioCompactSize: number;     // dp — max boyut (default 76)
+    audioCompactGap: number;      // dp — avatarlar arası (default 8)
   };
 }
